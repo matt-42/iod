@@ -1,4 +1,4 @@
-iodd
+iod
 ====
 
 Inline object definitions and declarations for C++11. This library embeds in

@@ -9,6 +9,7 @@ iod_define_attribute(age);
 iod_define_attribute(cars);
 iod_define_attribute(model);
 iod_define_attribute(cities);
+iod_define_attribute(lastname);
 
 int main()
 {
@@ -37,4 +38,6 @@ int main()
   auto test = iod(name_ = "", age_ = int());
   iod_from_json(test, json_string);
 
+  // Extend and object. (todo)
+  auto extended_person = iod_extend(person, iod(lastname_ = "Doe"));
 }

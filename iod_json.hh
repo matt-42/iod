@@ -26,21 +26,27 @@ namespace iod_internals
 
   template <typename T>
   void iod_to_json(const T& t, std::stringstream& ss);
+
   void iod_to_json(const char* t, std::stringstream& ss);
+
   void iod_to_json(const std::string& t, std::stringstream& ss);
+
   template <typename T>
   void iod_to_json(const std::vector<T>& array, std::stringstream& ss);
+
   template <typename T, typename ...Tail>
   void iod_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss);
+
   template <typename T, typename ...Tail>
   std::string iod_to_json(const iod_object<T, Tail...>& o);
 
-  template <typename T, typename ...Tail>
-  void iod_attr_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss);
   template <typename T>
   void iod_attr_to_json(const iod_object<T>& o, std::stringstream& ss);
+
   template <typename T, typename ...Tail>
-  void iod_attr_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss);
+  typename std::enable_if<(sizeof...(Tail) > 0), void>::type
+  iod_attr_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss);
+
 
   template <typename T>
   void iod_to_json(const T& t, std::stringstream& ss)
@@ -71,9 +77,6 @@ namespace iod_internals
     ss << ']';
   }
 
-  template <typename T>
-  void iod_attr_to_json(const iod_object<T>& o, std::stringstream& ss);
-
   template <typename T, typename ...Tail>
   void iod_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss)
   {
@@ -99,7 +102,8 @@ namespace iod_internals
   }
 
   template <typename T, typename ...Tail>
-  void iod_attr_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss)
+  typename std::enable_if<(sizeof...(Tail) > 0), void>::type
+  iod_attr_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss)
   {
     const T* attr = &o;
     ss << '"' << attr->attribute_name() << "\":";

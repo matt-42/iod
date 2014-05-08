@@ -114,6 +114,6 @@ struct NAME##_attr_builder                                              \
     NAME##_attr<T> operator=(T t) { return NAME##_attr<T>(t); } \
   template <typename T>                                                 \
     NAME##_attr<std::initializer_list<T>> operator=(const std::initializer_list<T>& t) { return NAME##_attr<std::initializer_list<T>>(t); } \
-} NAME##_;
+} NAME;
 
 #endif

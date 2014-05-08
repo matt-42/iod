@@ -16,12 +16,12 @@ int main()
 
   // Inline object definition.
   auto person = iod(
-    name_ = "Philippe",
-    age_ = 42,
-    cities_ = {"Paris", "Toronto", "New York City"},
-    cars_ = {
-        iod(name_ = "Renault", model_ = "Clio"),
-        iod(name_ = "Mercedes", model_ = "Class A")
+    name = "Philippe",
+    age = 42,
+    cities = {"Paris", "Toronto", "New York City"},
+    cars = {
+        iod(name = "Renault", model = "Clio"),
+        iod(name = "Mercedes", model = "Class A")
       }
     );
 
@@ -35,9 +35,9 @@ int main()
 
   // Load an object from a json string.
   std::string json_string = R"json({"name":"John", "age": 12})json";
-  auto test = iod(name_ = "", age_ = int());
+  auto test = iod(name = "", age = int());
   iod_from_json(test, json_string);
 
   // Extend and object. (todo)
-  auto extended_person = iod_extend(person, iod(lastname_ = "Doe"));
+  // auto extended_person = iod_extend(person, iod(lastname_ = "Doe"));
 }

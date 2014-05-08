@@ -1,15 +1,16 @@
 iod
 ====
 
-Inline object definitions and declarations for C++11. This library embeds in
-C++11 a fast type-safe json-like domain specific language. It allows, in one
-C++ statement, to define, declare and instantiate a C++ object, without any
-overhead execution time.
+**Inline object definitions and declarations** with **static introspection** for
+C++11. This library embeds in C++11 a fast type-safe **json-like** domain specific
+language. It allows, in one C++ statement, to define, declare and instantiate
+a C++ object, **without any overhead execution time**.
 
 While keeping the performance and type-checking of C++, it adds to C++11 the
 flexibility of dynamic languages like javascript where declaring an object or
-extending it can be done on the fly.
-
+extending it can be done on the fly. The library also provides **a json
+serializer and deserializer**, taking advantage of the static introspection and
+meta-programming.
 
 ## Overview of the library
 ```c++

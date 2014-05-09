@@ -17,7 +17,7 @@ template <typename ...Tail>
 inline void iod_from_json(iod_object<Tail...>& o, const std::string& str);
 
 template <typename T, typename ...Tail>
-std::string iod_to_json(const iod_object<T, Tail...>& o);
+inline std::string iod_to_json(const iod_object<T, Tail...>& o);
 
 namespace iod_internals
 {
@@ -25,47 +25,47 @@ namespace iod_internals
   // Json IOD Internals.
 
   template <typename T>
-  void iod_to_json(const T& t, std::stringstream& ss);
+  inline void iod_to_json(const T& t, std::stringstream& ss);
 
-  void iod_to_json(const char* t, std::stringstream& ss);
+  inline void iod_to_json(const char* t, std::stringstream& ss);
 
-  void iod_to_json(const std::string& t, std::stringstream& ss);
-
-  template <typename T>
-  void iod_to_json(const std::vector<T>& array, std::stringstream& ss);
-
-  template <typename T, typename ...Tail>
-  void iod_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss);
-
-  template <typename T, typename ...Tail>
-  std::string iod_to_json(const iod_object<T, Tail...>& o);
+  inline void iod_to_json(const std::string& t, std::stringstream& ss);
 
   template <typename T>
-  void iod_attr_to_json(const iod_object<T>& o, std::stringstream& ss);
+  inline void iod_to_json(const std::vector<T>& array, std::stringstream& ss);
+
+  template <typename T, typename ...Tail>
+  inline void iod_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss);
+
+  template <typename T, typename ...Tail>
+  inline std::string iod_to_json(const iod_object<T, Tail...>& o);
+
+  template <typename T>
+  inline void iod_attr_to_json(const iod_object<T>& o, std::stringstream& ss);
 
   template <typename T, typename ...Tail>
   typename std::enable_if<(sizeof...(Tail) > 0), void>::type
-  iod_attr_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss);
+  inline iod_attr_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss);
 
 
   template <typename T>
-  void iod_to_json(const T& t, std::stringstream& ss)
+  inline void iod_to_json(const T& t, std::stringstream& ss)
   {
     ss << t;
   }
 
-  void iod_to_json(const char* t, std::stringstream& ss)
+  inline void iod_to_json(const char* t, std::stringstream& ss)
   {
     ss << '"'<< t << '"';
   }
 
-  void iod_to_json(const std::string& t, std::stringstream& ss)
+  inline void iod_to_json(const std::string& t, std::stringstream& ss)
   {
     iod_to_json(t.c_str(), ss);
   }
 
   template <typename T>
-  void iod_to_json(const std::vector<T>& array, std::stringstream& ss)
+  inline void iod_to_json(const std::vector<T>& array, std::stringstream& ss)
   {
     ss << '[';
     for (const auto& t : array)
@@ -78,7 +78,7 @@ namespace iod_internals
   }
 
   template <typename T, typename ...Tail>
-  void iod_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss)
+  inline void iod_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss)
   {
     ss << '{';
     iod_attr_to_json(o, ss);
@@ -86,7 +86,7 @@ namespace iod_internals
   }
 
   template <typename T, typename ...Tail>
-  std::string iod_to_json(const iod_object<T, Tail...>& o)
+  inline std::string iod_to_json(const iod_object<T, Tail...>& o)
   {
     std::stringstream ss;
     iod_to_json(o, ss);
@@ -94,7 +94,7 @@ namespace iod_internals
   }
 
   template <typename T>
-  void iod_attr_to_json(const iod_object<T>& o, std::stringstream& ss)
+  inline void iod_attr_to_json(const iod_object<T>& o, std::stringstream& ss)
   {
     const T* attr = &(o);
     ss << '"' << attr->attribute_name() << "\":";
@@ -102,7 +102,7 @@ namespace iod_internals
   }
 
   template <typename T, typename ...Tail>
-  typename std::enable_if<(sizeof...(Tail) > 0), void>::type
+  inline typename std::enable_if<(sizeof...(Tail) > 0), void>::type
   iod_attr_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss)
   {
     const T* attr = &o;
@@ -116,23 +116,23 @@ namespace iod_internals
 
   template <typename T>
   struct fill_ {
-    fill_(T& _r) : r(_r) {}
+    inline fill_(T& _r) : r(_r) {}
     T& r;
   };
 
   template <typename T>
-  fill_<T> fill(T& t) { return fill_<T>(t); }
+  inline fill_<T> fill(T& t) { return fill_<T>(t); }
 
   struct spaces_ {} spaces;
 
   struct json_parser
   {
 
-    json_parser(const std::string& _str) : str(_str), ss(_str) {}
+    inline json_parser(const std::string& _str) : str(_str), ss(_str) {}
 
-    char peak() { return ss.peek(); }
+    inline char peak() { return ss.peek(); }
 
-    std::runtime_error json_error()
+    inline std::runtime_error json_error()
     {
       std::stringstream err;
 
@@ -146,7 +146,7 @@ namespace iod_internals
       return std::runtime_error(err.str());
     }
 
-    json_parser& fill(std::string& t)
+    inline json_parser& fill(std::string& t)
     {
       int start = ss.tellg();
       int end;
@@ -166,7 +166,7 @@ namespace iod_internals
     }
 
     template <typename T>
-    json_parser& fill(T&& t)
+    inline json_parser& fill(T&& t)
     {
       ss >> t;
       if (ss.good()) return *this;
@@ -175,12 +175,12 @@ namespace iod_internals
     }
 
     template <typename T>
-    json_parser& operator>>(fill_<T>&& t)
+    inline json_parser& operator>>(fill_<T>&& t)
     {
       return fill(t.r);
     }
 
-    json_parser& operator>>(char t)
+    inline json_parser& operator>>(char t)
     {
       char value;
       do
@@ -197,7 +197,7 @@ namespace iod_internals
     }
 
     template <typename T>
-    json_parser& operator>>(T t)
+    inline json_parser& operator>>(T t)
     {
       T value;
       ss >> value;
@@ -211,7 +211,7 @@ namespace iod_internals
       }
     }
 
-    json_parser& operator>>(const char* t)
+    inline json_parser& operator>>(const char* t)
     {
       std::string value;
       fill(value);
@@ -220,7 +220,7 @@ namespace iod_internals
         throw json_error();
     }
 
-    json_parser& operator>>(spaces_ s)
+    inline json_parser& operator>>(spaces_ s)
     {
       char value;
       do
@@ -244,12 +244,12 @@ namespace iod_internals
   }
 
   template <typename T>
-  void iod_from_json(T& t, json_parser& p)
+  inline void iod_from_json(T& t, json_parser& p)
   {
     p >> fill(t);
   }
 
-  void iod_from_json(std::string& t, json_parser& p)
+  inline void iod_from_json(std::string& t, json_parser& p)
   {
     p >> '"' >> fill(t) >> '"';
   }
@@ -321,7 +321,7 @@ inline void iod_from_json(iod_object<Tail...>& o, const std::string& str)
 }
 
 template <typename T, typename ...Tail>
-std::string iod_to_json(const iod_object<T, Tail...>& o)
+inline std::string iod_to_json(const iod_object<T, Tail...>& o)
 {
   return iod_internals::iod_to_json(o);
 }

@@ -10,10 +10,10 @@ template <typename ...T>
 struct iod_object;
 
 template <typename ...T>
-iod_object<T...> iod(T... args);
+inline iod_object<T...> iod(T... args);
 
 template <typename T, typename ...Tail>
-std::vector<T> iod_array(const T& t, Tail... args);
+inline std::vector<T> iod_array(const T& t, Tail... args);
 
 namespace iod_internals
 {
@@ -42,12 +42,12 @@ namespace iod_internals
   using transform_type_t = typename transform_type<T>::type;
 
   template <typename T>
-  void array_fill(std::vector<T>& array)
+  inline void array_fill(std::vector<T>& array)
   {
   };
 
   template <typename T, typename ...Tail>
-  void array_fill(const T& a, const Tail&... args, std::vector<T>& array)
+  inline void array_fill(const T& a, const Tail&... args, std::vector<T>& array)
   {
     array.push_back(a);
     array_fill(args..., array);
@@ -65,13 +65,13 @@ struct iod_object<>
 template <typename T, typename ...Tail>
 struct iod_object<T, Tail...> : public T, public iod_object<Tail...>
 {
-  iod_object()
+  inline iod_object()
     : T(),
       iod_object<Tail...>()
   {
   }
 
-  iod_object(const T& attr, const Tail... tail)
+  inline iod_object(const T& attr, const Tail... tail)
     : T(attr),
       iod_object<Tail...>(tail...)
   {
@@ -81,13 +81,13 @@ struct iod_object<T, Tail...> : public T, public iod_object<Tail...>
 
 
 template <typename ...T>
-iod_object<T...> iod(T... args)
+inline iod_object<T...> iod(T... args)
 {
   return iod_object<T...>(args...);
 };
 
 template <typename T, typename ...Tail>
-std::vector<T> iod_array(const T& t, Tail... args)
+inline std::vector<T> iod_array(const T& t, Tail... args)
 {
   std::vector<T> res;
   res.reserve(1 + sizeof...(args));
@@ -99,21 +99,21 @@ std::vector<T> iod_array(const T& t, Tail... args)
 template <typename T>                                                   \
 struct NAME##_attr                                                      \
 {                                                                       \
-  typedef iod_internals::transform_type_t<T> value_type;                               \
-  NAME##_attr() {}                                                      \
-  NAME##_attr(T t) : NAME(t) {}                                         \
-  const char* attribute_name() const { return #NAME; }                  \
-  value_type& value() { return NAME; }                                  \
-  const value_type& value() const { return NAME; }                      \
+  typedef iod_internals::transform_type_t<T> value_type;                \
+  inline NAME##_attr() {}                                               \
+  inline NAME##_attr(T t) : NAME(t) {}                                  \
+  inline const char* attribute_name() const { return #NAME; }           \
+  inline value_type& value() { return NAME; }                           \
+  inline const value_type& value() const { return NAME; }               \
   value_type NAME;                                                      \
 };                                                                      \
                                                                         \
 struct NAME##_attr_builder                                              \
 {                                                                       \
   template <typename T>                                                 \
-    NAME##_attr<T> operator=(T t) { return NAME##_attr<T>(t); } \
+    inline NAME##_attr<T> operator=(T t) { return NAME##_attr<T>(t); }  \
   template <typename T>                                                 \
-    NAME##_attr<std::initializer_list<T>> operator=(const std::initializer_list<T>& t) { return NAME##_attr<std::initializer_list<T>>(t); } \
+    inline NAME##_attr<std::initializer_list<T>> operator=(const std::initializer_list<T>& t) { return NAME##_attr<std::initializer_list<T>>(t); } \
 } NAME;
 
 #endif

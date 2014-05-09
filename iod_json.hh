@@ -141,7 +141,6 @@ namespace iod_internals
       int w = 20;
       int b = pos > w ? pos - w : 0;
       int e = pos < int(str.size()) - w ? pos + w : int(str.size()) - 1;
-      std::cout << b << " " << e <<  " "  << str.size() <<std::endl;
       std::string near(str.begin() + b, str.begin() + e);
       err << "Json parse error near " << near;
       return std::runtime_error(err.str());

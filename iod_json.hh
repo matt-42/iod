@@ -129,7 +129,7 @@ namespace iod_internals
   struct json_parser
   {
 
-    json_parser(const std::string& _str) : str(_str), ss(_str) {}
+    json_parser(const std::string& _str) : ss(_str), str(_str) {}
 
     char peak() { return ss.peek(); }
 

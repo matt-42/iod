@@ -124,10 +124,10 @@ namespace iod_internals
   template <typename T>
   inline fill_<T> fill(T& t) { return fill_<T>(t); }
 
-  struct spaces_ {} spaces;
 
   struct json_parser
   {
+    struct spaces_ {} spaces;
 
     inline json_parser(const std::string& _str) : ss(_str), str(_str) {}
 
@@ -259,11 +259,11 @@ namespace iod_internals
   {
     T* attr = &o;
 
-    p >> spaces >> '"' >> attr->attribute_name() >> '"' >> spaces >> ':';
+    p >> p.spaces >> '"' >> attr->attribute_name() >> '"' >> p.spaces >> ':';
 
     iod_from_json(attr->value(), p);
     if (sizeof...(Tail) != 0)
-      p >> spaces >> ',';
+      p >> p.spaces >> ',';
 
     iod_attr_from_json(*static_cast<iod_object<Tail...>*>(&o), p);
   }
@@ -271,7 +271,7 @@ namespace iod_internals
   template <typename T>
   inline void iod_from_json(std::vector<T>& array, json_parser& p)
   {
-    p >> '[' >> spaces;
+    p >> '[' >> p.spaces;
     if (p.peak() == ']')
     {
       p >> ']';
@@ -284,7 +284,7 @@ namespace iod_internals
       T t;
       iod_from_json(t, p);
       array.push_back(t);
-      p >> spaces;
+      p >> p.spaces;
       if (p.peak() == ']')
         break;
       else
@@ -297,9 +297,9 @@ namespace iod_internals
   template <typename ...Tail>
   inline void iod_from_json(iod_object<Tail...>& o, json_parser& p)
   {
-    p >> spaces >> '{';
+    p >> p.spaces >> '{';
     iod_attr_from_json(o, p);
-    p >> spaces >> '}';
+    p >> p.spaces >> '}';
   }
 
   template <typename ...Tail>

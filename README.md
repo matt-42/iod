@@ -27,16 +27,20 @@ iod_define_attribute(model);
 iod_define_attribute(cities);
 iod_define_attribute(lastname);
 
+
 int main()
 {
+
+
   // Inline object definition.
   auto person = iod(
-    name = "Philippe",
-    age = 42,
-    cities = {"Paris", "Toronto", "New York City"},
-    cars = {
-        iod(name = "Renault", model = "Clio"),
-        iod(name = "Mercedes", model = "Class A")
+    *name = "Philippe", // Stared fields are serialized.
+    *age = 42,
+    inc_age = [] (auto& self, int inc) { self.age += inc; },
+    *cities = {"Paris", "Toronto", "New York City"},
+    *cars = {
+        iod(*name = "Renault", model = "Clio"), // All elements of an array must have the same type.
+        iod(*name = "Mercedes", model = "Class A")
       }
     );
 

@@ -12,6 +12,16 @@ extending it can be done on the fly. The library also provides **a json
 serializer and deserializer**, taking advantage of the static introspection and
 meta-programming.
 
+## Compilers
+
+The core of iod relies on C++11 (-std=c++11), except method definitions that use generic lambda
+from C++14 (-std=c++1y).
+Iod has been successfully compliled with :
+  - GCC 4.9
+  - Clang 3.4
+
+Previons versions of GCC and Clang with support of C++11 should be able to compile iods without methods.
+
 ## Overview of the library
 ```c++
 

@@ -17,8 +17,8 @@
 template <typename ...Tail>
 inline void iod_from_json(iod_object<Tail...>& o, const std::string& str);
 
-template <typename T, typename ...Tail>
-inline std::string iod_to_json(const iod_object<T, Tail...>& o);
+template <typename ...Tail>
+inline std::string iod_to_json(const iod_object<Tail...>& o);
 
 namespace iod_internals
 {
@@ -26,91 +26,119 @@ namespace iod_internals
   // Json IOD Internals.
 
   template <typename T>
-  inline void iod_to_json(const T& t, std::stringstream& ss);
+  inline void iod_to_json_(const T& t, std::stringstream& ss);
 
-  inline void iod_to_json(const char* t, std::stringstream& ss);
+  template <typename F>
+  inline typename std::enable_if<std::is_function<F>::value, void>::type
+  iod_to_json_(const F& t, std::stringstream& ss);
 
-  inline void iod_to_json(const std::string& t, std::stringstream& ss);
+  inline void iod_to_json_(const char* t, std::stringstream& ss);
 
-  template <typename T>
-  inline void iod_to_json(const std::vector<T>& array, std::stringstream& ss);
-
-  template <typename T, typename ...Tail>
-  inline void iod_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss);
-
-  template <typename T, typename ...Tail>
-  inline std::string iod_to_json(const iod_object<T, Tail...>& o);
+  inline void iod_to_json_(const std::string& t, std::stringstream& ss);
 
   template <typename T>
-  inline void iod_attr_to_json(const iod_object<T>& o, std::stringstream& ss);
+  inline void iod_to_json_(const std::vector<T>& array, std::stringstream& ss);
+
+  template <typename ...Tail>
+  inline void iod_to_json_(const iod_object<Tail...>& o, std::stringstream& ss);
+
+  template <typename ...Tail>
+  inline std::string iod_to_json_(const iod_object<Tail...>& o);
+
+  template <typename T>
+  inline typename std::enable_if<T::symbol_type::is_serializable != 0, void>::type
+  iod_attr_to_json(const iod_object<T>& o, std::stringstream& ss, unsigned n);
+
+  template <typename T>
+  inline typename std::enable_if<T::symbol_type::is_serializable == 0, void>::type
+  iod_attr_to_json(const iod_object<T>& o, std::stringstream& ss, unsigned n);
 
   template <typename T, typename ...Tail>
-  typename std::enable_if<(sizeof...(Tail) > 0), void>::type
-  inline iod_attr_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss);
+  inline typename std::enable_if<(sizeof...(Tail) > 0 and T::symbol_type::is_serializable != 0), void>::type
+  iod_attr_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss, unsigned n);
+
+  template <typename T, typename ...Tail>
+  inline typename std::enable_if<(sizeof...(Tail) > 0 and T::symbol_type::is_serializable == 0), void>::type
+  iod_attr_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss, unsigned n);
 
 
   template <typename T>
-  inline void iod_to_json(const T& t, std::stringstream& ss)
+  inline void iod_to_json_(const T& t, std::stringstream& ss)
   {
     ss << t;
   }
 
-  inline void iod_to_json(const char* t, std::stringstream& ss)
+  inline void iod_to_json_(const char* t, std::stringstream& ss)
   {
     ss << '"'<< t << '"';
   }
 
-  inline void iod_to_json(const std::string& t, std::stringstream& ss)
+  inline void iod_to_json_(const std::string& t, std::stringstream& ss)
   {
-    iod_to_json(t.c_str(), ss);
+    iod_to_json_(t.c_str(), ss);
   }
 
   template <typename T>
-  inline void iod_to_json(const std::vector<T>& array, std::stringstream& ss)
+  inline void iod_to_json_(const std::vector<T>& array, std::stringstream& ss)
   {
     ss << '[';
     for (const auto& t : array)
     {
-      iod_to_json(t, ss);
+      iod_to_json_(t, ss);
       if (&t != &array.back())
         ss << ',';
     }
     ss << ']';
   }
 
-  template <typename T, typename ...Tail>
-  inline void iod_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss)
+  template <typename ...Tail>
+  inline void iod_to_json_(const iod_object<Tail...>& o, std::stringstream& ss)
   {
     ss << '{';
-    iod_attr_to_json(o, ss);
+    iod_attr_to_json(o, ss, 0);
     ss << '}';
   }
 
-  template <typename T, typename ...Tail>
-  inline std::string iod_to_json(const iod_object<T, Tail...>& o)
+  template <typename ...Tail>
+  inline std::string iod_to_json_(const iod_object<Tail...>& o)
   {
     std::stringstream ss;
-    iod_to_json(o, ss);
+    iod_to_json_(o, ss);
     return ss.str();
   }
 
   template <typename T>
-  inline void iod_attr_to_json(const iod_object<T>& o, std::stringstream& ss)
+  inline typename std::enable_if<T::symbol_type::is_serializable != 0, void>::type
+  iod_attr_to_json(const iod_object<T>& o, std::stringstream& ss, unsigned n)
   {
     const T* attr = &(o);
+    if (n != 0) ss << ',';
     ss << '"' << attr->attribute_name() << "\":";
-    iod_to_json(attr->value(), ss);
+    iod_to_json_(attr->value(), ss);
   }
 
   template <typename T, typename ...Tail>
-  inline typename std::enable_if<(sizeof...(Tail) > 0), void>::type
-  iod_attr_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss)
+  inline typename std::enable_if<(sizeof...(Tail) > 0 and T::symbol_type::is_serializable != 0), void>::type
+  iod_attr_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss, unsigned n)
   {
     const T* attr = &o;
+    if (n != 0) ss << ',';
     ss << '"' << attr->attribute_name() << "\":";
-    iod_to_json(attr->value(), ss);
-    ss << ',';
-    iod_attr_to_json(*static_cast<const iod_object<Tail...>*>(&o), ss);
+    iod_to_json_(attr->value(), ss);
+    iod_attr_to_json(*static_cast<const iod_object<Tail...>*>(&o), ss, n + 1);
+  }
+
+  template <typename T>
+  inline typename std::enable_if<T::symbol_type::is_serializable == 0, void>::type
+  iod_attr_to_json(const iod_object<T>& o, std::stringstream& ss, unsigned n)
+  {
+  }
+
+  template <typename T, typename ...Tail>
+  inline typename std::enable_if<(sizeof...(Tail) > 0 and T::symbol_type::is_serializable == 0), void>::type
+  iod_attr_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss, unsigned n)
+  {
+    iod_attr_to_json(*static_cast<const iod_object<Tail...>*>(&o), ss, n);
   }
 
 
@@ -244,12 +272,12 @@ namespace iod_internals
   }
 
   template <typename T>
-  inline void iod_from_json(T& t, json_parser& p)
+  inline void iod_from_json_(T& t, json_parser& p)
   {
     p >> fill(t);
   }
 
-  inline void iod_from_json(std::string& t, json_parser& p)
+  inline void iod_from_json_(std::string& t, json_parser& p)
   {
     p >> '"' >> fill(t) >> '"';
   }
@@ -261,7 +289,7 @@ namespace iod_internals
 
     p >> p.spaces >> '"' >> attr->attribute_name() >> '"' >> p.spaces >> ':';
 
-    iod_from_json(attr->value(), p);
+    iod_from_json_(attr->value(), p);
     if (sizeof...(Tail) != 0)
       p >> p.spaces >> ',';
 
@@ -269,7 +297,7 @@ namespace iod_internals
   }
 
   template <typename T>
-  inline void iod_from_json(std::vector<T>& array, json_parser& p)
+  inline void iod_from_json_(std::vector<T>& array, json_parser& p)
   {
     p >> '[' >> p.spaces;
     if (p.peak() == ']')
@@ -282,7 +310,7 @@ namespace iod_internals
     while (p.peak() != ']')
     {
       T t;
-      iod_from_json(t, p);
+      iod_from_json_(t, p);
       array.push_back(t);
       p >> p.spaces;
       if (p.peak() == ']')
@@ -295,7 +323,7 @@ namespace iod_internals
   }
 
   template <typename ...Tail>
-  inline void iod_from_json(iod_object<Tail...>& o, json_parser& p)
+  inline void iod_from_json_(iod_object<Tail...>& o, json_parser& p)
   {
     p >> p.spaces >> '{';
     iod_attr_from_json(o, p);
@@ -303,11 +331,11 @@ namespace iod_internals
   }
 
   template <typename ...Tail>
-  inline void iod_from_json(iod_object<Tail...>& o, const std::string& str)
+  inline void iod_from_json_(iod_object<Tail...>& o, const std::string& str)
   {
     json_parser p(str);
     if (str.size() > 0)
-      iod_from_json(o, p);
+      iod_from_json_(o, p);
     else
       throw std::runtime_error("Empty string.");
   }
@@ -317,13 +345,13 @@ namespace iod_internals
 template <typename ...Tail>
 inline void iod_from_json(iod_object<Tail...>& o, const std::string& str)
 {
-  iod_internals::iod_from_json(o, str);
+  iod_internals::iod_from_json_(o, str);
 }
 
-template <typename T, typename ...Tail>
-inline std::string iod_to_json(const iod_object<T, Tail...>& o)
+template <typename ...Tail>
+inline std::string iod_to_json(const iod_object<Tail...>& o)
 {
-  return iod_internals::iod_to_json(o);
+  return iod_internals::iod_to_json_(o);
 }
 
 #endif

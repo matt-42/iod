@@ -174,6 +174,6 @@ template <int serializable>                                             \
   static auto accessor(T t) -> decltype(t.NAME) { return t.NAME; }      \
   inline static const char* attribute_name() { return #NAME; }          \
 };                                                                      \
-NAME##_attribute_name<0> NAME;
+namespace { NAME##_attribute_name<0> NAME; }
 
 #endif

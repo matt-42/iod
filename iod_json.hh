@@ -46,19 +46,19 @@ namespace iod_internals
   inline std::string iod_to_json_(const iod_object<Tail...>& o);
 
   template <typename T>
-  inline typename std::enable_if<T::symbol_type::is_serializable != 0, void>::type
+  inline typename std::enable_if<T::is_serializable != 0, void>::type
   iod_attr_to_json(const iod_object<T>& o, std::stringstream& ss, unsigned n);
 
   template <typename T>
-  inline typename std::enable_if<T::symbol_type::is_serializable == 0, void>::type
+  inline typename std::enable_if<T::is_serializable == 0, void>::type
   iod_attr_to_json(const iod_object<T>& o, std::stringstream& ss, unsigned n);
 
   template <typename T, typename ...Tail>
-  inline typename std::enable_if<(sizeof...(Tail) > 0 and T::symbol_type::is_serializable != 0), void>::type
+  inline typename std::enable_if<(sizeof...(Tail) > 0 and T::is_serializable != 0), void>::type
   iod_attr_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss, unsigned n);
 
   template <typename T, typename ...Tail>
-  inline typename std::enable_if<(sizeof...(Tail) > 0 and T::symbol_type::is_serializable == 0), void>::type
+  inline typename std::enable_if<(sizeof...(Tail) > 0 and T::is_serializable == 0), void>::type
   iod_attr_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss, unsigned n);
 
 
@@ -108,7 +108,7 @@ namespace iod_internals
   }
 
   template <typename T>
-  inline typename std::enable_if<T::symbol_type::is_serializable != 0, void>::type
+  inline typename std::enable_if<T::is_serializable != 0, void>::type
   iod_attr_to_json(const iod_object<T>& o, std::stringstream& ss, unsigned n)
   {
     const T* attr = &(o);
@@ -118,7 +118,7 @@ namespace iod_internals
   }
 
   template <typename T, typename ...Tail>
-  inline typename std::enable_if<(sizeof...(Tail) > 0 and T::symbol_type::is_serializable != 0), void>::type
+  inline typename std::enable_if<(sizeof...(Tail) > 0 and T::is_serializable != 0), void>::type
   iod_attr_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss, unsigned n)
   {
     const T* attr = &o;
@@ -129,13 +129,13 @@ namespace iod_internals
   }
 
   template <typename T>
-  inline typename std::enable_if<T::symbol_type::is_serializable == 0, void>::type
-  iod_attr_to_json(const iod_object<T>& o, std::stringstream& ss, unsigned n)
+  inline typename std::enable_if<T::is_serializable == 0, void>::type
+  iod_attr_to_json(const iod_object<T>&, std::stringstream&, unsigned)
   {
   }
 
   template <typename T, typename ...Tail>
-  inline typename std::enable_if<(sizeof...(Tail) > 0 and T::symbol_type::is_serializable == 0), void>::type
+  inline typename std::enable_if<(sizeof...(Tail) > 0 and T::is_serializable == 0), void>::type
   iod_attr_to_json(const iod_object<T, Tail...>& o, std::stringstream& ss, unsigned n)
   {
     iod_attr_to_json(*static_cast<const iod_object<Tail...>*>(&o), ss, n);
@@ -208,6 +208,8 @@ namespace iod_internals
       return fill(t.r);
     }
 
+    //inline json_parser& operator>>(const char t[1]) { return *this >> t[0]; }
+
     inline json_parser& operator>>(char t)
     {
       char value;
@@ -248,7 +250,7 @@ namespace iod_internals
         throw json_error();
     }
 
-    inline json_parser& operator>>(spaces_ s)
+    inline json_parser& operator>>(spaces_)
     {
       char value;
       do
@@ -267,7 +269,7 @@ namespace iod_internals
     const std::string& str;
   };
 
-  inline void iod_attr_from_json(iod_object<>& o, json_parser& p)
+  inline void iod_attr_from_json(iod_object<>&, json_parser&)
   {
   }
 

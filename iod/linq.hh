@@ -7,104 +7,12 @@
 #include <iod/utils.hh>
 #include <iod/symbols.hh>
 #include <iod/linq_aggregators.hh>
+#include <iod/linq_evaluate.hh>
 
 namespace iod
 {
   namespace linq_internals
   {
-
-    // Terminals.
-    template <typename A, typename T>
-    inline const A&
-    evaluate(const A& v, const T&, std::enable_if_t<
-             not std::is_base_of<Exp<A>, A>::value and
-             not std::is_base_of<symbol<A>, A>::value
-             >* = nullptr)
-    {
-      return v;
-    }
-
-    template <int N, int S, typename ATTR>
-    struct find_first_predicate_runner;
-
-    template <int S, typename ATTR>
-    struct find_first_predicate_runner<S, S, ATTR>
-    {
-      template <typename T>
-      static inline not_found run(const T& t)
-      {
-        return not_found();
-      }
-    };
-
-    template <int N, int S, typename ATTR>
-    struct find_first_predicate_runner
-    {
-      template <typename T>
-      static inline auto run(const T& t)
-      {
-        typedef typename std::remove_reference_t<decltype(t.template get_nth<N>())> found_type;
-        
-        return static_if<has_symbol<found_type, ATTR>::value>
-          ([] (auto t) { return t.template get_nth<N>(); },
-           [] (auto t) { return find_first_predicate_runner<N + 1, S, ATTR>::run(t); },
-           t);
-      }
-    };
-
-    template <typename ATTR, typename T>
-    auto find_first_attribute_with_predicate(const T& t)
-    {
-      return find_first_predicate_runner<0, T::_size, ATTR>::run(t);
-    }
-
-    // Access to attributes.
-    // If ctx has the symbol \s return ctx.s.
-    // Otherwise, find the first attribute x of ctx containing s and return x.s.
-    template <typename S, typename T>
-    inline auto
-    evaluate(const symbol<S>& s, const T& ctx)
-    {
-      return static_if<has_symbol<T, S>::value>
-        ([] (auto s, const auto& ctx) { return S().attribute_access(ctx); },
-         [] (auto s, const auto& ctx) { return S().attribute_access(find_first_attribute_with_predicate<S>(ctx)); },
-         s, ctx);
-    }
-
-    // Access to attributes of a named variable: variable[attribute]
-    template <typename O, typename M, typename T>
-    inline auto
-    evaluate(const member_accessor_exp<O, M>& s, const T& ctx)
-    {
-      return M().attribute_access(evaluate(s.object, ctx));
-    }
-
-#define iod_stl_binary_op(OP, NAME)                             \
-    template <typename A, typename B, typename T>               \
-    inline auto                                                 \
-    evaluate(const NAME##_exp<A, B>& e, const T& ctx)           \
-    {                                                           \
-      return evaluate(e.lhs, ctx) OP evaluate(e.rhs, ctx);      \
-    }
-
-    iod_stl_binary_op(+, plus);
-    iod_stl_binary_op(-, minus);
-    iod_stl_binary_op(*, mult);
-    iod_stl_binary_op(<<, shiftl);
-    iod_stl_binary_op(>>, shiftr);
-    iod_stl_binary_op(<, inf);
-    iod_stl_binary_op(<=, inf_eq);
-    iod_stl_binary_op(>, sup);
-    iod_stl_binary_op(>=, sup_eq);
-    iod_stl_binary_op(==, eq);
-    iod_stl_binary_op(!=, neq);
-    iod_stl_binary_op(&, logical_and);
-    iod_stl_binary_op(^, logical_xor);
-    iod_stl_binary_op(|, logical_or);
-    iod_stl_binary_op(&&, and);
-    iod_stl_binary_op(||, or);
-
-#undef iod_stl_binary_op
 
     template <typename R, typename S>
     auto format_record(R& req, const S& r, std::enable_if_t<decltype(req.select)::_size != 0>* = nullptr)
@@ -148,7 +56,7 @@ namespace iod
           auto from_name = req.from.get(s::as, s::_1);
           auto join_name = req.join.get(s::as, s::_2);
           
-          typedef decltype(select_format(req, iod(from_name = typename decltype(from_table)::value_type(),
+          typedef decltype(select_format(req, D(from_name = typename decltype(from_table)::value_type(),
                                                   join_name = typename decltype(join_table)::value_type())))
             record_type;
           record_type sample;
@@ -156,7 +64,7 @@ namespace iod
         },
         [](const auto& req){
           auto from_name = req.from.get(s::as, s::_1);
-          typedef decltype(iod(from_name = typename from_table_type::value_type())) record_type1;
+          typedef decltype(D(from_name = typename from_table_type::value_type())) record_type1;
           record_type1 sample;
           return format_record(req, sample);
         }, req);
@@ -167,7 +75,7 @@ namespace iod
     {
       static_if<has_symbol<R, s::_group_by>::value>
         ([] (auto& req, auto& table, auto f) {
-          auto gb = req.get(s::group_by, iod(s::criteria = 42));
+          auto gb = req.get(s::group_by, D(s::criteria = 42));
           std::sort(table.begin(), table.end(), [&gb] (const auto& a, const auto& b)
                     {
                       return evaluate(gb.criteria, a) < evaluate(gb.criteria, b);
@@ -195,8 +103,8 @@ namespace iod
     {
       for (auto& t : table)
       {
-        auto r = iod(req.from.get(s::as, s::_1) = t);
-        if (evaluate(req.get(s::where, iod(s::condition = true)).condition, r))
+        auto r = D(req.from.get(s::as, s::_1) = t);
+        if (evaluate(req.get(s::where, D(s::condition = true)).condition, r))
           f(format_record(req, r));
       }
 
@@ -207,7 +115,7 @@ namespace iod
     {
       if (req.has(s::order_by))
       {
-        auto order = req.get(s::order_by, iod(s::order = 1)).order;
+        auto order = req.get(s::order_by, D(s::order = 1)).order;
         std::sort(table.begin(), table.end(), [&order] (const auto& a, const auto& b)
                   {
                     return evaluate(order, a) < evaluate(order, b);
@@ -251,11 +159,11 @@ namespace iod
           auto tables = static_if<R::template _has<s::_inner_join>::value>
             ([] (auto& req) {
               auto inner_join_name = req.inner_join.get(s::as, s::_2);
-              return iod(req.from.get(s::as, s::_1) = req.from.table,
+              return D(req.from.get(s::as, s::_1) = req.from.table,
                          req.inner_join.get(s::as, s::_1) = req.inner_join.table);
             },
               [] (auto& req) {
-                return iod(req.from.get(s::as, s::_1) = req.from.table);
+                return D(req.from.get(s::as, s::_1) = req.from.table);
               }, req);
 
           // The actual intermediate record type.
@@ -269,7 +177,7 @@ namespace iod
               const auto& join_table = *tables.template get_nth<1>();
 
               auto on_condition = req.inner_join.get(s::on, true);
-              auto where_condition = req.get(s::where, iod(s::condition = true)).condition;
+              auto where_condition = req.get(s::where, D(s::condition = true)).condition;
 
               auto record_sample = transform(tables, [&] (auto m) { return m.symbol() = (*tables[m])[0]; });
               typedef decltype(record_sample) record_type;
@@ -294,7 +202,7 @@ namespace iod
               typedef decltype(record_sample) record_type;
 
               auto table1 = *tables.template get_nth<0>();
-              auto where_condition = req.get(s::where, iod(s::condition = true)).condition;
+              auto where_condition = req.get(s::where, D(s::condition = true)).condition;
               std::vector<record_type> out;
               for (int i = 0; i < table1.size(); i++)
               {
@@ -346,47 +254,49 @@ namespace iod
 
           }, req, f);
     }
+
+    template <typename T>
+    struct query
+    {
+      query(const T& q) : q(q) {}
+
+      template <typename U>
+      auto make_query(U u)
+      {
+        return query<U>(u);
+      }
+
+      template <typename... E>
+      auto select(const E&... e) { return make_query(cat(q, s::select = D(e...))); }
+
+      template <typename E>
+      auto where(E e) { return make_query(cat(q, s::where = D(s::condition = e))); }
+      template <typename E>
+      auto group_by(E e) { return make_query(cat(q, s::group_by = D(s::criteria = e))); }
+      template <typename Q, typename... E>
+      auto from(Q table, const E&... e) { return make_query(cat(q, s::from = D(s::table = &table, e...))); }
+
+      template <typename Q, typename... E>
+      auto inner_join(Q table, E... e) { return make_query(cat(q,
+                                                               s::inner_join = D(s::table = &table, e...))); }
+      template <typename Q>
+      auto order_by(Q order) { return make_query(cat(q, s::order_by = D(s::order = order))); }
+
+      template <typename F>
+      void operator|(F f) { return linq_internals::exec_table(q, f); }
+
+      auto to_array() { 
+        typedef decltype(linq_internals::compute_request_record_type(q)) record_type;
+        std::vector<record_type> v;
+        (*this) | [&v] (const auto& r) { v.push_back(r); };
+        return v;
+      }
+
+      T q;
+    };
+
   }
 
-  template <typename T>
-  struct query
-  {
-    query(const T& q) : q(q) {}
-
-    template <typename U>
-    auto make_query(U u)
-    {
-      return query<U>(u);
-    }
-
-    template <typename... E>
-    auto select(const E&... e) { return make_query(cat(q, s::select = iod(e...))); }
-
-    template <typename E>
-    auto where(E e) { return make_query(cat(q, s::where = iod(s::condition = e))); }
-    template <typename E>
-    auto group_by(E e) { return make_query(cat(q, s::group_by = iod(s::criteria = e))); }
-    template <typename Q, typename... E>
-    auto from(Q table, const E&... e) { return make_query(cat(q, s::from = iod(s::table = &table, e...))); }
-
-    template <typename Q, typename... E>
-    auto inner_join(Q table, E... e) { return make_query(cat(q,
-                                                             s::inner_join = iod(s::table = &table, e...))); }
-    template <typename Q>
-    auto order_by(Q order) { return make_query(cat(q, s::order_by = iod(s::order = order))); }
-
-    template <typename F>
-    void operator|(F f) { return linq_internals::exec_table(q, f); }
-
-    auto to_array() { 
-      typedef decltype(linq_internals::compute_request_record_type(q)) record_type;
-      std::vector<record_type> v;
-      (*this) | [&v] (const auto& r) { v.push_back(r); };
-      return v;
-    }
-
-    T q;
-  };
 
   auto linq = linq_internals::query<iod_object<>>(iod_object<>());
 

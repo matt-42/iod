@@ -14,6 +14,8 @@ add_definitions(-std=c++14 -g)
 add_executable(json json.cc)
 add_test(json json)
 
-
 add_executable(core core.cc)
 add_test(core core)
+
+add_executable(linq linq.cc)
+add_test(linq linq)

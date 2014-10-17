@@ -122,10 +122,10 @@ namespace iod
     enum { _size = 0, _empty = true };
 
     constexpr iod_object() { }
-    constexpr int size() const { return _size; }
-    constexpr bool empty() const { return true; }
+    constexpr static int size() { return _size; }
+    constexpr static bool empty() { return true; }
     template <typename T>
-    constexpr bool has(T) const { return false; }
+    constexpr static bool has(T) { return false; }
     template <unsigned N>
     not_found get_nth() const { return not_found(); }
     template <unsigned N>
@@ -253,18 +253,18 @@ namespace iod
     
     // Check if the object has this symbol.
     template <typename E>
-    constexpr bool has(const E&) const
+    constexpr static bool has(const E&)
     {
       return _has<E>::value;
     }
 
     // Check if the object has this symbol.
-    constexpr int size() const
+    constexpr static int size()
     {
       return _size;
     }
 
-    constexpr bool empty() const
+    constexpr static bool empty()
     {
       return _size == 0;
     }

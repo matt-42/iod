@@ -19,3 +19,6 @@ add_test(core core)
 
 add_executable(linq linq.cc)
 add_test(linq linq)
+
+add_executable(callable_traits callable_traits.cc)
+add_test(callable_traits callable_traits)

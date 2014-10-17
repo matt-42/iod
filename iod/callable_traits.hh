@@ -18,9 +18,9 @@ namespace iod
 
   // Traits on callable (function, functors and lambda functions).
 
-  // is_callable<F>::value = true if F is callable.
-  // callable_arity<F>::value = N if F takes N arguments.
-  // callable_arguments_tuple<F>::type = tuple<Arg1, ..., ArgN>
+  // callable_traits<F>::is_callable = true_type if F is callable.
+  // callable_traits<F>::arity = N if F takes N arguments.
+  // callable_traits<F>::arguments_tuple_type = tuple<Arg1, ..., ArgN>
 
   template <typename F, typename X = void>
   struct callable_traits

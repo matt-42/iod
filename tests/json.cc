@@ -13,6 +13,7 @@ int main()
 {
   using namespace iod;
   using namespace s;
+
   {
     auto o = D(name = "John", age = 12, children = { 1,2,3,4,5 }, city = D(name = "Paris"));
     auto str = json_encode(o);
@@ -28,7 +29,7 @@ int main()
 
   {
     auto o = D(
-      name = std::string("xxxx"), optional, (json_symbol = my_json_name)
+      name(optional, json_symbol = my_json_name) = std::string("xxxx")
       );
 
     std::cout << json_encode(o) << std::endl;

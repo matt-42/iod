@@ -1,7 +1,38 @@
 #pragma once
 
+#include <initializer_list>
+
 namespace iod
 {
+
+
+  template <typename T>
+  struct grammar_value_type { typedef T type; };
+  template <>
+  struct grammar_value_type<const char*> { typedef std::string type; };
+  template <int N>
+  struct grammar_value_type<const char[N]> { typedef std::string type; };
+  template <int N>
+  struct grammar_value_type<char[N]> { typedef std::string type; };
+  template <typename T>
+  struct grammar_value_type<std::initializer_list<T> >
+  { typedef std::vector<typename grammar_value_type<T>::type> type; };
+  template <typename T>
+  using grammar_value_type_t =
+    typename grammar_value_type<std::remove_const_t<std::remove_reference_t<T>>>::type;
+
+  template <typename T>
+  auto make_value(const T& v)
+  {
+    return grammar_value_type_t<T>(v);
+  }
+
+  template <typename T>
+  auto make_value(T&& v)
+  {
+    return grammar_value_type_t<T>(v);
+  }
+
   template <typename E>
   struct Exp {
     constexpr const E& exact() const { return *static_cast<const E*>(this); }
@@ -16,12 +47,17 @@ namespace iod
   template <typename E>
   struct callable;
 
+  template <typename E>
+  struct assignable;
+
   template <typename M, typename... A>
   struct function_call_exp :
     public member_accessible<function_call_exp<M, A...>>,
     public callable<function_call_exp<M, A...>>,
+    public assignable<function_call_exp<M, A...>>,
     public Exp<function_call_exp<M, A...>>
   {
+    using assignable<function_call_exp<M, A...>>::operator=;
     function_call_exp() {}
     function_call_exp(const M& m, A... a)
       : method(m), args(a...) {}
@@ -34,12 +70,25 @@ namespace iod
   struct member_accessor_exp :
     public member_accessible<member_accessor_exp<O, M>>,
     public callable<member_accessor_exp<O, M>>,
+    public assignable<member_accessor_exp<O, M>>,
     public Exp<member_accessor_exp<O, M>>
   {
+    using assignable<member_accessor_exp<O, M>>::operator=;
+
     member_accessor_exp() {}
     member_accessor_exp(const O& o, const M& m) : object(o), member(m) {}
     O object;
     M member;
+  };
+
+  template <typename L, typename R>
+  struct assign_exp : public Exp<assign_exp<L, R>>
+  {
+    //assign_exp() {}
+    assign_exp(L&& l, R&& r) : left(l), right(r) {}
+    assign_exp(const L& l, const R& r) : left(l), right(r) {}
+    L left;
+    R right;
   };
 
   template <typename E>
@@ -63,7 +112,39 @@ namespace iod
     template <typename... A>
     constexpr auto operator()(A... args) const
     {
-      return function_call_exp<E, A...>(*static_cast<const E*>(this), args...);
+      return function_call_exp<E, grammar_value_type_t<A>...>(*static_cast<const E*>(this),
+                                                              grammar_value_type_t<A>(args)...);
+    }
+
+  };
+
+  template <typename E>
+  struct assignable
+  {
+  public:
+
+    template <typename L>
+    auto operator=(const L& l) const
+    {
+      return assign_exp<E, grammar_value_type_t<L>>(*static_cast<const E*>(this), grammar_value_type_t<L>(l));
+    }
+
+    template <typename T>
+    inline auto operator=(const std::initializer_list<T>& l) const
+    {
+      return assign_exp<E, 
+                        grammar_value_type_t<std::initializer_list<T>>>
+        (*static_cast<const E*>(this), grammar_value_type_t<std::initializer_list<T>>(l));
+    }
+
+    // Special case for initializer_list<const char*> that cannot implicitely build a vector<string>.
+    inline auto operator=(const std::initializer_list<const char*>& l) const
+    {
+      std::vector<std::string> v;
+      for (auto s : l) v.push_back(s);
+
+      return assign_exp<E, std::vector<std::string>>
+        (*static_cast<const E*>(this), v);
     }
 
   };

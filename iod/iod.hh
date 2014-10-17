@@ -311,32 +311,42 @@ namespace iod
   template <typename R, typename S>
   using has_symbol = typename R::template _has<S>;
 
-  template <typename T>
-  const T& function_call_to_variable(const T& t)
+
+  template <typename S>
+  const S& exp_to_variable(const symbol<S>& s)
   {
-    return t;
+    return *static_cast<const S*>(&s);
   }
 
   template <typename S, typename T>
-  auto function_call_to_variable(const function_call_exp<S, T>& c)
+  auto exp_to_variable(const function_call_exp<S, T>& c)
   {
     return typename S::template variable_type<T>(std::get<0>(c.args));
+  }
+
+  template <typename S, typename V>
+  auto exp_to_variable(const assign_exp<S, V>& e)
+  {
+    typedef V vtype;
+    return typename S::template variable_type<vtype>(e.right);
+  }
+
+  template <typename S, typename V, typename... ARGS>
+  auto exp_to_variable(const assign_exp<function_call_exp<S, ARGS...>, V>& e)
+  {
+    typedef V vtype;
+    return typename S::template variable_type<vtype, decltype(D(std::declval<ARGS>()...))>(e.right);
   }
 
   template <typename ...T>
   inline auto D(T&&... args)
   {
     typedef
-      iod_object<std::remove_const_t<std::remove_reference_t<decltype(function_call_to_variable(args))>>...>
+      iod_object<std::remove_const_t<std::remove_reference_t<decltype(exp_to_variable(args))>>...>
       result_type;
 
-    return result_type(function_call_to_variable(args)...);
-
-    // return result_type
-    //   (std::forward<std::remove_const_t<std::remove_reference_t<decltype(function_call_to_variable(args))>>>
-    //    (function_call_to_variable(args))...);
+    return result_type(exp_to_variable(args)...);
   }
-
 
   template <int N>
   struct transform_runner
@@ -421,7 +431,8 @@ namespace iod
   inline auto cat(const iod_object<T...>& a,
                   const V& variable)
   {
-    return iod_object<T..., V>(*static_cast<const T*>(&a)..., variable);
+    return iod_object<T..., decltype(exp_to_variable(variable))>
+      (*static_cast<const T*>(&a)..., exp_to_variable(variable));
   }
 
   template <typename T, typename ...Tail>

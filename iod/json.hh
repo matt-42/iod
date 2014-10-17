@@ -83,7 +83,7 @@ namespace iod
       int i = 0;
       foreach_attribute([&] (const auto& m)
                         {
-                          json_encode_(m.symbol_name(), ss);
+                          json_encode_(m.attributes().get(s::json_symbol, m.symbol()).name(), ss);
                           ss << ':';
                           json_encode_(m.value(), ss);
                           if (i != o.size() - 1) ss << ',';

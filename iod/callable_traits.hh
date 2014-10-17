@@ -27,7 +27,7 @@ namespace iod
   {
     typedef std::false_type is_callable;
     static const int arity = 0;
-    typedef std::tuple<> arguments_tuple_type;
+    typedef std::tuple<> arguments_tuple;
     typedef void return_type;
   };
 
@@ -37,7 +37,7 @@ namespace iod
     typedef callable_traits<decltype(&F::operator())> super;
     typedef std::true_type is_callable;
     static const int arity = super::arity;
-    typedef typename super::arguments_tuple_type arguments_tuple_type;
+    typedef typename super::arguments_tuple arguments_tuple;
     typedef typename super::return_type return_type;
   };
 
@@ -46,7 +46,7 @@ namespace iod
   {
     typedef std::true_type is_callable;
     static const int arity = sizeof...(ARGS);
-    typedef std::tuple<ARGS...> arguments_tuple_type;
+    typedef std::tuple<ARGS...> arguments_tuple;
     typedef R return_type;
   };
 
@@ -55,10 +55,13 @@ namespace iod
   {
     typedef std::true_type is_callable;
     static const int arity = sizeof...(ARGS);
-    typedef std::tuple<ARGS...> arguments_tuple_type;
+    typedef std::tuple<ARGS...> arguments_tuple;
     typedef R return_type;
   };
 
-  // callable_arity<F>::value = N if F takes N arguments.
+  template <typename F>
+  using callable_arguments_tuple_t = typename callable_traits<F>::arguments_tuple;
+  template <typename F>
+  using callable_return_type_t = typename callable_traits<F>::return_type;
 
 }

@@ -1,6 +1,6 @@
 #include <iostream>
 #include <cassert>
-#include <iod/iod.hh>
+#include <iod/sio.hh>
 #include <iod/symbol.hh>
 
 iod_define_symbol(name);
@@ -9,7 +9,7 @@ iod_define_symbol(city);
 iod_define_symbol(children);
 
 template <typename F, typename... T>
-void apply_variable(F f, const iod::iod_object<T...>& o)
+void apply_variable(F f, const iod::sio<T...>& o)
 {
   return f(*static_cast<const T*>(&o)...);
 }

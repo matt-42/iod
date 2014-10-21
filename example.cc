@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#include "iod.hh"
+#include <iod/sio.hh>
 #include "iod_json.hh"
 
 // Declaration of the attributes used by the inline object definitions.

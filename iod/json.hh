@@ -12,7 +12,8 @@
 #include <map>
 #include <boost/preprocessor/repetition/repeat.hpp>
 
-#include <iod/iod.hh>
+#include <iod/sio.hh>
+#include <iod/foreach.hh>
 #include <iod/symbols.hh>
 
 // Json IOD api.
@@ -25,15 +26,15 @@ namespace iod
 
   // Decode \o from a json string \str.
   template <typename ...T>
-  inline void json_decode(iod_object<T...>& o, const std::string& str);
+  inline void json_decode(sio<T...>& o, const std::string& str);
 
   // Encode \o into a json string.
   template <typename ...T>
-  inline std::string json_encode(const iod_object<T...>& o);
+  inline std::string json_encode(const sio<T...>& o);
 
   // Encode \o into a stream.
   template <typename S, typename ...Tail>
-  inline void json_encode(const iod_object<Tail...>& o, S& stream);
+  inline void json_encode(const sio<Tail...>& o, S& stream);
 
 
   namespace json_internals
@@ -61,7 +62,7 @@ namespace iod
 
     // Forward declaration.
     template <typename S, typename ...Tail>
-    inline void json_encode_(const iod_object<Tail...>& o, S& ss);
+    inline void json_encode_(const sio<Tail...>& o, S& ss);
 
     template <typename T, typename S>
     inline void json_encode_(const std::vector<T>& array, S& ss)
@@ -77,18 +78,18 @@ namespace iod
     }
 
     template <typename S, typename ...Tail>
-    inline void json_encode_(const iod_object<Tail...>& o, S& ss)
+    inline void json_encode_(const sio<Tail...>& o, S& ss)
     {
       ss << '{';
       int i = 0;
-      foreach_attribute([&] (const auto& m)
-                        {
-                          json_encode_(m.attributes().get(s::json_symbol, m.symbol()).name(), ss);
-                          ss << ':';
-                          json_encode_(m.value(), ss);
-                          if (i != o.size() - 1) ss << ',';
-                          i++;
-                        }, o);
+      foreach(o) | [&] (const auto& m)
+      {
+        json_encode_(m.attributes().get(s::json_symbol, m.symbol()).name(), ss);
+        ss << ':';
+        json_encode_(m.value(), ss);
+        if (i != o.size() - 1) ss << ',';
+        i++;
+      };
       ss << '}';
     }
 
@@ -233,7 +234,7 @@ namespace iod
       const std::string& str;
     };
 
-    inline void iod_attr_from_json(iod_object<>&, json_parser&)
+    inline void iod_attr_from_json(sio<>&, json_parser&)
     {
     }
 
@@ -250,7 +251,7 @@ namespace iod
 
     // Parse a json hashmap ordered the field in the object \o.
     template <typename T, typename ...Tail>
-    inline void iod_attr_from_json_strict(iod_object<T, Tail...>& o, json_parser& p)
+    inline void iod_attr_from_json_strict(sio<T, Tail...>& o, json_parser& p)
     {
       T* attr = &o;
 
@@ -260,25 +261,26 @@ namespace iod
       if (sizeof...(Tail) != 0)
         p >> p.spaces >> ',';
 
-      iod_attr_from_json(*static_cast<iod_object<Tail...>*>(&o), p);
+      iod_attr_from_json(*static_cast<sio<Tail...>*>(&o), p);
     }
 
     // Parse a json hashmap.
     template <typename T, typename ...Tail>
-    inline void iod_attr_from_json(iod_object<T, Tail...>& o, json_parser& p)
+    inline void iod_attr_from_json(sio<T, Tail...>& o, json_parser& p)
     {
       p >> p.spaces;
 
       std::map<std::string, bool> filled;
       std::map<std::string, int> symbol_map;
       int i = 0;
-      foreach_attribute([&] (auto& m) {
-          std::string name = m.symbol().name();
-          if (m.attributes().has(json_symbol))
-            name = m.attributes().get(json_symbol, json_symbol).name();
-          symbol_map[name] = i++;
-          filled[name] = false;
-        }, o);
+      foreach(o) | [&] (auto& m)
+      {
+        std::string name = m.symbol().name();
+        if (m.attributes().has(json_symbol))
+          name = m.attributes().get(json_symbol, json_symbol).name();
+        symbol_map[name] = i++;
+        filled[name] = false;
+      };
 
       while (p.peak() != '}')
       {
@@ -311,12 +313,12 @@ namespace iod
         throw p.json_error("Expected } got ", p.peak());
       }
 
-      foreach_attribute([&] (auto& m) {
-          typename std::remove_reference_t<decltype(m)>::attributes_type attrs;
-          if (!m.attributes().has(optional) and !filled[m.symbol().name()])
-            throw std::runtime_error(std::string("json_decode error: missing field ") +
-                                     m.symbol().name());
-        }, o);
+      foreach(o) | [&] (auto& m) {
+        typename std::remove_reference_t<decltype(m)>::attributes_type attrs;
+        if (!m.attributes().has(optional) and !filled[m.symbol().name()])
+          throw std::runtime_error(std::string("json_decode error: missing field ") +
+                                   m.symbol().name());
+      };
     }
 
     // Parse an array.
@@ -347,7 +349,7 @@ namespace iod
     }
 
     template <typename ...Tail>
-    inline void iod_from_json_(iod_object<Tail...>& o, json_parser& p)
+    inline void iod_from_json_(sio<Tail...>& o, json_parser& p)
     {
       p >> p.spaces >> '{';
       iod_attr_from_json(o, p);
@@ -355,7 +357,7 @@ namespace iod
     }
 
     template <typename ...Tail>
-    inline void iod_from_json_(iod_object<Tail...>& o, const std::string& str)
+    inline void iod_from_json_(sio<Tail...>& o, const std::string& str)
     {
       json_parser p(str);
       if (str.size() > 0)
@@ -366,13 +368,25 @@ namespace iod
   }
 
   template <typename ...Tail>
-  inline void json_decode(iod_object<Tail...>& o, const std::string& str)
+  inline void json_decode(sio<Tail...>& o, const std::string& str)
   {
     json_internals::iod_from_json_(o, str);
   }
 
+
   template <typename ...Tail>
-  inline std::string json_encode(const iod_object<Tail...>& o)
+  inline void json_decode(sio<Tail...>& o, const std::string& str, int& n_read)
+  {
+    json_internals::json_parser p(str);
+    if (str.size() > 0)
+      iod_from_json_(o, p);
+    else
+      throw std::runtime_error("Empty string.");
+    n_read = p.ss.tellg();
+  }
+
+  template <typename ...Tail>
+  inline std::string json_encode(const sio<Tail...>& o)
   {
     std::stringstream ss;
     json_internals::json_encode_(o, ss);
@@ -380,7 +394,7 @@ namespace iod
   }
 
   template <typename S, typename ...Tail>
-  inline void json_encode(const iod_object<Tail...>& o, S& stream)
+  inline void json_encode(const sio<Tail...>& o, S& stream)
   {
     json_internals::json_encode_(o, stream);
   }

@@ -1,6 +1,6 @@
 #include <iostream>
 #include <cassert>
-#include <iod/iod.hh>
+#include <iod/sio.hh>
 #include <iod/json.hh>
 
 iod_define_symbol(name);

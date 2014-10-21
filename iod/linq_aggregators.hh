@@ -32,7 +32,7 @@ namespace iod
     template <typename... T>
     struct has_aggregator { enum { value = false }; };
     template <typename... T>
-    struct has_aggregator<iod_object<T...>> { enum { value = has_aggregator<typename T::value_type...>::value }; };
+    struct has_aggregator<sio<T...>> { enum { value = has_aggregator<typename T::value_type...>::value }; };
     template <typename E, typename... T>
     struct has_aggregator<function_call_exp<s::_avg, E>, T...> { enum { value = true }; };
     template <typename E, typename... T>

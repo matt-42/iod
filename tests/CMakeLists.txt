@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 enable_testing()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
-add_definitions(-std=c++14 -g)
+add_definitions(-std=c++14)
 
 #add_executable(iod_query_stl iod_query_stl.cc)
 #add_test(iod_query_stl iod_query_stl)
@@ -22,3 +22,9 @@ add_test(linq linq)
 
 add_executable(callable_traits callable_traits.cc)
 add_test(callable_traits callable_traits)
+
+add_executable(apply apply.cc)
+add_test(apply apply)
+
+add_executable(foreach foreach.cc)
+add_test(foreach foreach)

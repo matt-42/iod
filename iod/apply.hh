@@ -87,7 +87,11 @@ namespace iod
     auto
     tuple_proxy_apply(std::enable_if_t<(N < SIZE), int>*, T& t, G g, F f, U&&... u)
     {
-      return tuple_proxy_apply<N + 1, SIZE, T, F>(0, t, g, f, u..., std::get<N>(t));
+      return tuple_proxy_apply<N + 1, SIZE, T, F>(0, t, g, f,
+                                                  u...,
+                                                  std::get<N>(t));
+                                                  // std::forward<U>(u)...,
+                                                  // std::forward<decltype(std::get<N>(t))>(std::get<N>(t)));
       
     }
 

@@ -64,4 +64,7 @@ namespace iod
   template <typename F>
   using callable_return_type_t = typename callable_traits<F>::return_type;
 
+  template <typename F>
+  struct is_callable : public callable_traits<F>::is_callable {};
+
 }

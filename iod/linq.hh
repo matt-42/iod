@@ -6,6 +6,7 @@
 #include <iod/grammar.hh>
 #include <iod/utils.hh>
 #include <iod/symbols.hh>
+#include <iod/foreach.hh>
 #include <iod/linq_aggregators.hh>
 #include <iod/linq_evaluate.hh>
 
@@ -18,8 +19,8 @@ namespace iod
     auto format_record(R& req, const S& r, std::enable_if_t<decltype(req.select)::_size != 0>* = nullptr)
     {
       // Format with a non empty select statement: select(f1 = t1[x], f2 = t2[y])
-      return transform(req.select,
-                       [&r] (auto m) { return m.symbol() = evaluate(m.value(), r); });
+      return foreach(req.select) |
+        [&r] (auto m) { return m.symbol() = evaluate(m.value(), r); };
     }
 
     template <typename R, typename S>
@@ -127,16 +128,16 @@ namespace iod
     auto exec_aggregate(R& req, T& group, F f)
     {
       auto aggregators = req.select;
-      auto aggrs = transform(req.select, [&] (auto& m) {
-          //return m.symbol() = aggregate_initialize(m.value(), decltype(group[0])());
-          return m.symbol() = aggregate_initialize(m.value(), group[0]);
-        });
+      auto aggrs = foreach(req.select) | [&] (auto& m) {
+        //return m.symbol() = aggregate_initialize(m.value(), decltype(group[0])());
+        return m.symbol() = aggregate_initialize(m.value(), group[0]);
+      };
       for(auto e : group)
         foreach_attribute_value([&] (auto& a) { a.take(e); }, aggrs);
 
-      return transform(aggrs, [] (auto& m) {
-          return m.symbol() = m.value().result();
-        });
+      return foreach(aggrs) | [] (auto& m) {
+        return m.symbol() = m.value().result();
+      };
 
     }
 
@@ -167,7 +168,7 @@ namespace iod
               }, req);
 
           // The actual intermediate record type.
-          auto record_sample = transform(tables, [&] (auto m) { return m.symbol() = (*tables[m])[0]; });
+          auto record_sample = foreach(tables) | [&] (auto m) { return m.symbol() = (*tables[m])[0]; };
           typedef decltype(record_sample) record_type;
 
           // Compute the intermediate table on which we will iterate.
@@ -179,7 +180,7 @@ namespace iod
               auto on_condition = req.inner_join.get(s::on, true);
               auto where_condition = req.get(s::where, D(s::condition = true)).condition;
 
-              auto record_sample = transform(tables, [&] (auto m) { return m.symbol() = (*tables[m])[0]; });
+              auto record_sample = foreach(tables) | [&] (auto m) { return m.symbol() = (*tables[m])[0]; };
               typedef decltype(record_sample) record_type;
 
               // Bruteforce O(n2) inner join. => optimization?
@@ -188,9 +189,9 @@ namespace iod
               {
                 for (int j = 0; j < join_table.size(); j++)
                 {
-                  auto r = transform(tables, [&] (auto m) {
-                      return m.symbol() = (*tables[m])[((void*)tables[m] == (void*)&from_table) ? i : j]; 
-                    });
+                  auto r = foreach(tables) | [&] (auto m) {
+                    return m.symbol() = (*tables[m])[((void*)tables[m] == (void*)&from_table) ? i : j]; 
+                  };
                   if (evaluate(on_condition, r) and evaluate(where_condition, r))
                     out.push_back(r);
                 }
@@ -198,7 +199,7 @@ namespace iod
               return out;
             },
             [] (auto& req, auto& tables) { // if no join
-              auto record_sample = transform(tables, [&] (auto m) { return m.symbol() = (*tables[m])[0]; });
+              auto record_sample = foreach(tables) | [&] (auto m) { return m.symbol() = (*tables[m])[0]; };
               typedef decltype(record_sample) record_type;
 
               auto table1 = *tables.template get_nth<0>();
@@ -206,7 +207,7 @@ namespace iod
               std::vector<record_type> out;
               for (int i = 0; i < table1.size(); i++)
               {
-                auto r = transform(tables, [&] (auto m) { return m.symbol() = (*tables[m])[i]; });
+                auto r = foreach(tables) | [&] (auto m) { return m.symbol() = (*tables[m])[i]; };
                 if (evaluate(where_condition, r))
                   out.push_back(r);
               }
@@ -298,6 +299,6 @@ namespace iod
   }
 
 
-  auto linq = linq_internals::query<iod_object<>>(iod_object<>());
+  auto linq = linq_internals::query<sio<>>(sio<>());
 
 }

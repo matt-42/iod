@@ -34,16 +34,16 @@ namespace iod
       typedef decltype(proxy_apply(args_tuple, std::declval<H>(), f)) return_type;
       
       return static_if<std::is_same<return_type, void>::value>(
-        [&] (auto& args_tuple)
+        [&] (auto& args_tuple, auto& h, auto& f)
              {
                proxy_apply(args_tuple, h, f);
                return foreach_loop_tuple<N + 1, SIZE>(0, f, args_tuple, results...);
              },
-        [&] (auto& args_tuple)
+        [&] (auto& args_tuple, auto& h, auto& f)
              {
                return foreach_loop_tuple<N + 1, SIZE>
                  (0, f, args_tuple, results..., proxy_apply(args_tuple, h, f));
-             }, args_tuple);
+             }, args_tuple, h, f);
 
     }
 

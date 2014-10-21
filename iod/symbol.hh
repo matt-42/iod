@@ -4,7 +4,7 @@
 #include <iod/tags.hh>
 #include <iod/grammar.hh>
 
-#include <iod/iod.hh>
+#include <iod/sio.hh>
 
 namespace iod
 {
@@ -17,6 +17,11 @@ namespace iod
     typedef E symbol_type;
     constexpr symbol() {}
     using assignable<E>::operator=;
+  };
+
+  template <typename E>
+  struct variable
+  {
   };
 
 #define iod_define_symbol(NAME)                                         \
@@ -36,7 +41,8 @@ namespace iod
     template <typename T, typename... A>                                \
     inline auto method_call(const T& o, A... args) const { return o.NAME(args...); } \
                                                                         \
-    template <typename T, typename INFO = iod::iod_object<>> struct variable_type { \
+    template <typename T, typename INFO = iod::sio<>>            \
+      struct variable_type : public iod::variable<variable_type<T, INFO>> { \
                                                                         \
       typedef T value_type;                                             \
       typedef INFO attributes_type;                                     \
@@ -56,9 +62,6 @@ namespace iod
   };                                                                    \
   constexpr _##NAME NAME;                                               \
   }
-
-
-//  #define iod_define_symbol(NAME) iod_define_symbol_(NAME, s)
 }
 
 #endif

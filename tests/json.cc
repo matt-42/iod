@@ -2,12 +2,8 @@
 #include <cassert>
 #include <iod/sio.hh>
 #include <iod/json.hh>
-
-iod_define_symbol(name);
-iod_define_symbol(age);
-iod_define_symbol(city);
-iod_define_symbol(children);
-iod_define_symbol(my_json_name);
+#include <iod/symbol.hh>
+#include "symbols.hh"
 
 int main()
 {
@@ -15,7 +11,7 @@ int main()
   using namespace s;
 
   {
-    auto o = D(name = "John", age = 12, children = { 1,2,3,4,5 }, city = D(name = "Paris"));
+    auto o = D(_Name = "John", _Age = 12, _Children = { 1,2,3,4,5 }, _City = D(_Name = "Paris"));
     auto str = json_encode(o);
 
     decltype(o) p;
@@ -29,7 +25,7 @@ int main()
 
   {
     auto o = D(
-      name(optional, json_symbol = my_json_name) = std::string("xxxx")
+      _Name(_Optional, _Json_symbol = _My_json_name) = std::string("xxxx")
       );
 
     std::cout << json_encode(o) << std::endl;

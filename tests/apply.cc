@@ -1,18 +1,21 @@
 #include <iostream>
 #include <iod/apply.hh>
 
-iod_define_symbol(name);
-iod_define_symbol(age);
+#include <iod/symbol.hh>
+#include "symbols.hh"
 
 int main()
 {
+  using s::_Age;
+  using s::_Name;
+
   auto t = std::make_tuple(1, 2, 3);
   const auto u = std::make_tuple(1, 2, 3);
   iod::apply(t, [] (int& x, int y, int s) { std::cout << s << std::endl; });
   iod::apply(u, [] (const int& x, int y, int s) { std::cout << s << std::endl; });
   
-  auto o1 = iod::D(s::name = "xxx", s::age = 12);
-  const auto o2 = iod::D(s::name = "xxx", s::age = 12);
+  auto o1 = iod::D(_Name = "xxx", _Age = 12);
+  const auto o2 = iod::D(_Name = "xxx", _Age = 12);
   iod::apply(o1, [] (std::string& s, int& a) { std::cout << s << std::endl; });
   iod::apply(o2, [] (const std::string& s, const int& a) { std::cout << s << std::endl; });
 

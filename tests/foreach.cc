@@ -2,11 +2,14 @@
 #include <iostream>
 #include <iod/foreach.hh>
 
-iod_define_symbol(name);
-iod_define_symbol(age);
+#include <iod/symbol.hh>
+#include "symbols.hh"
 
 int main()
 {
+  using s::_Age;
+  using s::_Name;
+
   auto t = std::make_tuple(1, 2, 3);
   const auto u = std::make_tuple(1, 2, 4);
   
@@ -25,8 +28,8 @@ int main()
   assert(std::get<1>(t3) == std::get<1>(u) + std::get<1>(t));
   assert(std::get<2>(t3) == std::get<2>(u) + std::get<2>(t));
 
-  auto o1 = iod::D(s::name = "xxx", s::age = 12);
-  const auto o2 = iod::D(s::name = "xxx", s::age = 12);
+  auto o1 = iod::D(_Name = "xxx", _Age = 12);
+  const auto o2 = iod::D(_Name = "xxx", _Age = 12);
 
   auto o3 = iod::foreach(o1, o2) | [] (auto& x, auto& y) { return x.symbol() = x.value() + y.value(); };
 

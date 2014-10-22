@@ -105,11 +105,11 @@
 
 #ifndef IOD_SYMBOL__1
 #define iod_symbol__1
-    iod_define_symbol(1, _1)
+    iod_define_symbol(_1, _1)
 #endif
 #ifndef IOD_SYMBOL__2
 #define iod_symbol__2
-    iod_define_symbol(2, _2)
+    iod_define_symbol(_2, _2)
 #endif
 
 #ifndef IOD_SYMBOL__Optional

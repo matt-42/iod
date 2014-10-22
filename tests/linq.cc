@@ -5,13 +5,13 @@
 #include <iod/sio.hh>
 #include <iod/linq.hh>
 
-iod_define_symbol(age);
-iod_define_symbol(age2);
-iod_define_symbol(name);
-iod_define_symbol(toto);
-iod_define_symbol(person);
-iod_define_symbol(city);
-iod_define_symbol(cp);
+iod_define_symbol(age, _Age);
+iod_define_symbol(age2, _Age2);
+iod_define_symbol(name, _Name);
+iod_define_symbol(toto, _Toto);
+iod_define_symbol(person, _Person);
+iod_define_symbol(city, _City);
+iod_define_symbol(cp, _Cp);
 
 template <typename T>
 struct PersonT
@@ -30,13 +30,38 @@ int main()
     Person;
 
   {
-    Person a = D(age2 = 3, age = 10, name = std::string("Tom"));
+    Person a = D(_Age2 = 3, _Age = 10, _Name = std::string("Tom"));
     std::vector<Person> persons = {
-      D(age2 = 3, age = 10, name = ("Tom")),
-      D(age2 = 12, age = 1, name = ("Tim")),
-      D(age2 = 12, age = 12, name = ("Tam"))
+      D(_Age2 = 3, _Age = 10, _Name = ("Tom")),
+      D(_Age2 = 12, _Age = 1, _Name = ("Tim")),
+      D(_Age2 = 12, _Age = 12, _Name = ("Tam"))
     };
 
+    Person a = D(s::age2 = 3, s::age _Age_Age = 10, _Name = std::string("Tom"));
+    std::vector<Person> persons = {
+      D(_Age2 = 3, _Age = 10, _Name = ("Tom")),
+      D(_Age2 = 12, _Age = 1, _Name = ("Tim")),
+      D(_Age2 = 12, _Age = 12, _Name = ("Tam"))
+    };
+
+    auto message = D(
+      _Id = 12,
+      _Name = "test",
+      _Arg1 = 3.45f);
+
+    
+    auto message = D(
+      :id = 12,
+      :name = "test",
+      :arg1 = 3.45f);
+
+    Person a = D(_Age2 = 3, _Age = 10, _Name = std::string("Tom"));
+    std::vector<Person> persons = {
+      D(_Age2 = 3, _Age = 10, _Name = ("Tom")),
+      D(_Age2 = 12, _Age = 1, _Name = ("Tim")),
+      D(_Age2 = 12, _Age = 12, _Name = ("Tam"))
+    };
+    
     {
       linq.select()
         .from(persons, as(person))

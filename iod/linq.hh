@@ -12,6 +12,8 @@
 
 namespace iod
 {
+  using namespace s;
+
   namespace linq_internals
   {
 
@@ -26,7 +28,7 @@ namespace iod
     template <typename R, typename S>
     auto format_record(R& req, const S& r,
                        std::enable_if_t<decltype(req.select)::_size == 0 and
-                       !decltype(req.from)::template _has<s::_as>::value>* = nullptr)
+                       !decltype(req.from)::template _has<_As_t>::value>* = nullptr)
     {
       // Format with an empty select statement and no table alias.
       //return r.template get_nth<0>();
@@ -36,7 +38,7 @@ namespace iod
     template <typename R, typename S>
     auto format_record(R& req, const S& r,
                        std::enable_if_t<decltype(req.select)::_size == 0 and
-                       decltype(req.from)::template _has<s::_as>::value>* = nullptr)
+                       decltype(req.from)::template _has<_As_t>::value>* = nullptr)
     {
       // Format with an empty select statement and a table alias.
       return r;
@@ -49,22 +51,22 @@ namespace iod
       typedef std::remove_reference_t<decltype(*req.from.table)> from_table_type;
       typedef typename from_table_type::value_type record_type1;
 
-      return static_if<R::template _has<s::_join>::value>
+      return static_if<R::template _has<_Join_t>::value>
         ([](const auto& req){
           const auto& from_table = *req.from.table;
           const auto& join_table = *req.join.table;
 
-          auto from_name = req.from.get(s::as, s::_1);
-          auto join_name = req.join.get(s::as, s::_2);
+          auto from_name = req.from.get(_As, s::_1);
+          auto join_name = req.join.get(_As, s::_2);
           
           typedef decltype(select_format(req, D(from_name = typename decltype(from_table)::value_type(),
-                                                  join_name = typename decltype(join_table)::value_type())))
+                                                join_name = typename decltype(join_table)::value_type())))
             record_type;
           record_type sample;
           return format_record(req, sample);
         },
         [](const auto& req){
-          auto from_name = req.from.get(s::as, s::_1);
+          auto from_name = req.from.get(_As, _1);
           typedef decltype(D(from_name = typename from_table_type::value_type())) record_type1;
           record_type1 sample;
           return format_record(req, sample);
@@ -74,9 +76,9 @@ namespace iod
     template <typename R, typename T, typename F>
     void exec_iteration(R& req, T& table, F f)
     {
-      static_if<has_symbol<R, s::_group_by>::value>
+      static_if<has_symbol<R, _Group_by_t>::value>
         ([] (auto& req, auto& table, auto f) {
-          auto gb = req.get(s::group_by, D(s::criteria = 42));
+          auto gb = req.get(_Group_by, D(_Criteria = 42));
           std::sort(table.begin(), table.end(), [&gb] (const auto& a, const auto& b)
                     {
                       return evaluate(gb.criteria, a) < evaluate(gb.criteria, b);
@@ -104,8 +106,8 @@ namespace iod
     {
       for (auto& t : table)
       {
-        auto r = D(req.from.get(s::as, s::_1) = t);
-        if (evaluate(req.get(s::where, D(s::condition = true)).condition, r))
+        auto r = D(req.from.get(_As, _1) = t);
+        if (evaluate(req.get(_Where, D(_Condition = true)).condition, r))
           f(format_record(req, r));
       }
 
@@ -114,9 +116,9 @@ namespace iod
     template <typename R, typename T, typename F>
     void exec_order_by(R& req, T& table, F f)
     {
-      if (req.has(s::order_by))
+      if (req.has(_Order_by))
       {
-        auto order = req.get(s::order_by, D(s::order = 1)).order;
+        auto order = req.get(_Order_by, D(_Order = 1)).order;
         std::sort(table.begin(), table.end(), [&order] (const auto& a, const auto& b)
                   {
                     return evaluate(order, a) < evaluate(order, b);
@@ -146,9 +148,9 @@ namespace iod
     {
       typedef std::remove_reference_t<decltype(*req.from.table)> from_table_type;
 
-      static_if<!has_symbol<R, s::_inner_join>::value and
-                !has_symbol<R, s::_order_by>::value and
-                !has_symbol<R, s::_group_by>::value and
+      static_if<!has_symbol<R, _Inner_join_t>::value and
+                !has_symbol<R, _Order_by_t>::value and
+                !has_symbol<R, _Group_by_t>::value and
                 decltype(req.select)::_empty
                 >
         ([] (auto& req, auto f) {
@@ -157,14 +159,14 @@ namespace iod
         [] (auto& req, auto f) {
 
           // Compute { table1_name = table1, table2_name = table2, ...}
-          auto tables = static_if<R::template _has<s::_inner_join>::value>
+          auto tables = static_if<R::template _has<_Inner_join_t>::value>
             ([] (auto& req) {
-              auto inner_join_name = req.inner_join.get(s::as, s::_2);
-              return D(req.from.get(s::as, s::_1) = req.from.table,
-                         req.inner_join.get(s::as, s::_1) = req.inner_join.table);
+              auto inner_join_name = req.inner_join.get(_As, _2);
+              return D(req.from.get(_As, _1) = req.from.table,
+                         req.inner_join.get(_As, _1) = req.inner_join.table);
             },
               [] (auto& req) {
-                return D(req.from.get(s::as, s::_1) = req.from.table);
+                return D(req.from.get(_As, _1) = req.from.table);
               }, req);
 
           // The actual intermediate record type.
@@ -172,13 +174,13 @@ namespace iod
           typedef decltype(record_sample) record_type;
 
           // Compute the intermediate table on which we will iterate.
-          auto v = static_if<has_symbol<R, s::_inner_join>::value>
+          auto v = static_if<has_symbol<R, _Inner_join_t>::value>
             ([] (auto& req, auto& tables) { // if join
               const auto& from_table = *tables.template get_nth<0>();
               const auto& join_table = *tables.template get_nth<1>();
 
-              auto on_condition = req.inner_join.get(s::on, true);
-              auto where_condition = req.get(s::where, D(s::condition = true)).condition;
+              auto on_condition = req.inner_join.get(_On, true);
+              auto where_condition = req.get(_Where, D(_Condition = true)).condition;
 
               auto record_sample = foreach(tables) | [&] (auto m) { return m.symbol() = (*tables[m])[0]; };
               typedef decltype(record_sample) record_type;
@@ -203,7 +205,7 @@ namespace iod
               typedef decltype(record_sample) record_type;
 
               auto table1 = *tables.template get_nth<0>();
-              auto where_condition = req.get(s::where, D(s::condition = true)).condition;
+              auto where_condition = req.get(_Where, D(_Condition = true)).condition;
               std::vector<record_type> out;
               for (int i = 0; i < table1.size(); i++)
               {
@@ -215,13 +217,13 @@ namespace iod
             }, req, tables);
 
           // Sort if requested.
-          if (req.has(s::order_by))
+          if (req.has(_Order_by))
             exec_order_by(req, v, f);
 
           static_if<has_aggregator<decltype(req.select)>::value>
             ([] (auto& req, auto& v, auto f) // If request contains aggregators.
              {
-               static_if<has_symbol<R, s::_group_by>::value>
+               static_if<has_symbol<R, _Group_by_t>::value>
                  ([] (auto& req, auto f, auto& v) { // If group_by
                    exec_iteration(req, v, 
                                   [&] (const auto& group) { return f(exec_aggregate(req, group, f)); });
@@ -233,7 +235,7 @@ namespace iod
              [] (auto& req, auto& v, auto f) // If no aggregators.
              {
 
-               static_if<has_symbol<R, s::_group_by>::value>
+               static_if<has_symbol<R, _Group_by_t>::value>
                  ([] (auto& req, auto f, auto& v) { //If group_by
                    exec_iteration(req, v, 
                                   [&] (const auto& group) { 
@@ -268,20 +270,20 @@ namespace iod
       }
 
       template <typename... E>
-      auto select(const E&... e) { return make_query(cat(q, s::select = D(e...))); }
+      auto select(const E&... e) { return make_query(cat(q, _Select = D(e...))); }
 
       template <typename E>
-      auto where(E e) { return make_query(cat(q, s::where = D(s::condition = e))); }
+      auto where(E e) { return make_query(cat(q, _Where = D(_Condition = e))); }
       template <typename E>
-      auto group_by(E e) { return make_query(cat(q, s::group_by = D(s::criteria = e))); }
+      auto group_by(E e) { return make_query(cat(q, _Group_by = D(_Criteria = e))); }
       template <typename Q, typename... E>
-      auto from(Q table, const E&... e) { return make_query(cat(q, s::from = D(s::table = &table, e...))); }
+      auto from(Q table, const E&... e) { return make_query(cat(q, _From = D(_Table = &table, e...))); }
 
       template <typename Q, typename... E>
       auto inner_join(Q table, E... e) { return make_query(cat(q,
-                                                               s::inner_join = D(s::table = &table, e...))); }
+                                                               _Inner_join = D(_Table = &table, e...))); }
       template <typename Q>
-      auto order_by(Q order) { return make_query(cat(q, s::order_by = D(s::order = order))); }
+      auto order_by(Q order) { return make_query(cat(q, _Order_by = D(_Order = order))); }
 
       template <typename F>
       void operator|(F f) { return linq_internals::exec_table(q, f); }

@@ -24,43 +24,42 @@ namespace iod
   {
   };
 
-#define iod_define_symbol(NAME)                                         \
-  namespace s                                                           \
+#define iod_define_symbol(SYMBOL, NAME)                                        \
+  namespace s {
+  struct NAME##_t : iod::symbol<NAME##_t>                                 \
   {                                                                     \
-  struct _##NAME : iod::symbol<_##NAME>                                 \
-  {                                                                     \
-    constexpr _##NAME() {}                                              \
-    typedef iod::symbol<_##NAME> super;                                 \
+    constexpr _##SYMBOL() {}                                              \
+    typedef iod::symbol<_##SYMBOL> super;                                 \
     using super::operator=;                                             \
                                                                         \
-    inline const char* name() const { return #NAME; }                   \
+    inline const char* name() const { return #SYMBOL; }                   \
                                                                         \
     template <typename T>                                               \
-    inline auto attribute_access(const T& o) const { return o.NAME; }   \
+    inline auto attribute_access(const T& o) const { return o.SYMBOL; }   \
                                                                         \
     template <typename T, typename... A>                                \
-    inline auto method_call(const T& o, A... args) const { return o.NAME(args...); } \
+    inline auto method_call(const T& o, A... args) const { return o.SYMBOL(args...); } \
                                                                         \
     template <typename T, typename INFO = iod::sio<>>            \
       struct variable_type : public iod::variable<variable_type<T, INFO>> { \
                                                                         \
       typedef T value_type;                                             \
       typedef INFO attributes_type;                                     \
-      typedef _##NAME symbol_type;                                      \
+      typedef _##SYMBOL symbol_type;                                      \
                                                                         \
       variable_type() {}                                                \
       template <typename V>                                             \
-      variable_type(V v) : NAME(v) {}                                   \
-      inline value_type& value() { return NAME; }                       \
-      inline const value_type& value() const { return NAME; }           \
-      auto symbol() const { return _##NAME(); }                         \
-      auto symbol_name() const { return #NAME; }                        \
+      variable_type(V v) : SYMBOL(v) {}                                   \
+      inline value_type& value() { return SYMBOL; }                       \
+      inline const value_type& value() const { return SYMBOL; }           \
+      auto symbol() const { return _##SYMBOL(); }                         \
+      auto symbol_name() const { return #SYMBOL; }                        \
       auto attributes() const { return INFO(); }                        \
                                                                         \
-      value_type NAME;                                                  \
+      value_type SYMBOL;                                                  \
     };                                                                  \
   };                                                                    \
-  constexpr _##NAME NAME;                                               \
+  constexpr NAME##_t NAME;                                               \
   }
 }
 

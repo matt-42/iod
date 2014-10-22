@@ -34,9 +34,9 @@ namespace iod
     template <typename... T>
     struct has_aggregator<sio<T...>> { enum { value = has_aggregator<typename T::value_type...>::value }; };
     template <typename E, typename... T>
-    struct has_aggregator<function_call_exp<s::_avg, E>, T...> { enum { value = true }; };
+    struct has_aggregator<function_call_exp<_Avg, E>, T...> { enum { value = true }; };
     template <typename E, typename... T>
-    struct has_aggregator<function_call_exp<s::_sum, E>, T...> { enum { value = true }; };
+    struct has_aggregator<function_call_exp<_Sum, E>, T...> { enum { value = true }; };
     template <typename E, typename... T>
     struct has_aggregator<E, T...> { enum { value = has_aggregator<T...>::value }; };
 
@@ -44,25 +44,25 @@ namespace iod
     auto aggregate_initialize(E exp, C ctx)
     {
       typedef decltype(evaluate(exp, ctx)) M;
-      return make_aggregator(D(s::elt = M()),
+      return make_aggregator(D(_Elt = M()),
                              [=] (auto& t, auto& o) { o.elt = evaluate(exp, t); },
                              [] (const auto& o) { return o.elt; });
     }
 
     template <typename A, typename C>
-    inline auto aggregate_initialize(function_call_exp<s::_avg, A> f, C ctx)
+    inline auto aggregate_initialize(function_call_exp<_Avg, A> f, C ctx)
     {
       typedef decltype((evaluate(A(), ctx) + evaluate(A(), ctx))) sum_type;
-      return make_aggregator(D(s::cpt = int(0), s::sum = sum_type(0)),
+      return make_aggregator(D(_Cpt = int(0), _Sum = sum_type(0)),
                              [=] (auto& t, auto& o) { o.sum += evaluate(std::get<0>(f.args), t); o.cpt++; },
                              [] (const auto& o) { return o.sum / float(o.cpt); });
     }
 
     template <typename A, typename C>
-    inline auto aggregate_initialize(function_call_exp<s::_sum, A> f, C ctx)
+    inline auto aggregate_initialize(function_call_exp<_Sum, A> f, C ctx)
     {
       typedef decltype((evaluate(A(), ctx) + evaluate(A(), ctx))) sum_type;
-      return make_aggregator(D(s::sum = sum_type(0)),
+      return make_aggregator(D(_Sum = sum_type(0)),
                              [=] (auto& t, auto& o) { o.sum += evaluate(std::get<0>(f.args), t); },
                              [] (const auto& o) { return o.sum; });
     }

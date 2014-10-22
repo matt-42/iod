@@ -21,8 +21,7 @@
 namespace iod
 {
 
-  using s::json_symbol;
-  using s::optional;
+  using namespace s;
 
   // Decode \o from a json string \str.
   template <typename ...T>
@@ -84,7 +83,7 @@ namespace iod
       int i = 0;
       foreach(o) | [&] (const auto& m)
       {
-        json_encode_(m.attributes().get(s::json_symbol, m.symbol()).name(), ss);
+        json_encode_(m.attributes().get(_Json_symbol, m.symbol()).name(), ss);
         ss << ':';
         json_encode_(m.value(), ss);
         if (i != o.size() - 1) ss << ',';
@@ -276,8 +275,8 @@ namespace iod
       foreach(o) | [&] (auto& m)
       {
         std::string name = m.symbol().name();
-        if (m.attributes().has(json_symbol))
-          name = m.attributes().get(json_symbol, json_symbol).name();
+        if (m.attributes().has(_Json_symbol))
+          name = m.attributes().get(_Json_symbol, _Json_symbol).name();
         symbol_map[name] = i++;
         filled[name] = false;
       };
@@ -315,7 +314,7 @@ namespace iod
 
       foreach(o) | [&] (auto& m) {
         typename std::remove_reference_t<decltype(m)>::attributes_type attrs;
-        if (!m.attributes().has(optional) and !filled[m.symbol().name()])
+        if (!m.attributes().has(_Optional) and !filled[m.symbol().name()])
           throw std::runtime_error(std::string("json_decode error: missing field ") +
                                    m.symbol().name());
       };

@@ -174,7 +174,7 @@ namespace iod
       auto results_tuple = std::make_tuple(results...);
       auto prev = std::get<std::tuple_size<decltype(results_tuple)>::value - 1>(results_tuple);
 
-      typedef decltype(h) H;
+      // typedef decltype(h) H;
       typedef decltype(apply(std::tuple_cat(foreach(args_tuple) | h, std::make_tuple(prev)), f)) return_type;
       //typedef decltype(proxy_apply(args_tuple, std::declval<H>(), f)) return_type;
 

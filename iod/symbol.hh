@@ -19,17 +19,15 @@ namespace iod
     using assignable<E>::operator=;
   };
 
+
   template <typename E>
   struct variable
   {
   };
 
-#define iod_define_symbol(SYMBOL, NAME)                                 \
-  namespace s {                                                         \
-  struct NAME##_t : iod::symbol<NAME##_t>                               \
-  {                                                                     \
-    constexpr NAME##_t() {}                                            \
-    typedef iod::symbol<NAME##_t> super;                               \
+#define iod_define_symbol_body(SYMBOL, NAME)                            \
+    constexpr NAME##_t() {}                                             \
+    typedef iod::symbol<NAME##_t> super;                                \
     using super::operator=;                                             \
                                                                         \
     inline const char* name() const { return #SYMBOL; }                 \
@@ -45,22 +43,44 @@ namespace iod
                                                                         \
       typedef T value_type;                                             \
       typedef INFO attributes_type;                                     \
-      typedef NAME##_t symbol_type;                                    \
+      typedef NAME##_t symbol_type;                                     \
                                                                         \
       variable_type() {}                                                \
       template <typename V>                                             \
       variable_type(V v) : SYMBOL(v) {}                                 \
       inline value_type& value() { return SYMBOL; }                     \
       inline const value_type& value() const { return SYMBOL; }         \
-      auto symbol() const { return NAME##_t(); }                       \
+      auto symbol() const { return NAME##_t(); }                        \
       auto symbol_name() const { return #SYMBOL; }                      \
       auto attributes() const { return INFO(); }                        \
                                                                         \
-      value_type SYMBOL;                                                \
-    };                                                                  \
-  };                                                                    \
-  constexpr NAME##_t NAME;                                              \
+      value_type SYMBOL; \
+    };
+
+#define iod_define_symbol(SYMBOL, NAME)                         \
+  namespace s {                                                 \
+  struct NAME##_t : iod::symbol<NAME##_t>                       \
+  {                                                             \
+  iod_define_symbol_body(SYMBOL, NAME)                          \
+  };                                                            \
+  constexpr NAME##_t NAME;                                      \
   }
+
+  template <int N>
+  struct int_symbol : iod::symbol<int_symbol<N>>
+  {
+    constexpr int_symbol() {}
+    typedef iod::symbol<iod::int_symbol<N>> super;
+    using super::operator=;
+    static constexpr const int to_int = N;
+  };
+
+#define iod_define_number_symbol(NUMBER)                                \
+  namespace s {                                                         \
+  typedef iod::int_symbol<NUMBER>  _##NUMBER##_t; \
+  constexpr _##NUMBER##_t _##NUMBER;                                    \
+  }
+
 }
 
 #endif

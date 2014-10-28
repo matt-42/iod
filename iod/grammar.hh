@@ -108,6 +108,37 @@ namespace iod
   // end of exp_transform_iterate
   // ================================
 
+
+  // exp_transform
+  // ================================
+  
+  // Terminals.
+  template <typename E, typename F, typename C>
+  auto exp_transform(E& exp, F map, C& ctx,
+                     std::enable_if_t<!callable_with<F, E&, C&>::value and
+                     !has_transform_iterate<E>::value>* = 0)
+  {
+    return exp;
+  }
+  
+  template <typename E, typename F, typename C>
+  auto exp_transform(E& exp, F map, C& ctx,
+                     std::enable_if_t<!callable_with<F, E&, C&>::value and
+                     has_transform_iterate<E>::value>* = 0)
+  {
+    return exp.transform(map, ctx);
+  }
+
+  template <typename E, typename F, typename C>
+  auto exp_transform(E& exp, F map, C& ctx,
+                     std::enable_if_t<callable_with<F, E&, C&>::value>* = 0)
+  {
+    return map(exp, ctx);
+  }
+
+  // end of exp_transform
+  // ================================
+  
   // exp_map_reduce
   // ================================
   
@@ -150,11 +181,11 @@ namespace iod
   
   // Terminals.
   template <typename E, typename M, typename C>
-  inline auto&& exp_evaluate(E exp, M eval, C& ctx,
+  inline auto exp_evaluate(E exp, M eval, C& ctx,
                              std::enable_if_t<!callable_with<M, E&, M, C&>::value and
                              !has_transform_iterate<E>::value>* = 0)
   {
-    return std::move(exp);
+    return exp;
   }
 
   template <typename E, typename M, typename C>
@@ -179,12 +210,12 @@ namespace iod
   struct function_call_exp;
 
   template <typename M, typename... A>
-  auto make_funcion_call_exp(M& m, A... a)
+  auto make_function_call_exp(M& m, A... a)
   {
     return function_call_exp<M, A...>(m, a...);
   }
   template <typename M, typename... A>
-  auto make_funcion_call_exp(M& m, std::tuple<A...> a)
+  auto make_function_call_exp(M&& m, std::tuple<A...> a)
   {
     return function_call_exp<M, A...>(m, a);
   }
@@ -197,6 +228,8 @@ namespace iod
     public Exp<function_call_exp<M, A...>>
   {
     using assignable<function_call_exp<M, A...>>::operator=;
+    using member_accessible<function_call_exp<M, A...>>::operator[];
+
     function_call_exp() {}
     function_call_exp(const M& m, A... a)
       : method(m), args(a...) {}
@@ -205,10 +238,10 @@ namespace iod
 
     template <typename F>
     auto visit(F f) { f(method); iod::foreach(args) | [&] (auto& m) { f(m); }; }
-    template <typename F>
-    auto transform(F f) {
-      return function_call_exp(f(method),
-                               iod::foreach(args) | [&] (auto& m) { return f(m); });
+    template <typename F, typename C>
+    auto transform(F f, C ctx) {
+      return make_function_call_exp(exp_transform(method, f, ctx),
+                                    iod::foreach(args) | [&] (auto& m) { return exp_transform(m, f, ctx); });
     }
     template <typename F, typename C>
     auto transform_iterate(F f, C ctx)                                  
@@ -217,7 +250,7 @@ namespace iod
       auto as = iod::foreach_prev(args, l) | [&] (auto m, auto& prev) {
         return exp_transform_iterate(m, f, prev.second);
       };
-      return std::make_pair(make_funcion_call_exp(l.first,
+      return std::make_pair(make_function_call_exp(l.first,
                                                   iod::foreach(as) | [] (auto& m) { return m.first; }),
                        std::get<std::tuple_size<decltype(as)>::value - 1>(as).second);
     }
@@ -246,8 +279,13 @@ namespace iod
 
     template <typename F>
     auto visit(F f) { return std::make_tuple(f(object), f(member)); }         
-    template <typename F>
-    auto transform(F f) { return plus_exp(f(object), f(member)); }
+    template <typename F, typename C>
+    auto transform(F f, C ctx) {
+      auto o = exp_transform(object, f, ctx);
+      auto m = exp_transform(member, f, ctx);
+      return member_accessor_exp<decltype(o), decltype(m)>(o, m);
+    }
+
     template <typename F, typename C>
     auto transform_iterate(F f, C ctx)                                  
     {                                                                   
@@ -255,10 +293,15 @@ namespace iod
       auto r = exp_transform_iterate(member, f, l.second);
       return std::make_pair(member_accessor_exp<decltype(l.first), decltype(r.first)>
                             (l.first, r.first), r.second);
-    }                                                                   
+    }
+
     auto children_tuple() { return std::make_tuple(object, member); }
+
     template <typename P, typename C>
-    inline auto&& evaluate(P eval, C& ctx) { return std::move(exp_evaluate(object, eval, ctx)[exp_evaluate(member, eval, ctx)]); }
+    inline auto evaluate(P eval, C& ctx) {
+      return exp_evaluate(object, eval, ctx)[exp_evaluate(member, eval, ctx)];
+    }
+    
     O object;
     M member;
   };
@@ -271,9 +314,15 @@ namespace iod
     assign_exp(const L& l, const R& r) : left(l), right(r) {}
 
     template <typename F>
-    auto visit(F f) { return std::make_tuple(f(left), f(right)); }         
-    template <typename F>
-    auto transform(F f) { return plus_exp(f(left), f(right)); }     
+    auto visit(F f) { return std::make_tuple(f(left), f(right)); }
+
+    template <typename F, typename C>
+    auto transform(F f, C ctx) {
+      auto l = exp_transform(left, f, ctx);
+      auto r = exp_transform(right, f, ctx);      
+      return assign_exp<decltype(l), decltype(r)>(l, r);
+    }
+
     template <typename F, typename C>
     auto transform_iterate(F f, C ctx)                                  
     {                                                                   
@@ -296,9 +345,9 @@ namespace iod
   public:
     // Member accessor
     template <typename S>
-    constexpr auto operator[](const symbol<S>& s) const
+    constexpr auto operator[](const S& s) const
     {
-      return member_accessor_exp<E, S>(*static_cast<const E*>(this), s.exact());
+      return member_accessor_exp<E, S>(*static_cast<const E*>(this), s);
     }
 
   };
@@ -367,10 +416,13 @@ namespace iod
       return std::make_pair(NAME##_exp<decltype(l.first), decltype(r.first)>(l.first, r.first), r.second); \
     }                                                                   \
                                                                         \
-    template <typename F>                                               \
-    auto transform(F f) { return NAME##_exp<decltype(f(lhs)), decltype(f(rhs))>(f(lhs), f(rhs)); } \
+    template <typename F, typename C>                                   \
+    auto transform(F f, C ctx) {                                        \
+      auto l = exp_transform(lhs, f, ctx);                              \
+      auto r = exp_transform(rhs, f, ctx);                              \
+    return NAME##_exp<decltype(l), decltype(r)>(l, r); }                \
     auto children_tuple() { return std::make_tuple(lhs, rhs); }         \
-    template <typename M, typename C>                                              \
+    template <typename M, typename C>                                   \
     inline auto evaluate(M eval, C& ctx)  { return exp_evaluate(lhs, eval, ctx) OP  exp_evaluate(rhs, eval, ctx); } \
     lhs_type lhs;                                                       \
     rhs_type rhs;                                                       \

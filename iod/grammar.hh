@@ -181,16 +181,17 @@ namespace iod
   
   // Terminals.
   template <typename E, typename M, typename C>
-  inline auto exp_evaluate(E exp, M eval, C& ctx,
-                             std::enable_if_t<!callable_with<M, E&, M, C&>::value and
-                             !has_transform_iterate<E>::value>* = 0)
+  inline auto& exp_evaluate(E& exp, M eval, C& ctx,
+                           std::enable_if_t<!callable_with<M, E&, M, C&>::value and
+                           !has_transform_iterate<E>::value>* = 0)
   {
     return exp;
   }
 
   template <typename E, typename M, typename C>
-  inline auto& exp_evaluate(E& exp, M eval, C& ctx,
-                            std::enable_if_t<callable_with<M, E&, M, C&>::value>* = 0)
+  inline auto exp_evaluate(E& exp, M eval, C& ctx,
+                           std::enable_if_t<callable_with<M, E&, M, C&>::value>* = 0)
+    -> decltype(eval(exp, eval, ctx))
   {
     return eval(exp, eval, ctx);
   }
@@ -199,6 +200,7 @@ namespace iod
   inline auto exp_evaluate(E& exp, M eval, C& ctx,
                            std::enable_if_t<!callable_with<M, E&, M, C&>::value and
                            has_transform_iterate<E>::value>* = 0)
+    -> decltype(exp.evaluate(eval, ctx))
   {
     return exp.evaluate(eval, ctx);
   }
@@ -333,8 +335,9 @@ namespace iod
     }
     auto children_tuple() { return std::make_tuple(left, right); }
     template <typename M, typename C>
-    inline void evaluate(M eval, C& ctx) {
-      exp_evaluate(left, eval, ctx) = exp_evaluate(right, eval, ctx); }
+    inline auto evaluate(M eval, C& ctx) {
+      return exp_evaluate(left, eval, ctx) = exp_evaluate(right, eval, ctx);
+    }
     L left;
     R right;
   };
@@ -438,6 +441,7 @@ namespace iod
   iod_query_declare_binary_op(+, plus);
   iod_query_declare_binary_op(-, minus);
   iod_query_declare_binary_op(*, mult);
+  iod_query_declare_binary_op(/, div);
   iod_query_declare_binary_op(<<, shiftl);
   iod_query_declare_binary_op(>>, shiftr);
   iod_query_declare_binary_op(<, inf);

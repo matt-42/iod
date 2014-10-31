@@ -1,0 +1,21 @@
+//  Convert the symbol file into a C++ header using sed, or another text processing tool
+//  with the equivalent command:
+//  sed -e 's/^\([0-9_]\+\)/#ifndef IOD_SYMBOL__\1\n#define IOD_SYMBOL__\1\n  iod_define_number_symbol(\1)\n#endif/' numbers.sb > number_symbol_definitions.hh
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+9
+10
+11
+12
+13
+14
+15
+16

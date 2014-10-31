@@ -1,10 +1,11 @@
 #pragma once
 
 #include <tuple>
-#include <iod/sio.hh>
 
 namespace iod
 {
+  template <typename ...T>
+  struct sio;
 
   namespace internal
   {

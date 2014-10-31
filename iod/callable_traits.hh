@@ -67,4 +67,14 @@ namespace iod
   template <typename F>
   struct is_callable : public callable_traits<F>::is_callable {};
 
+  template <typename F, typename... A>
+  struct callable_with
+  {
+    template<typename G, typename... B> 
+    static char test(int x, std::remove_reference_t<decltype(std::declval<G>()(std::declval<B>()...))>* = 0);
+    template<typename G, typename... B> 
+    static int test(...);
+    static const bool value = sizeof(test<F, A...>(0)) == 1;    
+  };
+
 }

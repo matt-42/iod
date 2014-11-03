@@ -212,12 +212,12 @@ namespace iod
   struct function_call_exp;
 
   template <typename M, typename... A>
-  auto make_function_call_exp(M&& m, A... a)
+  auto make_function_call_exp(M m, A... a)
   {
     return function_call_exp<M, A...>(m, a...);
   }
   template <typename M, typename... A>
-  auto make_function_call_exp(M&& m, std::tuple<A...>&& a)
+  auto make_function_call_exp(M m, std::tuple<A...>&& a)
   {
     return function_call_exp<M, A...>(m, a);
   }

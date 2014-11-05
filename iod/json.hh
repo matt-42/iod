@@ -109,7 +109,7 @@ namespace iod
     {
       struct spaces_ {} spaces;
 
-      inline json_parser(const std::string& _str) : ss(_str), str(_str) {}
+      inline json_parser(std::istringstream& _stream) : ss(_stream) {}
 
       inline char peak() { return ss.peek(); }
       inline char eof() { return ss.eof(); }
@@ -129,6 +129,7 @@ namespace iod
         {
           std::stringstream err;
 
+          auto str = ss.str();
           int pos = ss.tellg();
           int w = 20;
           int b = pos > w ? pos - w : 0;
@@ -148,6 +149,7 @@ namespace iod
           int start = ss.tellg();
           int end;
           char c, prev_c;
+          auto str = ss.str();
           do
           {
             ss.ignore(1000, '"');
@@ -229,8 +231,7 @@ namespace iod
 
       int line_cpt, char_cpt;
       const char* cur;
-      std::istringstream ss;
-      const std::string& str;
+      std::istringstream& ss;
     };
 
     inline void iod_attr_from_json(sio<>&, json_parser&)
@@ -358,7 +359,8 @@ namespace iod
     template <typename ...Tail>
     inline void iod_from_json_(sio<Tail...>& o, const std::string& str)
     {
-      json_parser p(str);
+      std::istringstream stream(str);
+      json_parser p(stream);
       if (str.size() > 0)
         iod_from_json_(o, p);
       else
@@ -376,7 +378,8 @@ namespace iod
   template <typename ...Tail>
   inline void json_decode(sio<Tail...>& o, const std::string& str, int& n_read)
   {
-    json_internals::json_parser p(str);
+    std::istringstream stream(str);
+    json_internals::json_parser p(stream);
     if (str.size() > 0)
       iod_from_json_(o, p);
     else
@@ -384,6 +387,17 @@ namespace iod
     n_read = p.ss.tellg();
   }
 
+
+  template <typename ...Tail>
+  inline void json_decode(sio<Tail...>& o, std::istringstream& stream)
+  {
+    json_internals::json_parser p(stream);
+    if (stream.str().size() > 0)
+      iod_from_json_(o, p);
+    else
+      throw std::runtime_error("Empty string.");
+  }
+  
   template <typename ...Tail>
   inline std::string json_encode(const sio<Tail...>& o)
   {

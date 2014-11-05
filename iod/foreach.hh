@@ -10,6 +10,9 @@ namespace iod
   template <typename ...T>
   struct sio;
 
+  template <typename ...T>
+  inline auto D(T&&... args);
+  
   namespace internal
   {
 

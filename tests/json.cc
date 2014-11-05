@@ -1,5 +1,7 @@
 #include <iostream>
 #include <cassert>
+#include <iod/foreach.hh>
+#include <iod/sio_utils.hh>
 #include <iod/sio.hh>
 #include <iod/json.hh>
 #include <iod/symbol.hh>

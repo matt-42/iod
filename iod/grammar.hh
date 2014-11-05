@@ -143,31 +143,31 @@ namespace iod
   // ================================
   
   // Terminals.
-  template <typename E, typename N, typename M, typename R>
-  auto exp_map_reduce(E& exp, N neutral,
+  template <typename E, typename N, typename C, typename M, typename R>
+  auto exp_map_reduce(E& exp, N neutral, C& ctx,
                       M map, R reduce,
-                      std::enable_if_t<!callable_with<M, E&>::value and
+                      std::enable_if_t<!callable_with<M, E&, C&>::value and
                       !has_transform_iterate<E>::value>* = 0)
   {
     return neutral;
   }
 
-  template <typename E, typename N, typename M, typename R>
-  auto exp_map_reduce(E& exp, N neutral,
+  template <typename E, typename N, typename C, typename M, typename R>
+  auto exp_map_reduce(E& exp, N neutral, C& ctx,
                       M map, R reduce,
-                      std::enable_if_t<callable_with<M, E&>::value>* = 0)
+                      std::enable_if_t<callable_with<M, E&, C&>::value>* = 0)
   {
-    return map(exp);
+    return map(exp, ctx);
   }
   
-  template <typename E, typename N, typename M, typename R>
-  auto exp_map_reduce(E& exp, N neutral,
+  template <typename E, typename N, typename C, typename M, typename R>
+  auto exp_map_reduce(E& exp, N neutral, C& ctx,
                       M map, R reduce,
-                      std::enable_if_t<!callable_with<M, E&>::value and
+                      std::enable_if_t<!callable_with<M, E&, C&>::value and
                       has_transform_iterate<E>::value>* = 0)
   {
     auto t = foreach(exp.children_tuple()) | [&] (auto n) {
-      return exp_map_reduce(n, neutral, map, reduce);
+      return exp_map_reduce(n, neutral, ctx, map, reduce);
     };
     return apply(t, reduce);
   }
@@ -212,12 +212,12 @@ namespace iod
   struct function_call_exp;
 
   template <typename M, typename... A>
-  auto make_function_call_exp(M& m, A... a)
+  auto make_function_call_exp(M m, A... a)
   {
     return function_call_exp<M, A...>(m, a...);
   }
   template <typename M, typename... A>
-  auto make_function_call_exp(M&& m, std::tuple<A...> a)
+  auto make_function_call_exp(M m, std::tuple<A...>&& a)
   {
     return function_call_exp<M, A...>(m, a);
   }

@@ -75,6 +75,11 @@ namespace iod
     static constexpr const int to_int = N;
   };
 
+  template <typename T> struct is_int_symbol               : std::false_type {};
+  template <int N>      struct is_int_symbol<int_symbol<N>> : std::true_type {};
+  template <typename T> struct is_int_symbol<const T> : is_int_symbol<T> {};
+  template <typename T> struct is_int_symbol<T&> : is_int_symbol<T> {};
+
 #define iod_define_number_symbol(NUMBER)                                \
   namespace s {                                                         \
   typedef iod::int_symbol<NUMBER>  _##NUMBER##_t; \

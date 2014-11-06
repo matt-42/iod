@@ -1,41 +1,45 @@
-The IOD Library, Symbol Based Meta-Programming for C++14
+The IOD Library.
 ==========================
 
+The IOD library pushes C++ meta programming to the next level by using
+a symbol based paradigm. Its main features are zero cost introspection
+on objects and a framework to easily embed domain specific languages
+into C++14.
 
-The goal of the IOD library is to brings to C++14 closer to the flexibility
-of Javascript without impacting its speed.
 
-# Statically introspectable objects (SIO)
+## Statically introspectable objects (SIO)
 
-  - Define object without having to declare any struct or class.
-  - Static introspection (i.e. without overhead on execution time) on those objects.
+Statically introspectable objects 
+
+  - Define POD-like objects without having to declare any struct or class.
+  - Zero cost static introspection (i.e. without overhead on execution time) on those objects.
   - A fast Json library built using this static introspection to generate a serializer
     and a deserializer dedicated to each SIO.
   - A way to iterate on the member of the object.
-  - Apply the
+
 ```c++
-        // Define an object
-        auto o = D(_Name = "John", _Age = 42, _City = "NYC");
-        // Direct access to its members.
-        assert(o.name == "John" && o.age == 42 && o.city == "NYC");
+  // Define an object
+  auto o = D(_Name = "John", _Age = 42, _City = "NYC");
+  // Direct access to its members.
+  assert(o.name == "John" && o.age == 42 && o.city == "NYC");
 
-        // Static Introspection. It has no execution cost since these function
-        // are computed at compile time.
-        assert(o.has(_Name) == true);
-        assert(o.has(_FirstName) == false);
-        assert(o.has(_FirstName) == false);
-        assert(o.size() == 3);
+  // Static Introspection. It has no execution cost since these function
+  // are computed at compile time.
+  assert(o.has(_Name) == true);
+  assert(o.has(_FirstName) == false);
+  assert(o.has(_FirstName) == false);
+  assert(o.size() == 3);
 
-        // Output the structure of the object to std::cout:
-        // name:John
-        // age:42
-        // city:NYC
-        foreach(o) | [] (auto& m) { std::cout << m.symbol().name() << ":" << m.value() << std::end; }
+  // Output the structure of the object to std::cout:
+  // name:John
+  // age:42
+  // city:NYC
+  foreach(o) | [] (auto& m) { std::cout << m.symbol().name() << ":" << m.value() << std::end; }
 
-        json_encode(o) // => {"name":"John","age":42,"City":"NYC"}
+  json_encode(o) // => {"name":"John","age":42,"City":"NYC"}
 ```
 
-# Optional and Named Function Arguments
+## Named Optional Function Arguments
 
 In classic C or C++, you would define a function taking optional arguments as :
 
@@ -51,14 +55,116 @@ of each argument. SIOs are a good alternative since they solve both issues:
 template <typename... O>
 void fun(int mandatory_arg, const O&... opts)
 {
-  auto options = D(opts...);
+  const auto options = D(opts...);
   int optional_arg1 = options.get(_Optional_arg1, 1); // return options.optional_arg1 or 1 if not set.
+  int optional_arg2 = options.get(_Optional_arg2, 1);
+  int optional_arg3 = options.get(_Optional_arg3, 1);
 }
 
 fun(1, _Optional_arg3 = 2); // Set the thirds argument and leave the two others to their default value.
 ```
 
-# 
+## Foreach for tuple and SIO
+
+While C++11 introduce range based for loops for container such as
+std::vector, it does not provide a way to iterate on
+tuples. ```foreach``` is a powerfull primitive for processing tuples
+as well as SIOs.
+
+```c++
+auto my_tuple = std::make_tuple(1, "test", 34.f);
+// Prints 1 test 34.f.
+foreach(my_tuple) | [] (auto& e) { std::cout << e << " "; }
+
+auto my_sio = D(_Name = "John", _Age = 42);
+// Prints name John age 42
+foreach(my_sio) | [] (auto& m) { std::cout << m.symbol().name() << " " << m.value() << " "; }
+```
+
+```foreach``` also allows to iterate on several object of the same length:
+
+```c++
+auto t1 = std::make_tuple(1, "test", 34.f);
+auto t2 = std::make_tuple("x", 34.f, "y");
+// Prints 1 xxx test 34 34 y
+foreach(t1, t2) | [] (auto& a, auto& b) { std::cout << a << " " << b << " "; }
+```
+
+Furthermore, it automatically builds a new tuple if the given function
+returns a non void value:
+```c++
+auto t1 = std::make_tuple(1, "A", 34.f);
+auto t2 = std::make_tuple(2, "B", 2);
+auto t3 = foreach(t1, t2) | [] (auto& a, auto& b) { return a + b; };
+// t3 == <3, "AB", 36>
+```
+
+## Apply tuples and SIOs to functions
+
+The ```apply``` primitive map elements of a tuple or SIO to a given
+function.
+
+```c++
+int fun(int x, float y) { return x + y; }
+
+auto tuple = std::make_tuple(1, 2.f);
+int res = apply(tuple, fun);
+// res == 3
+```
+
+
+## Language integrated queries
+
+To demonstrate the power of the IOD framework, we embeded an
+implementation of a subset of the SQL language in the C++ language.
+It handles SELECT, FROM, WHERE, INNER_JOIN (with the ON criteria),
+ORDER BY, GROUP BY, and aggregators such as average or sum.
+
+Given two collection:
+
+```c++
+std::vector<decltype(D(_Name = std::string(), _Age() = int(), _City_id = int()))> persons;
+std::vector<decltype(D(_Id = int(), _Name() = std::string(), _Zipcode = int()))> cities;
+```
+
+The following requests are valid:
+
+```c++
+// SELECT * from persons;
+linq.select().from(persons) | [] (auto& p) { std::cout << p.name << std::endl; }
+```
+
+```c++
+// SELECT myname = name from persons WHERE age > 42;
+linq.select(_Myname = _Name).from(persons).where(_Age > 42) |
+  [] (auto& p) { std::cout << p.myname << std::endl; }
+```
+
+```c++
+// SELECT name = person.name, city = city.name
+//        FROM persons as person
+//        INNER JOIN cities as city
+//        ON person.city_id == city.id
+linq.select(_Name = _Person[_Name], _City = _City[_Name])
+    .from(persons, _As(_Person))
+    .inner_join(cities, _As(_City),
+              _On(_City[_Cp] == _Person[_Cp])) |
+  [] (auto& p) { std::cout << p.name << " lives in " << p.city << std::endl; }
+```
+
+```c++
+// SELECT age = avg(age), city_id = city_id
+//        FROM persons
+//        GROUP BY city_id
+
+linq.select(_Age = _Avg(_Age), _City_id = _City_id)
+    .from(persons)
+    .group_by(_City_id) |
+  [] (auto& p) { std::cout << p.age << " is the average age in city " << p.city_id << std::endl; }
+```
+
+
+
 
 
 Javascript Vs C++: Introspection, on the fly object definition, object are maps

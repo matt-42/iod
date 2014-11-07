@@ -10,11 +10,13 @@
 #include <iostream>
 #include <stdexcept>
 #include <map>
-#include <boost/preprocessor/repetition/repeat.hpp>
+#include <unordered_map>
+#include <boost/lexical_cast.hpp>
 
 #include <iod/sio.hh>
 #include <iod/foreach.hh>
 #include <iod/symbols.hh>
+#include <iod/pow_10.hh>
 
 // Json IOD api.
 
@@ -38,6 +40,24 @@ namespace iod
 
   namespace json_internals
   {
+
+    struct stringview
+    {
+      stringview() {}
+      stringview(const std::string& _str) : str(&_str[0]), len(_str.size()) {}
+      stringview(const char* _str, int _len) : str(_str), len(_len) {}
+      stringview(const char* _str) : str(_str), len(strlen(_str)) {}
+      
+      bool operator==(const stringview& o) const { return len == o.len and !strncmp(o.str, str, len); }
+      bool operator==(const std::string& o) const { return len == o.size() and !strncmp(&o[0], str, len); }
+      bool operator==(const char* o) const { return len == strlen(o) and !strncmp(o, str, len); }
+
+      bool operator<(const stringview& o) const { return strncmp(o.str, str, std::min(len, o.len)); }
+      explicit operator std::string() const { return std::string(str, len); }
+
+      const char* str;
+      int len;
+    };
 
     // Json encoder.
     // =============================================
@@ -109,10 +129,12 @@ namespace iod
     {
       struct spaces_ {} spaces;
 
-      inline json_parser(std::istringstream& _stream) : ss(_stream) {}
+      inline json_parser(std::istringstream& _stream) : str(_stream.str()), pos(0) {}
+      inline json_parser(const std::string& _str) : str(_str), pos(0) {}
 
-      inline char peak() { return ss.peek(); }
-      inline char eof() { return ss.eof(); }
+      inline char peak() { return str[pos]; }
+      inline char eof() { return pos == str.size(); }
+      inline char eat_one() { return pos++; }
 
       template <typename E>
       inline void format_error(E& err) {}
@@ -124,13 +146,13 @@ namespace iod
         format_error(err, args...);
       }
 
+      // inline void skip_spaces(spaces_) { while (!eof() and std::isspace(str[pos])) pos++; }
+      
       template <typename... T>
       inline std::runtime_error json_error(T... message)
         {
           std::stringstream err;
 
-          auto str = ss.str();
-          int pos = ss.tellg();
           int w = 20;
           int b = pos > w ? pos - w : 0;
           int e = pos < int(str.size()) - w ? pos + w : int(str.size()) - 1;
@@ -140,37 +162,100 @@ namespace iod
           for (int i = 0; i < pos - b - 1; i++) err << ' ';
           err << "^^^"<< std::endl;
           format_error(err, message...);
-          // assert(0);
           return std::runtime_error(err.str());
         }
 
       inline json_parser& fill(std::string& t)
         {
-          int start = ss.tellg();
-          int end;
-          char c, prev_c;
-          auto str = ss.str();
-          do
-          {
-            ss.ignore(1000, '"');
-            end = ss.tellg();
-            c = str[end];
-            prev_c = str[end - 1];
-          } while (c == '"' and prev_c != '\\');
+          int start = pos;
+          int end = pos + 1;
 
-          ss.unget();
-          t.clear();
-          t = str.substr(start, end - start - 1);
+          while (!eof() and str[end] != '"') end++;
+          t = str.substr(start, end - start);
+          pos = end;
           return *this;
         }
 
-      template <typename T>
-      inline json_parser& fill(T&& t)
+      inline json_parser& fill(stringview& t)
         {
-          ss >> t;
-          if (ss.good()) return *this;
-          else
-            throw json_error();
+          int start = pos;
+          int end = pos + 1;
+
+          while (!eof() and str[end] != '"') end++;
+          t.str = str.data() + start;
+          t.len = end - start;
+          pos = end;
+          return *this;
+        }
+
+      template <typename I, int N>
+      inline json_parser& fill_int(I& val)
+        {
+          int sign = 1;
+          if (std::is_signed<I>::value and str[pos] == '-') { sign = -1; eat_one(); }
+          else if (str[pos] == '+') { eat_one(); }
+
+          int end = pos;
+          
+          val = 0;
+
+          const char* s = str.data() + pos;
+
+          for (int i = 0; i < N; i++)
+          {
+            val = val * 10 + (s[i] - '0');
+            end++;
+            if (s[i + 1] < '0' or s[i + 1] > '9') break;
+          }
+          val *= sign;
+
+          pos = end;
+          return *this;
+        }
+      
+      inline json_parser& fill(float& val)
+        {
+          int end = pos;
+          float res = 0;
+          
+          int ent = 0;
+          fill_int<int, 10>(ent);
+
+          res = ent;
+
+          if (str[pos] == '.')
+          {
+            eat_one();
+            unsigned int floating = 0;
+            int start = pos;
+            fill_int<unsigned int, 10>(floating);
+            int end = pos;
+            res += float(floating) / pow_10(end - start);
+          }
+
+          if (str[pos] == 'e')
+          {
+            eat_one();
+            int exp = 0;
+            fill_int<int, 10>(exp);
+            res *= pow_10(exp);
+          }
+
+          val = res;
+          return *this;
+        }
+      
+      inline json_parser& fill(int& val) { return fill_int<int, 10>(val); }
+      inline json_parser& fill(unsigned int& val) { return fill_int<unsigned int, 10>(val); }
+      
+      template <typename T>
+      inline json_parser& fill(T& t)
+        {
+          int end = pos;
+          while(!eof() and str[end] != ',' and str[end] != '}' and str[end] != ']') end++;
+          t = boost::lexical_cast<std::remove_reference_t<T>>(str.data() + pos, end - pos);
+          pos = end;
+          return *this;
         }
 
       template <typename T>
@@ -181,57 +266,46 @@ namespace iod
 
       inline json_parser& operator>>(char t)
         {
-          char value;
-          do
+          if (!eof() and str[pos] == t)
           {
-            ss.get(value);
+            pos++;
+            return *this;
           }
-          while(value == ' ');
-
-          if (ss.good() && value == t) return *this;
           else
           {
-            throw json_error("Expected ", t, " got ", value);
-          }
-        }
-
-      template <typename T>
-      inline json_parser& operator>>(T t)
-        {
-          T value;
-          ss >> value;
-          if (ss.good() && value == t) return *this;
-          else
-          {
-            throw json_error();
+            if (eof())
+              throw json_error("Expected ", t, " got eof");
+            else
+              throw json_error("Expected ", t, " got ", str[pos]);
           }
         }
 
       inline json_parser& operator>>(const char* t)
         {
-          std::string value;
-          fill(value);
-          if (ss.good() && value == std::string(t)) return *this;
+          int start = pos;
+          int end = pos;
+          while (!eof() and (t[end - start] == str[end] or str[end] != '"')) end++;
+
+          if (t[end - start] == '\0')
+          {
+            pos = end;
+            return *this;
+          }
           else
-            throw json_error("Expected ", t, " got ", value);
+            throw json_error("Expected ", t, " got something else.");
         }
+
 
       inline json_parser& operator>>(spaces_)
         {
-          char value;
-          do
-          {
-            ss.get(value);
-          }
-          while(std::isspace(value));
-
-          ss.unget();
+          while (!eof() and std::isspace(str[pos])) pos++;
           return *this;
         }
 
       int line_cpt, char_cpt;
       const char* cur;
-      std::istringstream& ss;
+      const std::string& str;
+      int pos;
     };
 
     inline void iod_attr_from_json(sio<>&, json_parser&)
@@ -255,7 +329,7 @@ namespace iod
     {
       T* attr = &o;
 
-      p >> p.spaces >> '"' >> attr->attribute_name() >> '"' >> p.spaces >> ':';
+      p >> p.spaces >> '"' >> attr->symbol().name() >> '"' >> p.spaces >> ':';
 
       iod_from_json_(attr->value(), p);
       if (sizeof...(Tail) != 0)
@@ -270,40 +344,39 @@ namespace iod
     {
       p >> p.spaces;
 
-      std::map<std::string, bool> filled;
-      std::map<std::string, int> symbol_map;
+      struct attr_info { bool filled; stringview name; };
+
+      attr_info A[std::remove_reference_t<decltype(o)>::size()];
+      
       int i = 0;
       foreach(o) | [&] (auto& m)
       {
-        std::string name = m.symbol().name();
+        A[i].filled = false;
+        stringview name(m.symbol().name(), strlen(m.symbol().name()));
         if (m.attributes().has(_Json_symbol))
-          name = m.attributes().get(_Json_symbol, _Json_symbol).name();
-        symbol_map[name] = i++;
-        filled[name] = false;
+        {
+          const char* new_name = m.attributes().get(_Json_symbol, _Json_symbol).name();
+          name = stringview(new_name, strlen(new_name));
+        }
+        A[i].name = name;
+        i++;
       };
 
       while (p.peak() != '}')
       {
-        std::string attr_name;
+        stringview attr_name;
         p >> p.spaces >> '"' >> fill(attr_name) >> '"' >> p.spaces >> ':' >> p.spaces;
-        filled[attr_name] = true;
-        auto it = symbol_map.find(attr_name);
-        if (it != symbol_map.end())
+
+        int i = 0;
+        foreach(o) | [&] (auto& m)
         {
-          switch (it->second)
-          {
-#define IOD_ATTR_CASE(z, I, X) case I: iod_from_json_(o.template get_nth<I>(), p); break;
-            BOOST_PP_REPEAT(50, IOD_ATTR_CASE, x);
-            #undef IOD_ATTR_CASE
-          default:
-            throw std::runtime_error(std::string("json_decode error: field does not exists: ") +
-                                     it->first);
-            break;
-          }
-        }
+          if (attr_name == A[i].name) { iod_from_json_(m.value(), p); A[i].filled = true; }
+          i++;
+        };
+
         p >> p.spaces;
         if (p.peak() == ',')
-          p >> ',';
+          p.eat_one();
         else
           break;
       }
@@ -313,14 +386,16 @@ namespace iod
         throw p.json_error("Expected } got ", p.peak());
       }
 
+      i = 0;
       foreach(o) | [&] (auto& m) {
         typename std::remove_reference_t<decltype(m)>::attributes_type attrs;
-        if (!m.attributes().has(_Optional) and !filled[m.symbol().name()])
+        if (!m.attributes().has(_Optional) and !A[i].filled)
           throw std::runtime_error(std::string("json_decode error: missing field ") +
                                    m.symbol().name());
+        i++;
       };
     }
-
+    
     // Parse an array.
     template <typename T>
     inline void iod_from_json_(std::vector<T>& array, json_parser& p)
@@ -359,8 +434,7 @@ namespace iod
     template <typename ...Tail>
     inline void iod_from_json_(sio<Tail...>& o, const std::string& str)
     {
-      std::istringstream stream(str);
-      json_parser p(stream);
+      json_parser p(str);
       if (str.size() > 0)
         iod_from_json_(o, p);
       else
@@ -384,7 +458,7 @@ namespace iod
       iod_from_json_(o, p);
     else
       throw std::runtime_error("Empty string.");
-    n_read = p.ss.tellg();
+    n_read = p.pos;
   }
 
 

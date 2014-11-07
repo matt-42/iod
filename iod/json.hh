@@ -10,7 +10,6 @@
 #include <iostream>
 #include <stdexcept>
 #include <map>
-#include <unordered_map>
 #include <boost/lexical_cast.hpp>
 
 #include <iod/sio.hh>

@@ -49,7 +49,6 @@ namespace iod
     {
       const auto& from_table = *req.from.table;
       typedef std::remove_reference_t<decltype(*req.from.table)> from_table_type;
-      typedef typename from_table_type::value_type record_type1;
 
       return static_if<R::template _has<_Join_t>::value>
         ([](const auto& req){
@@ -84,10 +83,10 @@ namespace iod
                       return evaluate(gb.criteria, a) < evaluate(gb.criteria, b);
                     });
 
-          for (int i = 0; i < table.size();)
+          for (int i = 0; i < int(table.size());)
           {
             int j = i + 1;
-            while (j < table.size() and
+            while (j < int(table.size()) and
                    evaluate(gb.criteria, table[i]) == evaluate(gb.criteria, table[i + j]))
               j++;
             T group(table.begin() + i, table.begin() + j);
@@ -129,7 +128,7 @@ namespace iod
     template <typename R, typename T, typename F>
     auto exec_aggregate(R& req, T& group, F f)
     {
-      auto aggregators = req.select;
+      //auto aggregators = req.select;
       auto aggrs = foreach(req.select) | [&] (auto& m) {
         //return m.symbol() = aggregate_initialize(m.value(), decltype(group[0])());
         return m.symbol() = aggregate_initialize(m.value(), group[0]);
@@ -146,8 +145,6 @@ namespace iod
     template <typename R, typename F>
     void exec_table(R& req, F f)
     {
-      typedef std::remove_reference_t<decltype(*req.from.table)> from_table_type;
-
       static_if<!has_symbol<R, _Inner_join_t>::value and
                 !has_symbol<R, _Order_by_t>::value and
                 !has_symbol<R, _Group_by_t>::value and
@@ -161,7 +158,7 @@ namespace iod
           // Compute { table1_name = table1, table2_name = table2, ...}
           auto tables = static_if<R::template _has<_Inner_join_t>::value>
             ([] (auto& req) {
-              auto inner_join_name = req.inner_join.get(_As, _2);
+              //auto inner_join_name = req.inner_join.get(_As, _2);
               return D(req.from.get(_As, _1) = req.from.table,
                          req.inner_join.get(_As, _1) = req.inner_join.table);
             },
@@ -171,7 +168,6 @@ namespace iod
 
           // The actual intermediate record type.
           auto record_sample = foreach(tables) | [&] (auto m) { return m.symbol() = (*tables[m])[0]; };
-          typedef decltype(record_sample) record_type;
 
           // Compute the intermediate table on which we will iterate.
           auto v = static_if<has_symbol<R, _Inner_join_t>::value>
@@ -187,9 +183,9 @@ namespace iod
 
               // Bruteforce O(n2) inner join. => optimization?
               std::vector<record_type> out;
-              for (int i = 0; i < from_table.size(); i++)
+              for (int i = 0; i < int(from_table.size()); i++)
               {
-                for (int j = 0; j < join_table.size(); j++)
+                for (int j = 0; j < int(join_table.size()); j++)
                 {
                   auto r = foreach(tables) | [&] (auto m) {
                     return m.symbol() = (*tables[m])[((void*)tables[m] == (void*)&from_table) ? i : j]; 
@@ -207,7 +203,7 @@ namespace iod
               auto table1 = *tables.template get_nth<0>();
               auto where_condition = req.get(_Where, D(_Condition = true)).condition;
               std::vector<record_type> out;
-              for (int i = 0; i < table1.size(); i++)
+              for (int i = 0; i < int(table1.size()); i++)
               {
                 auto r = foreach(tables) | [&] (auto m) { return m.symbol() = (*tables[m])[i]; };
                 if (evaluate(where_condition, r))

@@ -172,7 +172,7 @@ namespace iod
         };
         auto append_str = [&] (const char* str, int len)
         {
-          if (buffer_pos + len > sizeof(buffer)) flush();
+          if (buffer_pos + len > int(sizeof(buffer))) flush();
           memcpy(buffer + buffer_pos, str, len);
           buffer_pos += len;
         };

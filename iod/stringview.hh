@@ -13,8 +13,8 @@ namespace iod
     stringview(const char* _str) : str(_str), len(strlen(_str)) {}
       
     bool operator==(const stringview& o) const { return len == o.len and !strncmp(o.str, str, len); }
-    bool operator==(const std::string& o) const { return len == o.size() and !strncmp(&o[0], str, len); }
-    bool operator==(const char* o) const { return len == strlen(o) and !strncmp(o, str, len); }
+    bool operator==(const std::string& o) const { return len == int(o.size()) and !strncmp(&o[0], str, len); }
+    bool operator==(const char* o) const { return len == int(strlen(o)) and !strncmp(o, str, len); }
 
     bool operator<(const stringview& o) const { return strncmp(o.str, str, std::min(len, o.len)); }
     explicit operator std::string() const { return std::string(str, len); }

@@ -1,4 +1,4 @@
-The IOD Library.
+The IOD Library
 ==========================
 
 The IOD library pushes C++14 meta programming to the next level by using

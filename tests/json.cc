@@ -32,4 +32,14 @@ int main()
 
     std::cout << json_encode(o) << std::endl;
   }
+
+  { // UTF 8
+    auto o = D(_Name = std::string());
+    auto s = R"json({"name":"\u00E2\u82AC\u00E2\u82AC\u00E2\u82AC\u00E2\u82AC\u00E2\u82AC"})json";
+
+    json_decode(o, s);
+    assert(o.name.size() == 15 and o.name == "€€€€€");
+    std::cout << o.name << " " <<  o.name.size() << std::endl;
+  }
+
 }

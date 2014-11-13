@@ -96,16 +96,21 @@ As of today, all json parsers rely dynamic data structures to
 parse and store the json objects. Even if some good parser reduces
 dramastically the amount of dynamic memory allocation, they still
 suffer from the dynamic paradigm: A single function has to handle the
-whole set of possible json objects. This comes to the absurde situation
+whole set of possible json objects. This comes to the absurd situation
 where a program handling a small set specific json object types
 have to use a json parser handling any kind of objects.
 
 The iod library implement the opposite approach: Using
 meta-programming and introspection, one tiny specialized json parser
 is generated for each SIO object type so it involves no dynamic memory
-allocation, and very few conditional branching. This makes its
-performances impossible to match in other languages such as C or Java
-with using a generic parser.
+allocation, and very few conditional branching. It directly fill the
+object member according to their type without having to store the
+object in an intermediate hash map.
+
+This makes its performances impossible to match in other languages
+such as C or Java that do not provide static introspection. It is
+currently from 1.3x to 2.3x faster than the fastest JSON library while
+being easier to use.
 
 The only limitation of this design is when using a very large type set
 of json objects, the total code size of the generated parsers will be
@@ -121,6 +126,7 @@ assert(o2.name == "John");
 assert(o2.age == 42); 
 assert(o2.city == "NYC");
 ```
+
 
 ## Named Optional Function Arguments
 

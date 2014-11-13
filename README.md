@@ -1,21 +1,71 @@
 The IOD Library.
 ==========================
 
-The IOD library pushes C++ meta programming to the next level by using
-a symbol based paradigm. Its main features are zero cost introspection
-on objects and a framework to easily embed domain specific languages
-into C++14.
+The IOD library pushes C++14 meta programming to the next level by using
+a symbol based paradigm. It provides a compile-time a way to introspect objects and
+generate code matching their data structures.
 
+## What is a IOD symbol?
+
+Symbols are at the core of the IOD paradigm. They add to C++ a missing
+powerfull feature: The way to statically store in a variable the
+access to a object member, the call to a method, and the access to the
+string representing the name of this variable. Here is the most simple
+but powerfull operator that is now possible with IOD symbols:
+
+```c++
+#include <iod/symbol.hh>
+
+namespace s
+{
+  iod_define_symbol(a, _A); // Refer to members and methods a with symbol _A
+  iod_define_symbol(b, _B); // Refer to members and methods b with symbol _B
+  iod_define_symbol(c, _C); // Refer to members and methods b with symbol _C
+}
+
+int main() {
+
+  auto print_member = [] (auto& obj, auto& m)
+                      {
+                        std::cout << "obj." << s.name()
+                                  << " == " << m.member_access(obj) << std::endl;
+                      };
+
+  struct { int a; int b; int c; } obj{21, 42, 84};
+  print_member(obj, _A); // Prints "obj.a == 21"
+  print_member(obj, _B); // Prints "obj.b == 42"
+  print_member(obj, _C); // Prints "obj.c == 84"
+}
+```
+
+Without symbols (or other similar constructs), it is not possible to
+write such a generic print_member function. Without, one would have to
+write the three version accessing the three different members.
+
+By convention all the symbols should be place in the namespace ::s and
+they name start with _[uppercase character]. And to avoid multiple
+definition, guards should be used such as in the following:
+
+```c++
+namespace s
+{
+  #ifndef IOD_SYMBOL__Mysymbol
+  #define IOD_SYMBOL__Mysymbol
+    iod_define_symbol(mysymbol, _Mysymbol);
+  #endif
+}
+```
+
+The script ```tools/generate_symbol_definitions.sh``` automates this
+process by converting a file containing a list of symbol into a valid
+C++ header containing the symbol definitions.
 
 ## Statically introspectable objects (SIO)
 
 Statically introspectable objects 
 
   - Define POD-like objects without having to declare any struct or class.
-  - Zero cost static introspection (i.e. without overhead on execution time) on those objects.
-  - A fast Json library built using this static introspection to generate a serializer
-    and a deserializer dedicated to each SIO.
-  - A way to iterate on the member of the object.
+  - Zero cost static introspection (i.e. without overhead on execution time or memory) on those objects.
 
 ```c++
   // Define an object
@@ -37,6 +87,35 @@ Statically introspectable objects
   foreach(o) | [] (auto& m) { std::cout << m.symbol().name() << ":" << m.value() << std::end; }
 
   json_encode(o) // => {"name":"John","age":42,"City":"NYC"}
+```
+
+## A fast, malloc-free Json Parser.
+
+As of today, all json parsers rely dynamic data structures to
+parse and store the json objects. Even if some good parser reduces
+dramastically the amount of dynamic memory allocation, they still
+suffer from the dynamic paradigm: A single function has to handle the
+whole set of possible json objects. This comes to the absurde situation
+where a program handling a small set specific json object types
+have to use a json parser handling any kind of objects.
+
+The iod library implement the opposite approach: Using
+meta-programming and introspection, one tiny specialized json parser
+is generated for each object type so it involves no dynamic memory
+allocation, and very few conditional branching. This makes its
+performances impossible to match in other languages such as C or Java
+with using a generic parser.
+
+The only limitation of this design is when using a very large type set
+of json objects, the total code size of the generated parsers will be
+bigger than a generic dynamic parser.
+
+```c++
+auto o = D(_Name = "John", _Age = 42, _City = "NYC");
+auto str = json_encode(o) // => {"name":"John","age":42,"City":"NYC"}
+
+decltype(o) o2;
+json_decode(o2, str);
 ```
 
 ## Named Optional Function Arguments
@@ -81,7 +160,7 @@ auto my_sio = D(_Name = "John", _Age = 42);
 foreach(my_sio) | [] (auto& m) { std::cout << m.symbol().name() << " " << m.value() << " "; }
 ```
 
-```foreach``` also allows to iterate on several object of the same length:
+```foreach``` also allows to iterate on several object of the same length (but different types):
 
 ```c++
 auto t1 = std::make_tuple(1, "test", 34.f);
@@ -111,6 +190,26 @@ auto tuple = std::make_tuple(1, 2.f);
 int res = apply(tuple, fun);
 // res == 3
 ```
+
+
+## C++ Embedded Domain Specific Languages Framework
+
+The IOD library provides a set of tools to ease the embeding of
+embedded domain specific languages (EDSL) framework. It includes an
+abstract syntax tree (AST) with symbols and values as terminals. Here
+is an example of a simple expression:
+
+```c++
+auto exp = _A(23) + _B;
+```
+
+This code does nothing except computing the AST type and storing the
+value 23.  ```exp``` has to be evaluate to actually compute
+something. IOD provides three handy primitives to traverse ASTs:
+exp_map_reduce, exp_transform, exp_tranform_iterate. More
+documentation will come later. In the meantime, you can check how the
+Video++ library implements its image processing C++ EDSL:
+https://github.com/matt-42/vpp/blob/master/vpp/core/liie.hh
 
 
 ## Language integrated queries
@@ -164,6 +263,7 @@ linq.select(_Age = _Avg(_Age), _City_id = _City_id)
 ```
 
 
+## Language integrated queries
 
 
 

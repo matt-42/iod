@@ -65,8 +65,8 @@ namespace iod
     evaluate(const symbol<S>& s, const T& ctx)
     {
       return static_if<has_symbol<T, S>::value>
-        ([] (auto s, const auto& ctx) { return S().attribute_access(ctx); },
-         [] (auto s, const auto& ctx) { return S().attribute_access(find_first_attribute_with_predicate<S>(ctx)); },
+        ([] (auto s, const auto& ctx) { return S().member_access(ctx); },
+         [] (auto s, const auto& ctx) { return S().member_access(find_first_attribute_with_predicate<S>(ctx)); },
          s, ctx);
     }
 
@@ -75,7 +75,7 @@ namespace iod
     inline auto
     evaluate(const member_accessor_exp<O, M>& s, const T& ctx)
     {
-      return M().attribute_access(evaluate(s.object, ctx));
+      return M().member_access(evaluate(s.object, ctx));
     }
 
 #define iod_stl_binary_op(OP, NAME)                             \

@@ -16,6 +16,7 @@
 #include <iod/foreach.hh>
 #include <iod/symbols.hh>
 #include <iod/pow_10.hh>
+#include <iod/stringview.hh>
 
 // Json IOD api.
 
@@ -26,7 +27,7 @@ namespace iod
 
   // Decode \o from a json string \str.
   template <typename ...T>
-  inline void json_decode(sio<T...>& o, const std::string& str);
+  inline void json_decode(sio<T...>& o, const stringview& str);
 
   // Encode \o into a json string.
   template <typename ...T>
@@ -36,27 +37,8 @@ namespace iod
   template <typename S, typename ...Tail>
   inline void json_encode(const sio<Tail...>& o, S& stream);
 
-
   namespace json_internals
   {
-
-    struct stringview
-    {
-      stringview() {}
-      stringview(const std::string& _str) : str(&_str[0]), len(_str.size()) {}
-      stringview(const char* _str, int _len) : str(_str), len(_len) {}
-      stringview(const char* _str) : str(_str), len(strlen(_str)) {}
-      
-      bool operator==(const stringview& o) const { return len == o.len and !strncmp(o.str, str, len); }
-      bool operator==(const std::string& o) const { return len == o.size() and !strncmp(&o[0], str, len); }
-      bool operator==(const char* o) const { return len == strlen(o) and !strncmp(o, str, len); }
-
-      bool operator<(const stringview& o) const { return strncmp(o.str, str, std::min(len, o.len)); }
-      explicit operator std::string() const { return std::string(str, len); }
-
-      const char* str;
-      int len;
-    };
 
     // Json encoder.
     // =============================================
@@ -72,6 +54,15 @@ namespace iod
       ss << '"' << t << '"';
     }
 
+    template <typename S>
+    inline void json_encode_(const stringview& s, S& ss)
+    {
+      ss << '"';
+      for (int i = 0; i < s.len; i++)
+        ss << s.str[i];
+      ss << '"';
+    }
+    
     template <typename S>
     inline void json_encode_(const std::string& t, S& ss)
     {
@@ -129,7 +120,8 @@ namespace iod
       struct spaces_ {} spaces;
 
       inline json_parser(std::istringstream& _stream) : str(_stream.str()), pos(0) {}
-      inline json_parser(const std::string& _str) : str(_str), pos(0) {}
+      inline json_parser(const std::string& _str) : str(_str.c_str(), _str.size()), pos(0) {}
+      inline json_parser(const stringview& _str) : str(_str), pos(0) {}
 
       inline char peak() { return str[pos]; }
       inline char eof() { return pos == str.size(); }
@@ -144,166 +136,167 @@ namespace iod
         err << a;
         format_error(err, args...);
       }
-
-      // inline void skip_spaces(spaces_) { while (!eof() and std::isspace(str[pos])) pos++; }
       
       template <typename... T>
       inline std::runtime_error json_error(T... message)
-        {
-          std::stringstream err;
+      {
+        std::stringstream err;
 
-          int w = 20;
-          int b = pos > w ? pos - w : 0;
-          int e = pos < int(str.size()) - w ? pos + w : int(str.size()) - 1;
-          std::string near(str.begin() + b, str.begin() + e);
-          err << std::endl << "Json parse error near " << near << std::endl;
-          err << "                      ";
-          for (int i = 0; i < pos - b - 1; i++) err << ' ';
-          err << "^^^"<< std::endl;
-          format_error(err, message...);
-          return std::runtime_error(err.str());
-        }
+        int w = 20;
+        int b = pos > w ? pos - w : 0;
+        int e = pos < int(str.size()) - w ? pos + w : int(str.size()) - 1;
+        std::string near(str.data() + b, str.data() + e);
+        err << std::endl << "Json parse error near " << near << std::endl;
+        err << "                      ";
+        for (int i = 0; i < pos - b - 1; i++) err << ' ';
+        err << "^^^"<< std::endl;
+        format_error(err, message...);
+        return std::runtime_error(err.str());
+      }
 
       inline json_parser& fill(std::string& t)
-        {
-          int start = pos;
-          int end = pos + 1;
+      {
+        int start = pos;
+        int end = pos + 1;
 
-          while (!eof() and str[end] != '"') end++;
-          t = str.substr(start, end - start);
-          pos = end;
-          return *this;
-        }
+        while (!eof() and str[end] != '"') end++;
+        t = std::string(str.data() + start, end - start);
+        pos = end;
+        return *this;
+      }
 
       inline json_parser& fill(stringview& t)
-        {
-          int start = pos;
-          int end = pos + 1;
+      {
+        int start = pos;
+        int end = pos + 1;
 
-          while (!eof() and str[end] != '"') end++;
-          t.str = str.data() + start;
-          t.len = end - start;
-          pos = end;
-          return *this;
-        }
+        while (!eof() and str[end] != '"') end++;
+        t.str = str.data() + start;
+        t.len = end - start;
+        pos = end;
+        return *this;
+      }
 
       template <typename I, int N>
       inline json_parser& fill_int(I& val)
-        {
-          int sign = 1;
-          if (std::is_signed<I>::value and str[pos] == '-') { sign = -1; eat_one(); }
-          else if (str[pos] == '+') { eat_one(); }
+      {
+        int sign = 1;
+        if (std::is_signed<I>::value and str[pos] == '-') { sign = -1; eat_one(); }
+        else if (str[pos] == '+') { eat_one(); }
 
-          int end = pos;
+        int end = pos;
           
-          val = 0;
+        val = 0;
 
-          const char* s = str.data() + pos;
+        const char* s = str.data() + pos;
 
-          for (int i = 0; i < N; i++)
-          {
-            val = val * 10 + (s[i] - '0');
-            end++;
-            if (s[i + 1] < '0' or s[i + 1] > '9') break;
-          }
-          val *= sign;
-
-          pos = end;
-          return *this;
+        
+        for (int i = 0; i < N; i++)
+        {
+          if (s[i] < '0' or s[i] > '9') break;
+          val = val * 10 + (s[i] - '0');
+          end++;
         }
+        val *= sign;
+
+        if (end == pos) throw json_error("Could not find the expected number.");
+        
+        pos = end;
+        return *this;
+      }
       
       inline json_parser& fill(float& val)
-        {
-          int end = pos;
-          float res = 0;
+      {
+        int end = pos;
+        float res = 0;
           
-          int ent = 0;
-          fill_int<int, 10>(ent);
+        int ent = 0;
+        fill_int<int, 10>(ent);
 
-          res = ent;
+        res = ent;
 
-          if (str[pos] == '.')
-          {
-            eat_one();
-            unsigned int floating = 0;
-            int start = pos;
-            fill_int<unsigned int, 10>(floating);
-            int end = pos;
-            res += float(floating) / pow_10(end - start);
-          }
-
-          if (str[pos] == 'e')
-          {
-            eat_one();
-            int exp = 0;
-            fill_int<int, 10>(exp);
-            res *= pow_10(exp);
-          }
-
-          val = res;
-          return *this;
+        if (str[pos] == '.')
+        {
+          eat_one();
+          unsigned int floating = 0;
+          int start = pos;
+          fill_int<unsigned int, 10>(floating);
+          int end = pos;
+          res += float(floating) / pow_10(end - start);
         }
+
+        if (str[pos] == 'e')
+        {
+          eat_one();
+          int exp = 0;
+          fill_int<int, 10>(exp);
+          res *= pow_10(exp);
+        }
+
+        val = res;
+        return *this;
+      }
       
       inline json_parser& fill(int& val) { return fill_int<int, 10>(val); }
       inline json_parser& fill(unsigned int& val) { return fill_int<unsigned int, 10>(val); }
       
       template <typename T>
       inline json_parser& fill(T& t)
-        {
-          int end = pos;
-          while(!eof() and str[end] != ',' and str[end] != '}' and str[end] != ']') end++;
-          t = boost::lexical_cast<std::remove_reference_t<T>>(str.data() + pos, end - pos);
-          pos = end;
-          return *this;
-        }
+      {
+        int end = pos;
+        while(!eof() and str[end] != ',' and str[end] != '}' and str[end] != ']') end++;
+        t = boost::lexical_cast<std::remove_reference_t<T>>(str.data() + pos, end - pos);
+        pos = end;
+        return *this;
+      }
 
       template <typename T>
       inline json_parser& operator>>(fill_<T>&& t)
-        {
-          return fill(t.r);
-        }
+      {
+        return fill(t.r);
+      }
 
       inline json_parser& operator>>(char t)
+      {
+        if (!eof() and str[pos] == t)
         {
-          if (!eof() and str[pos] == t)
-          {
-            pos++;
-            return *this;
-          }
-          else
-          {
-            if (eof())
-              throw json_error("Expected ", t, " got eof");
-            else
-              throw json_error("Expected ", t, " got ", str[pos]);
-          }
+          pos++;
+          return *this;
         }
+        else
+        {
+          if (eof())
+            throw json_error("Expected ", t, " got eof");
+          else
+            throw json_error("Expected ", t, " got ", str[pos]);
+        }
+      }
 
       inline json_parser& operator>>(const char* t)
-        {
-          int start = pos;
-          int end = pos;
-          while (!eof() and (t[end - start] == str[end] or str[end] != '"')) end++;
+      {
+        int start = pos;
+        int end = pos;
+        while (!eof() and (t[end - start] == str[end] or str[end] != '"')) end++;
 
-          if (t[end - start] == '\0')
-          {
-            pos = end;
-            return *this;
-          }
-          else
-            throw json_error("Expected ", t, " got something else.");
+        if (t[end - start] == '\0')
+        {
+          pos = end;
+          return *this;
         }
+        else
+          throw json_error("Expected ", t, " got something else.");
+      }
 
 
       inline json_parser& operator>>(spaces_)
-        {
-          while (!eof() and std::isspace(str[pos])) pos++;
-          return *this;
-        }
+      {
+        while (!eof() and std::isspace(str[pos])) pos++;
+        return *this;
+      }
 
       int line_cpt, char_cpt;
       const char* cur;
-      const std::string& str;
+      stringview str;
       int pos;
     };
 
@@ -322,6 +315,11 @@ namespace iod
       p >> '"' >> fill(t) >> '"';
     }
 
+    inline void iod_from_json_(stringview& t, json_parser& p)
+    {
+      p >> '"' >> fill(t) >> '"';
+    }
+    
     // Parse a json hashmap ordered the field in the object \o.
     template <typename T, typename ...Tail>
     inline void iod_attr_from_json_strict(sio<T, Tail...>& o, json_parser& p)
@@ -367,12 +365,18 @@ namespace iod
         p >> p.spaces >> '"' >> fill(attr_name) >> '"' >> p.spaces >> ':' >> p.spaces;
 
         int i = 0;
+        bool attr_found = false;
         foreach(o) | [&] (auto& m)
         {
-          if (attr_name == A[i].name) { iod_from_json_(m.value(), p); A[i].filled = true; }
+          if (!attr_found and attr_name == A[i].name)
+          {
+            iod_from_json_(m.value(), p);
+            A[i].filled = true;
+            attr_found = true;
+          }
           i++;
         };
-
+        // Fixme: if !attr_found, skip the json value.
         p >> p.spaces;
         if (p.peak() == ',')
           p.eat_one();
@@ -442,17 +446,9 @@ namespace iod
   }
 
   template <typename ...Tail>
-  inline void json_decode(sio<Tail...>& o, const std::string& str)
+  inline void json_decode(sio<Tail...>& o, const stringview& str, int& n_read)
   {
-    json_internals::iod_from_json_(o, str);
-  }
-
-
-  template <typename ...Tail>
-  inline void json_decode(sio<Tail...>& o, const std::string& str, int& n_read)
-  {
-    std::istringstream stream(str);
-    json_internals::json_parser p(stream);
+    json_internals::json_parser p(str);
     if (str.size() > 0)
       iod_from_json_(o, p);
     else
@@ -460,6 +456,15 @@ namespace iod
     n_read = p.pos;
   }
 
+  template <typename ...Tail>
+  inline void json_decode(sio<Tail...>& o, const stringview& str)
+  {
+    json_internals::json_parser p(str);
+    if (str.size() > 0)
+      iod_from_json_(o, p);
+    else
+      throw std::runtime_error("Empty string.");
+  }
 
   template <typename ...Tail>
   inline void json_decode(sio<Tail...>& o, std::istringstream& stream)

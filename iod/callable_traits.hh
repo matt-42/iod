@@ -50,6 +50,15 @@ namespace iod
     typedef R return_type;
   };
 
+  template <typename C, typename R, typename... ARGS>
+  struct callable_traits<R (C::*)(ARGS...)>
+  {
+    typedef std::true_type is_callable;
+    static const int arity = sizeof...(ARGS);
+    typedef std::tuple<ARGS...> arguments_tuple;
+    typedef R return_type;
+  };
+  
   template <typename R, typename... ARGS>
   struct callable_traits<R(ARGS...)>
   {

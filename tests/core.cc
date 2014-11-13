@@ -81,7 +81,7 @@ int main()
   }
 
   { // Attribute value without default constructor should also work.
-    auto a = D(_Name = [] () {});
+    D(_Name = [] () {});
     // But cannot be default constructed.
     // Do not compile: decltype(a) d;
   }

@@ -237,9 +237,9 @@ namespace iod
       inline json_parser& fill(stringview& t)
       {
         int start = pos;
-        int end = pos + 1;
+        int end = pos;
 
-        while (!eof() and str[end] != '"') end++;
+        while (!eof() and str[end] != '"' and str[end - 1] != '\\') end++;
         t.str = str.data() + start;
         t.len = end - start;
         pos = end;

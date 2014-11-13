@@ -89,7 +89,7 @@ Statically introspectable objects
   json_encode(o) // => {"name":"John","age":42,"City":"NYC"}
 ```
 
-## A fast, malloc-free Json Parser.
+## A Fast, Malloc-Free Json Parser / Encoder.
 
 As of today, all json parsers rely dynamic data structures to
 parse and store the json objects. Even if some good parser reduces
@@ -112,11 +112,16 @@ bigger than a generic dynamic parser.
 
 ```c++
 auto o = D(_Name = "John", _Age = 42, _City = "NYC");
-auto str = json_encode(o) // => {"name":"John","age":42,"City":"NYC"}
+auto str = json_encode(o) // => str = {"name":"John","age":42,"City":"NYC"}
 
 decltype(o) o2;
 json_decode(o2, str);
+assert(o2.name == "John"); 
+assert(o2.age == 42); 
+assert(o2.city == "NYC");
 ```
+
+The parser is up to 4x faster than rapidjson
 
 ## Named Optional Function Arguments
 

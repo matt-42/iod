@@ -24,6 +24,7 @@ namespace s
 }
 
 int main() {
+  using namespace s;
 
   auto print_member = [] (auto& obj, auto& m)
                       {
@@ -57,14 +58,14 @@ namespace s
 ```
 
 The script ```tools/generate_symbol_definitions.sh``` automates this
-process by converting a file containing a list of symbol into a valid
+process by converting a file containing a list of symbols into a valid
 C++ header containing the symbol definitions.
 
 ## Statically introspectable objects (SIO)
 
-Statically introspectable objects 
+Statically introspectable objects features are:
 
-  - Define POD-like objects without having to declare any struct or class.
+  - The ability to instantiate C++ objects without having to declare any struct or class.
   - Zero cost static introspection (i.e. without overhead on execution time or memory) on those objects.
 
 ```c++
@@ -84,9 +85,9 @@ Statically introspectable objects
   // name:John
   // age:42
   // city:NYC
-  foreach(o) | [] (auto& m) { std::cout << m.symbol().name() << ":" << m.value() << std::end; }
+  foreach(o) | [] (auto& m) { std::cout << m.symbol().name() << ":"
+                                        << m.value() << std::end; }
 
-  json_encode(o) // => {"name":"John","age":42,"City":"NYC"}
 ```
 
 ## A Fast, Malloc-Free Json Parser / Encoder.
@@ -101,7 +102,7 @@ have to use a json parser handling any kind of objects.
 
 The iod library implement the opposite approach: Using
 meta-programming and introspection, one tiny specialized json parser
-is generated for each object type so it involves no dynamic memory
+is generated for each SIO object type so it involves no dynamic memory
 allocation, and very few conditional branching. This makes its
 performances impossible to match in other languages such as C or Java
 with using a generic parser.
@@ -120,8 +121,6 @@ assert(o2.name == "John");
 assert(o2.age == 42); 
 assert(o2.city == "NYC");
 ```
-
-The parser is up to 4x faster than rapidjson
 
 ## Named Optional Function Arguments
 
@@ -217,7 +216,7 @@ Video++ library implements its image processing C++ EDSL:
 https://github.com/matt-42/vpp/blob/master/vpp/core/liie.hh
 
 
-## Language integrated queries
+## Language Integrated Queries
 
 To demonstrate the power of the IOD framework, we embeded an
 implementation of a subset of the SQL language in the C++ language.
@@ -267,129 +266,11 @@ linq.select(_Age = _Avg(_Age), _City_id = _City_id)
   [] (auto& p) { std::cout << p.age << " is the average age in city " << p.city_id << std::endl; }
 ```
 
+## Compilers support
 
-## Language integrated queries
-
-
-
-Javascript Vs C++: Introspection, on the fly object definition, object are maps
-Iod makes meta programming very easy.
-A new meta-programming paradigm: Symbol-based meta programming.
-
-What is a symbol ?
-```c++
-struct name_t
-{
-   const char* name() const { return #SYMBOL; }                 
-                                                                        
-   template <typename T>                                               
-   auto attribute_access(const T& o) const { return o.SYMBOL; } 
-                                                                        
-   template <typename T, typename... A>                                
-   auto method_call(const T& o, A... args) const { return o.SYMBOL(args...); }
-
-   template <typename T>
-   struct variable_t { T name; };
-};
-
-One of the major advantage of dynamic languages like Javascript over
-C++ is that they 
-
-
-#What is Symbol Based Meta-Programming?
-
-C++ Meta-Programmer rely on types to implement their
-meta-algorithms. It usually lead to really deep complex templated
-structures hard to read and maintain. Iod greatly simplify
-meta-programming by letting the programmer play with symbols instead
-of types.
-
-
-
-The iod library introduces a new paradigm of C++ metaprograming. Its
-goal is to make writing of meta code as simple as plain C++ code.
-
-Its main features are :
-
-
- It
-also provide a meta-embeded language that you can map to any specific
-application domain. As a proof of concept, a subset of SQL has been
-embedded in C++, as well as a JSON-Like
-
-**Inline object definitions and declarations** with **static
-introspection** for C++11. This library embeds in C++11 a fast
-type-safe **json-like** domain specific language. It allows, in one
-C++ statement, to define, declare and instantiate a C++ object,
-**without any overhead execution time**.
-
-While keeping the performance and type-checking of C++, it adds to C++11 the
-flexibility of dynamic languages like javascript where declaring an object or
-extending it can be done on the fly. The library also provides **a json
-serializer and deserializer**, taking advantage of the static introspection and
-meta-programming.
-
-## Compilers
-
-The core of iod relies on C++11 (-std=c++11), except method definitions that use generic lambda
-from C++14 (-std=c++1y).
-Iod has been successfully compliled with :
+IOD relies on the C++14 standart. It has been successfully compliled with :
   - GCC 4.9
   - Clang 3.4
-
-Previons versions of GCC and Clang with support of C++11 should be able to compile iods without methods.
-
-## Overview of the library
-```c++
-
-// Headers
-#include "iod.hh"
-#include "iod_json.hh"
-
-// Declaration of the attributes used by the inline object definitions.
-iod_define_attribute(name);
-iod_define_attribute(age);
-iod_define_attribute(cars);
-iod_define_attribute(model);
-iod_define_attribute(cities);
-iod_define_attribute(lastname);
-
-
-int main()
-{
-
-
-  // Inline object definition.
-  auto person = iod(
-    *name = "Philippe", // Stared fields are serialized.
-    *age = 42,
-    inc_age = [] (auto& self, int inc) { self.age += inc; }, // Requires C++14.
-    *cities = {"Paris", "Toronto", "New York City"},
-    *cars = {
-        iod(*name = "Renault", model = "Clio"), // All elements of an array must have the same type.
-        iod(*name = "Mercedes", model = "Class A")
-      }
-    );
-
-  // Access to the content of the object.
-  std::cout << person.name << std::endl;
-  std::cout << person.cars[1].model << std::endl;
-
-  // Serialize an object to json.
-  std::string json = iod_to_json(person);
-  std::cout << json << std::endl;
-
-  // Load an object from a json string.
-  std::string json_string = R"json({"name":"John", "age": 12})json";
-  auto test = iod(name = "", age = int());
-  iod_from_json(test, json_string);
-
-  // Extend and object. (todo)
-  auto extended_person = iod_extend(person, iod(lastname = "Doe"));
-}
-
-
-```
 
 ## Contributing
 

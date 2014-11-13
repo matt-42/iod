@@ -153,14 +153,83 @@ namespace iod
         format_error(err, message...);
         return std::runtime_error(err.str());
       }
-
+      
       inline json_parser& fill(std::string& t)
       {
         int start = pos;
-        int end = pos + 1;
+        int end = pos;
+        t.clear();
 
-        while (!eof() and str[end] != '"') end++;
-        t = std::string(str.data() + start, end - start);
+        char buffer[128];
+        int buffer_pos = 0;
+        auto flush = [&] () { t.append(buffer, buffer_pos); buffer_pos = 0; };
+        auto append_char = [&] (char c)
+        {
+          if (buffer_pos == sizeof(buffer)) flush();
+            
+          buffer[buffer_pos] = c;
+          buffer_pos++;
+        };
+        auto append_str = [&] (const char* str, int len)
+        {
+          if (buffer_pos + len > sizeof(buffer)) flush();
+          memcpy(buffer + buffer_pos, str, len);
+          buffer_pos += len;
+        };
+        
+        while (true)
+        {
+          while (!eof() and str[end] != '"' and str[end] != '\\')
+            end++;
+
+          if (eof()) throw json_error("Unexpected end of string when parsing a string.");
+          append_str(str.data() + start, end - start);
+
+          if (str[end] == '"') break;
+
+          end++;
+          switch (str[end])
+          {
+          case '\'': append_char('\''); break;
+          case '"': append_char('"'); break;
+          case '\\': append_char('\\'); break;
+          case '/': append_char('/'); break;
+          case 'n': append_char('\n'); break;
+          case 'r': append_char('\r'); break;
+          case 't': append_char('\t'); break;
+          case 'b': append_char('\b'); break;
+          case 'f': append_char('\f'); break;
+          case 'v': append_char('\v'); break;
+          case '0': append_char('\0'); break;
+          case 'u':
+            while (true)
+            {
+              if (str.size() < end + 4)
+                throw json_error("Unexpected end of string when decoding an utf8 character");
+              end++;
+
+              auto decode_hex_c = [this] (char c) {
+                if (c >= '0' and c <= '9') return c - '0';
+                else return (10 + c - 'A');
+              };
+              
+              const char* str2 = str.data() + end;
+              char x = (decode_hex_c(str2[0]) << 4) + decode_hex_c(str2[1]);
+              if (x) append_char(x);
+              append_char((decode_hex_c(str2[2]) << 4) + decode_hex_c(str2[3]));
+
+              end += 4;
+              
+              if (str[end] == '\\' and str[end + 1] == 'u')
+                end += 1;
+              else break;
+            }
+            break;
+          }
+
+          start = end;
+        }
+        flush();
         pos = end;
         return *this;
       }
@@ -207,7 +276,6 @@ namespace iod
       
       inline json_parser& fill(float& val)
       {
-        int end = pos;
         float res = 0;
           
         int ent = 0;

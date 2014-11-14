@@ -8,10 +8,10 @@ generate code matching their data structures.
 ## What is a IOD symbol?
 
 Symbols are at the core of the IOD paradigm. They add to C++ a missing
-powerfull feature: The way to statically store in a variable the
+powerful feature: The way to statically store in a variable the
 access to a object member, the call to a method, and the access to the
 string representing the name of this variable. Here is the most simple
-but powerfull operator that is now possible with IOD symbols:
+but powerful operator that is now possible with IOD symbols:
 
 ```c++
 #include <iod/symbol.hh>
@@ -94,13 +94,13 @@ Statically introspectable objects features are:
 
 As of today, all json parsers rely dynamic data structures to
 parse and store the json objects. Even if some good parser reduces
-dramastically the amount of dynamic memory allocation, they still
+dramatically the amount of dynamic memory allocation, they still
 suffer from the dynamic paradigm: A single function has to handle the
 whole set of possible json objects. This comes to the absurd situation
 where a program handling a small set specific json object types
 have to use a json parser handling any kind of objects.
 
-The iod library implement the opposite approach: Using
+The iod library implements the opposite approach: Using
 meta-programming and introspection, one tiny specialized json parser
 is generated for each SIO object type so it involves no dynamic memory
 allocation, and very few conditional branching. It directly fill the
@@ -108,9 +108,10 @@ object member according to their type without having to store the
 object in an intermediate hash map.
 
 This makes its performances impossible to match in other languages
-such as C or Java that do not provide static introspection. It is
-currently from 1.3x to 2.3x faster than the fastest JSON library
-(RapidJSON) while being easier to use.
+such as C or Java that do not provide static introspection. The
+encoder still need optimizations, and the parser is currently from
+1.3x to 2.3x faster than the RapidJSON library without explicit use of
+SIMD vector instruction.
 
 The only limitation of this design is when using a very large type set
 of json objects, the total code size of the generated parsers will be
@@ -157,7 +158,7 @@ fun(1, _Optional_arg3 = 2); // Set the thirds argument and leave the two others 
 
 While C++11 introduce range based for loops for container such as
 std::vector, it does not provide a way to iterate on
-tuples. ```foreach``` is a powerfull primitive for processing tuples
+tuples. ```foreach``` is a powerful primitive for processing tuples
 as well as SIOs.
 
 ```c++
@@ -224,10 +225,10 @@ https://github.com/matt-42/vpp/blob/master/vpp/core/liie.hh
 
 ## Language Integrated Queries
 
-To demonstrate the power of the IOD framework, we embeded an
+To demonstrate the power of the IOD framework, we embedded an
 implementation of a subset of the SQL language in the C++ language.
 It handles SELECT, FROM, WHERE, INNER_JOIN (with the ON criteria),
-ORDER BY, GROUP BY, and aggregators such as average or sum.
+ORDER BY, GROUP BY, and aggregates such as average or sum.
 
 Given two collection:
 
@@ -274,7 +275,7 @@ linq.select(_Age = _Avg(_Age), _City_id = _City_id)
 
 ## Compilers support
 
-IOD relies on the C++14 standart. It has been successfully compliled with :
+IOD relies on the C++14 standard. It has been successfully compiled with :
   - GCC 4.9
   - Clang 3.4
 

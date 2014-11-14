@@ -111,7 +111,7 @@ This makes its performances impossible to match in other languages
 such as C or Java that do not provide static introspection. The
 encoder still need optimizations, and the parser is currently from
 1.3x to 2.3x faster than the RapidJSON library without explicit use of
-SIMD vector instruction.
+SIMD vector instructions.
 
 The only limitation of this design is when using a very large type set
 of json objects, the total code size of the generated parsers will be

@@ -131,7 +131,7 @@ assert(o2.city == "NYC");
 
 ## Named Optional Function Arguments
 
-In classic C or C++, you would define a function taking optional arguments as :
+In classic C++, you would define a function taking optional arguments as :
 
 ```c++
 void fun(int mandatory_arg, int optional_arg1 = 1, int optional_arg2 = 12, int optional_arg3 = 12);

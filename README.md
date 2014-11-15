@@ -117,6 +117,10 @@ The only limitation of this design is when using a very large type set
 of json objects, the total code size of the generated parsers will be
 bigger than a generic dynamic parser.
 
+Note on memory allocation: While the parser does not allocate any
+intermediate structure, it allocates the destination object's
+members if they are of type std::vector or std::string.
+
 ```c++
 
 // The type of the object contains attributes related to its json

@@ -118,14 +118,36 @@ of json objects, the total code size of the generated parsers will be
 bigger than a generic dynamic parser.
 
 ```c++
-auto o = D(_Name = "John", _Age = 42, _City = "NYC");
-auto str = json_encode(o) // => str = {"name":"John","age":42,"City":"NYC"}
 
-decltype(o) o2;
-json_decode(o2, str);
-assert(o2.name == "John"); 
-assert(o2.age == 42); 
-assert(o2.city == "NYC");
+// The type of the object contains attributes related to its json
+// representation such as alternative json keys and whether or not a
+// field should not be included in the json representation.
+typedef decltype(D(_Name(_Json_key = _Username) = std::string(),
+                   _Age(_Json_skip) = int(),
+                   _City = std::string())) User;
+  
+User u("John", 23, "NYC");
+
+// Encode to a json string.
+auto str = json_encode(u);
+assert(str == R"({"username":"John","city":"NYC"})");
+
+// Decode a json string representing a user.
+User u2; json_decode(u2, str);
+assert(u2.name == "John" and u2.city == "NYC");
+
+// The json throw exeptions when some value type mismatch
+// the object or when some fields are missing:
+
+json_decode(u2, R"({"username":"John"})");
+// Exception: json_decode error: missing field city.
+
+json_decode(u2, R"({"username":"John","city":22})");
+//  Exception:
+//  Json parse error near name":"John","city":22
+                                             ^^^
+//  Expected " got 2
+
 ```
 
 

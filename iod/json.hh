@@ -91,12 +91,17 @@ namespace iod
     {
       ss << '{';
       int i = 0;
+      bool first = true;
       foreach(o) | [&] (const auto& m)
       {
-        json_encode_(m.attributes().get(_Json_symbol, m.symbol()).name(), ss);
-        ss << ':';
-        json_encode_(m.value(), ss);
-        if (i != o.size() - 1) ss << ',';
+        if (!m.attributes().has(_Json_skip))
+        {
+          if (!first) { ss << ','; }
+          first = false; 
+          json_encode_(m.attributes().get(_Json_key, m.symbol()).name(), ss);
+          ss << ':';
+          json_encode_(m.value(), ss);
+        }
         i++;
       };
       ss << '}';
@@ -418,9 +423,9 @@ namespace iod
       {
         A[i].filled = false;
         stringview name(m.symbol().name(), strlen(m.symbol().name()));
-        if (m.attributes().has(_Json_symbol))
+        if (m.attributes().has(_Json_key))
         {
-          const char* new_name = m.attributes().get(_Json_symbol, _Json_symbol).name();
+          const char* new_name = m.attributes().get(_Json_key, _Json_key).name();
           name = stringview(new_name, strlen(new_name));
         }
         A[i].name = name;
@@ -436,7 +441,7 @@ namespace iod
         bool attr_found = false;
         foreach(o) | [&] (auto& m)
         {
-          if (!attr_found and attr_name == A[i].name)
+          if (!m.attributes().has(_Json_skip) and !attr_found and attr_name == A[i].name)
           {
             iod_from_json_(m.value(), p);
             A[i].filled = true;
@@ -460,7 +465,7 @@ namespace iod
       i = 0;
       foreach(o) | [&] (auto& m) {
         typename std::remove_reference_t<decltype(m)>::attributes_type attrs;
-        if (!m.attributes().has(_Optional) and !A[i].filled)
+        if (!m.attributes().has(_Json_skip) and !m.attributes().has(_Optional) and !A[i].filled)
           throw std::runtime_error(std::string("json_decode error: missing field ") +
                                    m.symbol().name());
         i++;

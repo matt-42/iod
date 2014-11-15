@@ -2,6 +2,7 @@
 #include <cassert>
 #include <iod/sio.hh>
 #include <iod/symbol.hh>
+#include <iod/symbols.hh>
 
 #include "symbols.hh"
 

@@ -34,3 +34,7 @@
 #define IOD_SYMBOL__My_json_name
     iod_define_symbol(my_json_name, _My_json_name)
 #endif
+#ifndef IOD_SYMBOL__Username
+#define IOD_SYMBOL__Username
+    iod_define_symbol(username, _Username)
+#endif

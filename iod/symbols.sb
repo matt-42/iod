@@ -30,4 +30,5 @@ stddev
 
 optional
 
-json_symbol
+json_key
+json_skip

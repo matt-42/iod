@@ -33,7 +33,9 @@ namespace iod
     inline const char* name() const { return #SYMBOL; }                 \
                                                                         \
     template <typename T>                                               \
-    inline auto member_access(const T& o) const { return o.SYMBOL; } \
+    inline const auto& member_access(const T& o) const { return o.SYMBOL; } \
+    template <typename T>                                               \
+    inline auto& member_access(T& o) const { return o.SYMBOL; } \
                                                                         \
     template <typename T, typename... A>                                \
     inline auto method_call(const T& o, A... args) const { return o.SYMBOL(args...); } \

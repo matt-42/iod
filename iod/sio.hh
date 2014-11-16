@@ -295,6 +295,11 @@ namespace iod
     typename _nth_attribute<N>::value_type&
     get_nth() { return get_nth_attribute<N>().value(); }
 
+    auto&& values_as_tuple() { return std::forward_as_tuple(static_cast<T*>(this)->value(),
+                                                            static_cast<Tail*>(this)->value()...); }
+    auto&& values_as_tuple() const { return std::forward_as_tuple(static_cast<const T*>(this)->value(),
+                                                                  static_cast<const Tail*>(this)->value()...); }
+
     // Assignment.
     template <typename O, typename... Otail>
     self& operator=(const sio<O, Otail...>& o)

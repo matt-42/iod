@@ -182,7 +182,7 @@ namespace iod
   
   // Terminals.
   template <typename E, typename M, typename C>
-  inline auto& exp_evaluate(E& exp, M eval, C& ctx,
+  inline decltype(auto) exp_evaluate(E& exp, M eval, C& ctx,
                            std::enable_if_t<!callable_with<M, E&, M, C&>::value and
                            !has_transform_iterate<E>::value>* = 0)
   {
@@ -190,18 +190,16 @@ namespace iod
   }
 
   template <typename E, typename M, typename C>
-  inline auto exp_evaluate(E& exp, M eval, C& ctx,
+  inline decltype(auto) exp_evaluate(E& exp, M eval, C& ctx,
                            std::enable_if_t<callable_with<M, E&, M, C&>::value>* = 0)
-    -> decltype(eval(exp, eval, ctx))
   {
     return eval(exp, eval, ctx);
   }
   
   template <typename E, typename M, typename C>
-  inline auto exp_evaluate(E& exp, M eval, C& ctx,
+  inline decltype(auto) exp_evaluate(E& exp, M eval, C& ctx,
                            std::enable_if_t<!callable_with<M, E&, M, C&>::value and
                            has_transform_iterate<E>::value>* = 0)
-    -> decltype(exp.evaluate(eval, ctx))
   {
     return exp.evaluate(eval, ctx);
   }

@@ -7,55 +7,80 @@ namespace iod
   template <typename ...T>
   struct sio;
 
-  namespace internal
+  template <int N>
+  struct run_apply;
+  
+  template <int N, int TP>
+  struct run_tuple
+  {
+    template <typename... M, typename... T>
+    static decltype(auto) run(std::tuple<M...>& o, T&&... t)
+    { return run_tuple<N, TP - 1>::run(o, std::forward<T>(t)..., std::get<sizeof...(M) - TP>(o)); }
+    template <typename... M, typename... T>
+    static decltype(auto) run(const std::tuple<M...>& o, T&&... t)
+    { return run_tuple<N, TP - 1>::run(o, std::forward<T>(t)..., std::get<sizeof...(M) - TP>(o)); }
+  };
+
+  template <int N>
+  struct run_tuple<N, 0>
+  {
+    template <typename... M, typename... T>
+    static decltype(auto) run(std::tuple<M...>& o, T&&... t)
+    { return run_apply<N - 1>::run(std::forward<T>(t)...); }
+    template <typename... M, typename... T>
+    static decltype(auto) run(const std::tuple<M...>& o, T&&... t)
+    { return run_apply<N - 1>::run(std::forward<T>(t)...); }
+  };
+  
+  template <int N>
+  struct run_apply
   {
 
-    template<unsigned N, unsigned SIZE, typename T, typename F, typename... U>
-    inline
-    auto
-    tuple_apply(std::enable_if_t<(N == SIZE), int>*, T& t, F f, U&&... u)
+    // SIOs
+    template <typename... M, typename... T>
+    static decltype(auto) run(sio<M...>& o, T&&... t)
+    { return run_apply<N - 1>::run(t..., static_cast<M*>(&o)->value()...); }
+    template <typename... M, typename... T>
+    static decltype(auto) run(const sio<M...>& o, T&&... t)
+    { return run_apply<N - 1>::run(t..., static_cast<const M*>(&o)->value()...); }
+
+    // tuples.
+
+    template <typename... M, typename... T>
+    static decltype(auto) run(std::tuple<M...>& o, T&&... t)
+    { return run_tuple<N, sizeof...(M)>::run(o, t...); }
+    template <typename... M, typename... T>
+    static decltype(auto) run(const std::tuple<M...>& o, T&&... t)
+    { return run_tuple<N, sizeof...(M)>::run(o, t...); }
+  
+    // Other types
+    template <typename T1, typename... T>
+    static decltype(auto) run(T1& t1, T&&... t)
+    { return run_apply<N - 1>::run(std::forward<T>(t)..., t1); }
+    template <typename T1, typename... T>
+    static decltype(auto) run(const T1& t1, T&&... t)
+    { return run_apply<N - 1>::run(std::forward<T>(t)..., t1); }
+    
+  };
+
+  template <>
+  struct run_apply<0>
+  {
+    // Finalize the call.
+    template <typename F, typename... T>
+    static decltype(auto) run(F f, T&&... t)
     {
-      return f(std::forward<U>(u)...);
+      return f(std::forward<T>(t)...);
     }
-
-    template<unsigned N, unsigned SIZE, typename T, typename F, typename... U>
-    inline
-    auto
-    tuple_apply(std::enable_if_t<(N < SIZE), int>*, T& t, F f, U&&... u)
-    {
-      return tuple_apply<N + 1, SIZE, T, F>(0, t, f, u..., std::get<N>(t));
-    }
-
-  }
-
-
-  template<typename F, typename... T>
-  inline auto apply(std::tuple<T...>& t, F f)
+  };
+  
+  template <typename... T>
+  decltype(auto) apply(T&&... t)
   {
-    return internal::tuple_apply<0, sizeof...(T), std::tuple<T...>>(0, t, f);
+    return run_apply<sizeof...(T) - 1>::run(std::forward<T>(t)...);
   }
-
-  template<typename F, typename... T>
-  inline auto apply(const std::tuple<T...>& t, F f)
-  {
-    return internal::tuple_apply<0, sizeof...(T), const std::tuple<T...>>(0, t, f);
-  }
-
-
-
-  template <typename F, typename... T>
-  auto apply(const sio<T...>& o, F f)
-  {
-    return f(static_cast<const T*>(&o)->value()...);
-  }
-
-  template <typename F, typename... T>
-  auto apply(sio<T...>& o, F f)
-  {
-    return f(static_cast<T*>(&o)->value()...);
-  }
-
-
+  
+  
 
   template <typename F, typename... T>
   auto apply_members(const sio<T...>& o, F f)

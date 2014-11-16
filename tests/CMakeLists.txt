@@ -28,3 +28,6 @@ add_test(apply apply)
 
 add_executable(foreach foreach.cc)
 add_test(foreach foreach)
+
+add_executable(readme readme.cc)
+add_test(readme readme)

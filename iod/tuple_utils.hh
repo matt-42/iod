@@ -5,20 +5,20 @@
 namespace iod
 {
 
-  template <unsigned N, typename T, typename X>
+  template <int N, typename T, typename X>
   struct tuple_find_type2;
 
-  template <unsigned N, typename X>
-  struct tuple_find_type2<N, std::tuple<>, X> : public std::integral_constant<unsigned, -1> {};
+  template <int N, typename X>
+  struct tuple_find_type2<N, std::tuple<>, X> : public std::integral_constant<int, -1> {};
 
-  template <unsigned N, typename... T, typename X>
-  struct tuple_find_type2<N, std::tuple<X, T...>, X> : public std::integral_constant<unsigned, N> {};
-  template <unsigned N, typename... T, typename X>
-  struct tuple_find_type2<N, std::tuple<X&, T...>, X> : public std::integral_constant<unsigned, N> {};
-  template <unsigned N, typename... T, typename X>
-  struct tuple_find_type2<N, std::tuple<const X&, T...>, X> : public std::integral_constant<unsigned, N> {};
+  template <int N, typename... T, typename X>
+  struct tuple_find_type2<N, std::tuple<X, T...>, X> : public std::integral_constant<int, N> {};
+  template <int N, typename... T, typename X>
+  struct tuple_find_type2<N, std::tuple<X&, T...>, X> : public std::integral_constant<int, N> {};
+  template <int N, typename... T, typename X>
+  struct tuple_find_type2<N, std::tuple<const X&, T...>, X> : public std::integral_constant<int, N> {};
 
-  template <unsigned N, typename T1, typename... T, typename X>
+  template <int N, typename T1, typename... T, typename X>
   struct tuple_find_type2<N, std::tuple<T1, T...>, X> : public tuple_find_type2<N + 1, std::tuple<T...>, X> {};
 
   template <typename T, typename X>

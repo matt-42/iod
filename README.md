@@ -14,21 +14,23 @@ string representing the name of this variable. Here is the most simple
 but powerful operator that is now possible with IOD symbols:
 
 ```c++
+#include <iostream>
 #include <iod/symbol.hh>
 
-namespace s
-{
-  iod_define_symbol(a, _A); // Refer to members and methods a with symbol _A
-  iod_define_symbol(b, _B); // Refer to members and methods b with symbol _B
-  iod_define_symbol(c, _C); // Refer to members and methods b with symbol _C
-}
+iod_define_symbol(a, _A); // Refer to members and methods a with symbol _A
+iod_define_symbol(b, _B); // Refer to members and methods b with symbol _B
+iod_define_symbol(c, _C); // Refer to members and methods b with symbol _C
 
 int main() {
-  using namespace s;
+
+  // Symbols are located in namespace s to avoid name clash.
+  using s::_A;
+  using s::_B;
+  using s::_C;
 
   auto print_member = [] (auto& obj, auto& m)
                       {
-                        std::cout << "obj." << s.name()
+                        std::cout << "obj." << m.name()
                                   << " == " << m.member_access(obj) << std::endl;
                       };
 
@@ -43,17 +45,15 @@ Without symbols (or other similar constructs), it is not possible to
 write such a generic print_member function. Without, one would have to
 write the three version accessing the three different members.
 
-By convention all the symbols should be place in the namespace ::s and
-they name start with _[uppercase character]. And to avoid multiple
-definition, guards should be used such as in the following:
+By convention all the symbols starts with _[uppercase character]. And
+to avoid multiple definition, guards should be used such as in the
+following:
 
 ```c++
-namespace s
-{
-  #ifndef IOD_SYMBOL__Mysymbol
-  #define IOD_SYMBOL__Mysymbol
-    iod_define_symbol(mysymbol, _Mysymbol);
-  #endif
+#ifndef IOD_SYMBOL__Mysymbol
+#define IOD_SYMBOL__Mysymbol
+  iod_define_symbol(mysymbol, _Mysymbol);
+#endif
 }
 ```
 

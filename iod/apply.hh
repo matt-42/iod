@@ -7,6 +7,23 @@ namespace iod
   template <typename ...T>
   struct sio;
 
+  template <typename T>
+  struct forward_
+  {
+    T& t;
+  };
+
+  template <typename T>
+  struct forward_<const T>
+  {
+    const T& t;
+  };
+
+  template <typename T>
+  auto forward(T& t) { return forward_<T>{t}; }
+  template <typename T>
+  auto forward(const T& t) { return forward_<const T>{t}; }
+
   template <int N>
   struct run_apply;
   
@@ -39,19 +56,18 @@ namespace iod
     // SIOs
     template <typename... M, typename... T>
     static decltype(auto) run(sio<M...>& o, T&&... t)
-    { return run_apply<N - 1>::run(t..., static_cast<M*>(&o)->value()...); }
+    { return run_apply<N - 1>::run(std::forward<T>(t)..., static_cast<M*>(&o)->value()...); }
     template <typename... M, typename... T>
     static decltype(auto) run(const sio<M...>& o, T&&... t)
-    { return run_apply<N - 1>::run(t..., static_cast<const M*>(&o)->value()...); }
+    { return run_apply<N - 1>::run(std::forward<T>(t)..., static_cast<const M*>(&o)->value()...); }
 
     // tuples.
-
     template <typename... M, typename... T>
     static decltype(auto) run(std::tuple<M...>& o, T&&... t)
-    { return run_tuple<N, sizeof...(M)>::run(o, t...); }
+    { return run_tuple<N, sizeof...(M)>::run(o, std::forward<T>(t)...); }
     template <typename... M, typename... T>
     static decltype(auto) run(const std::tuple<M...>& o, T&&... t)
-    { return run_tuple<N, sizeof...(M)>::run(o, t...); }
+    { return run_tuple<N, sizeof...(M)>::run(o, std::forward<T>(t)...); }
   
     // Other types
     template <typename T1, typename... T>
@@ -60,6 +76,11 @@ namespace iod
     template <typename T1, typename... T>
     static decltype(auto) run(const T1& t1, T&&... t)
     { return run_apply<N - 1>::run(std::forward<T>(t)..., t1); }
+
+    // Other types
+    template <typename T1, typename... T>
+    static decltype(auto) run(forward_<T1>&& t1, T&&... t)
+    { return run_apply<N - 1>::run(std::forward<T>(t)..., t1.t); }
     
   };
 
@@ -68,7 +89,13 @@ namespace iod
   {
     // Finalize the call.
     template <typename F, typename... T>
-    static decltype(auto) run(F f, T&&... t)
+    static decltype(auto) run(F& f, T&&... t)
+    {
+      return f(std::forward<T>(t)...);
+    }
+
+    template <typename F, typename... T>
+    static decltype(auto) run(const F& f, T&&... t)
     {
       return f(std::forward<T>(t)...);
     }

@@ -18,19 +18,19 @@ namespace iod
 
     template<unsigned N, unsigned SIZE, typename F, typename A, typename... R>
     inline
-    auto
+    decltype(auto)
     foreach_loop_tuple(std::enable_if_t<N == SIZE>*, F f, A&& args_tuple, R&&... results)
     {
       return static_if<sizeof...(R) == 0>(
         [] () {},
-        [&] () { return std::make_tuple(results...);}); }
+        [&] () { return std::forward_as_tuple(std::forward<R>(results)...);}); }
 
     template<unsigned N, unsigned SIZE, typename F, typename A, typename... R>
     inline
-    auto
+    decltype(auto)
     foreach_loop_tuple(std::enable_if_t<N < SIZE>*, F f, A&& args_tuple, R&&... results)
     {
-      auto h = [] (auto&& a) -> auto&& // avoid the lambda to convert references to values.
+      auto h = [] (auto&& a) -> decltype(auto)
         {
           return std::forward<decltype(std::get<N>(a))>(std::get<N>(a)); 
         };
@@ -41,12 +41,12 @@ namespace iod
         [&] (auto& args_tuple, auto& h, auto& f)
              {
                proxy_apply(args_tuple, h, f);
-               return foreach_loop_tuple<N + 1, SIZE>(0, f, args_tuple, results...);
+               return foreach_loop_tuple<N + 1, SIZE>(0, f, args_tuple, std::forward<R>(results)...);
              },
-        [&] (auto& args_tuple, auto& h, auto& f)
+        [&] (auto& args_tuple, auto& h, auto& f) -> decltype(auto)
              {
                return foreach_loop_tuple<N + 1, SIZE>
-                 (0, f, args_tuple, results..., proxy_apply(args_tuple, h, f));
+                 (0, f, args_tuple, std::forward<R>(results)..., proxy_apply(args_tuple, h, f));
              }, args_tuple, h, f);
 
     }
@@ -162,7 +162,7 @@ namespace iod
     {
       return static_if<sizeof...(R) == 0>(
         [] () {},
-        [&] () { return std::make_tuple(results...);}); }
+        [&] () { return std::forward_as_tuple(results...);}); }
 
     template<unsigned N, unsigned SIZE, typename F, typename A, typename... R>
     inline
@@ -174,25 +174,25 @@ namespace iod
           return std::forward<decltype(std::get<N>(a))>(std::get<N>(a)); 
         };
 
-      auto results_tuple = std::make_tuple(results...);
+      auto results_tuple = std::forward_as_tuple(results...);
       auto prev = std::get<std::tuple_size<decltype(results_tuple)>::value - 1>(results_tuple);
 
       // typedef decltype(h) H;
-      typedef decltype(apply(std::tuple_cat(foreach(args_tuple) | h, std::make_tuple(prev)), f)) return_type;
+      typedef decltype(apply(std::tuple_cat(foreach(args_tuple) | h, std::forward_as_tuple(prev)), f)) return_type;
       //typedef decltype(proxy_apply(args_tuple, std::declval<H>(), f)) return_type;
 
 
       return static_if<std::is_same<return_type, void>::value>(
         [&] (auto& args_tuple, auto& h, auto& f)
              {
-               apply(std::tuple_cat(foreach(args_tuple) | h, std::make_tuple(prev)), f);
+               apply(std::tuple_cat(foreach(args_tuple) | h, std::forward_as_tuple(prev)), f);
                return foreach_loop_tuple_prev<N + 1, SIZE>(0, f, args_tuple, results...);
              },
         [&] (auto& args_tuple, auto& h, auto& f)
              {
                return foreach_loop_tuple_prev<N + 1, SIZE>
                  (0, f, args_tuple, results...,
-                  apply(std::tuple_cat(foreach(args_tuple) | h, std::make_tuple(prev)), f));
+                  apply(std::tuple_cat(foreach(args_tuple) | h, std::forward_as_tuple(prev)), f));
              }, args_tuple, h, f);
     }
 

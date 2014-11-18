@@ -20,9 +20,9 @@ namespace iod
   };
 
   template <typename T>
-  auto forward(T& t) { return forward_<T>{t}; }
+  decltype(auto) forward(T& t) { return forward_<T>{t}; }
   template <typename T>
-  auto forward(const T& t) { return forward_<const T>{t}; }
+  decltype(auto) forward(const T& t) { return forward_<const T>{t}; }
 
   template <int N>
   struct run_apply;
@@ -77,7 +77,7 @@ namespace iod
     static decltype(auto) run(const T1& t1, T&&... t)
     { return run_apply<N - 1>::run(std::forward<T>(t)..., t1); }
 
-    // Other types
+    // Forward
     template <typename T1, typename... T>
     static decltype(auto) run(forward_<T1>&& t1, T&&... t)
     { return run_apply<N - 1>::run(std::forward<T>(t)..., t1.t); }
@@ -110,13 +110,13 @@ namespace iod
   
 
   template <typename F, typename... T>
-  auto apply_members(const sio<T...>& o, F f)
+  decltype(auto) apply_members(const sio<T...>& o, F f)
   {
     return f(*static_cast<const T*>(&o)...);
   }
 
   template <typename F, typename... T>
-  auto apply_members(sio<T...>& o, F f)
+  decltype(auto) apply_members(sio<T...>& o, F f)
   {
     return f(*static_cast<T*>(&o)...);
   }
@@ -129,7 +129,7 @@ namespace iod
 
     template<unsigned N, unsigned SIZE, typename T, typename F, typename G,  typename... U>
     inline
-    auto
+    decltype(auto)
     tuple_proxy_apply(std::enable_if_t<(N == SIZE), int>*, T& t, G g, F f, U&&... u)
     {
       return f(g(std::forward<U>(u))...);
@@ -137,11 +137,11 @@ namespace iod
 
     template<unsigned N, unsigned SIZE, typename T, typename F, typename G,  typename... U>
     inline
-    auto
+    decltype(auto)
     tuple_proxy_apply(std::enable_if_t<(N < SIZE), int>*, T& t, G g, F f, U&&... u)
     {
       return tuple_proxy_apply<N + 1, SIZE, T, F>(0, t, g, f,
-                                                  u...,
+                                                  std::forward<U>(u)...,
                                                   std::get<N>(t));
                                                   // std::forward<U>(u)...,
                                                   // std::forward<decltype(std::get<N>(t))>(std::get<N>(t)));
@@ -152,13 +152,13 @@ namespace iod
 
 
   template<typename F, typename G,  typename... T>
-  inline auto proxy_apply(std::tuple<T...>& t, G g, F f)
+  inline decltype(auto) proxy_apply(std::tuple<T...>& t, G g, F f)
   {
     return internal::tuple_proxy_apply<0, sizeof...(T), std::tuple<T...>>(0, t, g, f);
   }
 
   template<typename F, typename G,  typename... T>
-  inline auto proxy_apply(const std::tuple<T...>& t, G g, F f)
+  inline decltype(auto) proxy_apply(const std::tuple<T...>& t, G g, F f)
   {
     return internal::tuple_proxy_apply<0, sizeof...(T), const std::tuple<T...>>(0, t, g, f);
   }
@@ -166,13 +166,13 @@ namespace iod
 
 
   template <typename F, typename G,  typename... T>
-  auto proxy_apply(const sio<T...>& o, G g, F f)
+  decltype(auto) proxy_apply(const sio<T...>& o, G g, F f)
   {
     return f(g(static_cast<const T*>(&o)->value())...);
   }
 
   template <typename F, typename G,  typename... T>
-  auto proxy_apply(sio<T...>& o, G g, F f)
+  decltype(auto) proxy_apply(sio<T...>& o, G g, F f)
   {
     return f(g(static_cast<T*>(&o)->value())...);
   }
@@ -180,13 +180,13 @@ namespace iod
 
 
   template <typename F, typename G,  typename... T>
-  auto proxy_apply_members(const sio<T...>& o, G g, F f)
+  decltype(auto) proxy_apply_members(const sio<T...>& o, G g, F f)
   {
     return f(g(*static_cast<const T*>(&o))...);
   }
 
   template <typename F, typename G,  typename... T>
-  auto proxy_apply_members(sio<T...>& o, G g, F f)
+  decltype(auto) proxy_apply_members(sio<T...>& o, G g, F f)
   {
     return f(g(*static_cast<T*>(&o))...);
   }

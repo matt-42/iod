@@ -140,7 +140,7 @@ assert(str == R"({"username":"John","city":"NYC"})");
 User u2; json_decode(u2, str);
 assert(u2.name == "John" and u2.city == "NYC");
 
-// The json throw exeptions when some value type mismatch
+// The json throw exceptions when some value type mismatch
 // the object or when some fields are missing:
 
 json_decode(u2, R"({"username":"John"})");
@@ -231,7 +231,7 @@ int res = apply(tuple, fun);
 
 ## C++ Embedded Domain Specific Languages Framework
 
-The IOD library provides a set of tools to ease the embeding of
+The IOD library provides a set of tools to ease the embedding of
 embedded domain specific languages (EDSL) framework. It includes an
 abstract syntax tree (AST) with symbols and values as terminals. Here
 is an example of a simple expression:

@@ -82,7 +82,7 @@ namespace iod
   
   // Terminals.
   template <typename E, typename F, typename C>
-  auto exp_transform_iterate(E& exp, F map,
+  decltype(auto) exp_transform_iterate(E& exp, F map,
                              C ctx,
                              std::enable_if_t<!callable_with<F, E&, C>::value and
                              !has_transform_iterate<E>::value>* = 0)
@@ -91,7 +91,7 @@ namespace iod
   }
   
   template <typename E, typename F, typename C>
-  auto exp_transform_iterate(E& exp, F map,
+  decltype(auto) exp_transform_iterate(E& exp, F map,
                              C ctx,
                              std::enable_if_t<!callable_with<F, E&, C>::value and
                              has_transform_iterate<E>::value>* = 0)
@@ -100,7 +100,7 @@ namespace iod
   }
 
   template <typename E, typename F, typename C>
-  auto exp_transform_iterate(E& exp, F map, C ctx,
+  decltype(auto) exp_transform_iterate(E& exp, F map, C ctx,
                              std::enable_if_t<callable_with<F, E&, C>::value>* = 0)
   {
     return map(exp, ctx);
@@ -115,7 +115,7 @@ namespace iod
   
   // Terminals.
   template <typename E, typename F, typename C>
-  auto exp_transform(E& exp, F map, C& ctx,
+  decltype(auto) exp_transform(E& exp, F map, C& ctx,
                      std::enable_if_t<!callable_with<F, E&, C&>::value and
                      !has_transform_iterate<E>::value>* = 0)
   {
@@ -123,7 +123,7 @@ namespace iod
   }
   
   template <typename E, typename F, typename C>
-  auto exp_transform(E& exp, F map, C& ctx,
+  decltype(auto) exp_transform(E& exp, F map, C& ctx,
                      std::enable_if_t<!callable_with<F, E&, C&>::value and
                      has_transform_iterate<E>::value>* = 0)
   {
@@ -131,7 +131,7 @@ namespace iod
   }
 
   template <typename E, typename F, typename C>
-  auto exp_transform(E& exp, F map, C& ctx,
+  decltype(auto) exp_transform(E& exp, F map, C& ctx,
                      std::enable_if_t<callable_with<F, E&, C&>::value>* = 0)
   {
     return map(exp, ctx);
@@ -145,7 +145,7 @@ namespace iod
   
   // Terminals.
   template <typename E, typename N, typename C, typename M, typename R>
-  auto exp_map_reduce(E& exp, N neutral, C& ctx,
+  decltype(auto) exp_map_reduce(E& exp, N neutral, C& ctx,
                       M map, R reduce,
                       std::enable_if_t<!callable_with<M, E&, C&>::value and
                       !has_transform_iterate<E>::value>* = 0)
@@ -154,7 +154,7 @@ namespace iod
   }
 
   template <typename E, typename N, typename C, typename M, typename R>
-  auto exp_map_reduce(E& exp, N neutral, C& ctx,
+  decltype(auto) exp_map_reduce(E& exp, N neutral, C& ctx,
                       M map, R reduce,
                       std::enable_if_t<callable_with<M, E&, C&>::value>* = 0)
   {
@@ -162,7 +162,7 @@ namespace iod
   }
   
   template <typename E, typename N, typename C, typename M, typename R>
-  auto exp_map_reduce(E& exp, N neutral, C& ctx,
+  decltype(auto) exp_map_reduce(E& exp, N neutral, C& ctx,
                       M map, R reduce,
                       std::enable_if_t<!callable_with<M, E&, C&>::value and
                       has_transform_iterate<E>::value>* = 0)
@@ -213,12 +213,12 @@ namespace iod
   template <typename M, typename... A>
   auto make_function_call_exp(M m, A... a)
   {
-    return function_call_exp<M, A...>(m, a...);
+    return function_call_exp<M, std::decay_t<A>...>(m, a...);
   }
   template <typename M, typename... A>
-  auto make_function_call_exp(M m, std::tuple<A...>&& a)
+  auto make_function_call_exp(M m, std::tuple<A...> a)
   {
-    return function_call_exp<M, A...>(m, a);
+    return function_call_exp<M, std::decay_t<A>...>(m, a);
   }
 
   template <typename M, typename... A>
@@ -232,9 +232,11 @@ namespace iod
     using member_accessible<function_call_exp<M, A...>>::operator[];
 
     function_call_exp() {}
-    function_call_exp(const M& m, A... a)
+    function_call_exp(const M& m, A&&... a)
       : method(m), args(a...) {}
-    function_call_exp(const M& m, std::tuple<A...> a)
+    function_call_exp(const M& m, std::tuple<A...>& a)
+      : method(m), args(a) {}
+    function_call_exp(const M& m, const std::tuple<A...>& a)
       : method(m), args(a) {}
 
     template <typename F>
@@ -245,21 +247,21 @@ namespace iod
                                     iod::foreach(args) | [&] (auto& m) { return exp_transform(m, f, ctx); });
     }
     template <typename F, typename C>
-    auto transform_iterate(F f, C ctx)                                  
+    decltype(auto) transform_iterate(F f, C ctx)                                  
     {
       auto l = exp_transform_iterate(method, f, ctx);
       auto as = iod::foreach_prev(args, l) | [&] (auto m, auto& prev) {
         return exp_transform_iterate(m, f, prev.second);
       };
       return std::make_pair(make_function_call_exp(l.first,
-                                                  iod::foreach(as) | [] (auto& m) { return m.first; }),
+                                                  iod::foreach(as) | [] (auto& m) -> auto { return m.first; }),
                        std::get<std::tuple_size<decltype(as)>::value - 1>(as).second);
     }
     auto children_tuple() { return std::tuple_cat(std::make_tuple(method), args); }
     template <typename P, typename C>
-    auto evaluate(P eval, C& ctx) {
-      return std::move(apply(foreach(args) | [&] (auto a) -> auto&& { return std::move(exp_evaluate(a, eval, ctx)); },
-                             exp_evaluate(method, eval, ctx)));
+    decltype(auto) evaluate(P eval, C& ctx) {
+      return apply(foreach(args) | [&] (auto a) -> auto&& { return std::move(exp_evaluate(a, eval, ctx)); },
+                             exp_evaluate(method, eval, ctx));
     }
 
     M method;
@@ -299,7 +301,7 @@ namespace iod
     auto children_tuple() { return std::make_tuple(object, member); }
 
     template <typename P, typename C>
-    inline auto evaluate(P eval, C& ctx) {
+    inline decltype(auto) evaluate(P eval, C& ctx) {
       return exp_evaluate(object, eval, ctx)[exp_evaluate(member, eval, ctx)];
     }
     
@@ -325,7 +327,7 @@ namespace iod
     }
 
     template <typename F, typename C>
-    auto transform_iterate(F f, C ctx)                                  
+    decltype(auto) transform_iterate(F f, C ctx)                                  
     {                                                                   
       auto l = exp_transform_iterate(left, f, ctx);
       auto r = exp_transform_iterate(right, f, l.second);
@@ -334,7 +336,7 @@ namespace iod
     }
     auto children_tuple() { return std::make_tuple(left, right); }
     template <typename M, typename C>
-    inline auto evaluate(M eval, C& ctx) {
+    inline decltype(auto) evaluate(M eval, C& ctx) {
       return exp_evaluate(left, eval, ctx) = exp_evaluate(right, eval, ctx);
     }
     L left;
@@ -425,7 +427,7 @@ namespace iod
     return NAME##_exp<decltype(l), decltype(r)>(l, r); }                \
     auto children_tuple() { return std::make_tuple(lhs, rhs); }         \
     template <typename M, typename C>                                   \
-    inline auto evaluate(M eval, C& ctx)  { return exp_evaluate(lhs, eval, ctx) OP  exp_evaluate(rhs, eval, ctx); } \
+    inline decltype(auto) evaluate(M eval, C& ctx)  { return exp_evaluate(lhs, eval, ctx) OP  exp_evaluate(rhs, eval, ctx); } \
     lhs_type lhs;                                                       \
     rhs_type rhs;                                                       \
   };                                                                    \
@@ -435,7 +437,7 @@ namespace iod
                    std::is_base_of<Exp<B>, B>::value or std::is_base_of<symbol<B>, B>::value,\
                    NAME##_exp<A, B >>                                                    \
   operator OP (const A& b, const B& a)                                \
-  { return NAME##_exp<A, B>{b, a}; }
+  { return NAME##_exp<std::decay_t<A>, std::decay_t<B>>{b, a}; }
 
   iod_query_declare_binary_op(+, plus);
   iod_query_declare_binary_op(-, minus);

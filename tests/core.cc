@@ -86,4 +86,10 @@ int main()
     // But cannot be default constructed.
     // Do not compile: decltype(a) d;
   }
+
+  {
+    static_assert(is_sio<decltype(D(_Name = std::string()))>::value, "is sio failled");
+    static_assert(is_sio<decltype(D(_Name = std::string()))&>::value, "is sio failled");
+    static_assert(!is_sio<int>::value, "is sio failled");
+  }
 }

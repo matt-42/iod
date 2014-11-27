@@ -133,7 +133,7 @@ namespace iod
       inline char eat_one() { return pos++; }
 
       template <typename E>
-      inline void format_error(E& err) {}
+      inline void format_error(E&) {}
 
       template <typename E, typename T1, typename... T>
       inline void format_error(E& err, T1 a, T... args)
@@ -238,7 +238,7 @@ namespace iod
         pos = end;
         return *this;
       }
-
+      
       inline json_parser& fill(stringview& t)
       {
         int start = pos;
@@ -464,7 +464,6 @@ namespace iod
 
       i = 0;
       foreach(o) | [&] (auto& m) {
-        typename std::remove_reference_t<decltype(m)>::attributes_type attrs;
         if (!m.attributes().has(_Json_skip) and !m.attributes().has(_Optional) and !A[i].filled)
           throw std::runtime_error(std::string("json_decode error: missing field ") +
                                    m.symbol().name());

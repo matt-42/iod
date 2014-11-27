@@ -21,7 +21,7 @@ namespace iod
 
     // Fill an array from a variable list of arguments.
     template <typename T>
-    inline void array_fill(std::vector<T>& array)
+    inline void array_fill(std::vector<T>&)
     {
     }
 
@@ -48,7 +48,7 @@ namespace iod
     template <typename D, typename S>
     struct iod_assign<-1, D, S>
     {
-      static inline void run(D& dst, const S& src)
+      static inline void run(D&, const S&)
       {
       }
     };
@@ -70,7 +70,7 @@ namespace iod
             typename F, typename... T>
   struct iod_foreach_runner<Const, -1, F, T...>
   {
-    static inline void run(F f, Const<T>&... args)
+    static inline void run(F, Const<T>&...)
     {
     }
   };
@@ -118,6 +118,9 @@ namespace iod
   {
     enum { _size = 0, _empty = true };
 
+    template <typename E>
+    struct _has { static const bool value = false; };
+    
     constexpr sio() { }
     constexpr static int size() { return _size; }
     constexpr static bool empty() { return true; }
@@ -130,7 +133,7 @@ namespace iod
     template <unsigned N>
     attribute_not_found& get_nth_attribute() { return *(attribute_not_found*)(0); }
     template <typename E, typename D>
-    D get(const E& e, const D default_) const { return default_; }
+    D get(const E&, const D default_) const { return default_; }
     
   };
 
@@ -235,8 +238,8 @@ namespace iod
     }
 
     template <typename E, typename D>
-    typename std::enable_if<_has<E>::value, attribute_value_type<E>>::type
-    get(const E& e, const D default_) const
+    decltype(auto)
+    get(const E& e, const D, std::enable_if_t<_has<E>::value>* = 0) const
     {
       return (*this)[e];
     }
@@ -299,12 +302,11 @@ namespace iod
                                                             static_cast<Tail*>(this)->value()...); }
     auto&& values_as_tuple() const { return std::forward_as_tuple(static_cast<const T*>(this)->value(),
                                                                   static_cast<const Tail*>(this)->value()...); }
-
     // Assignment.
     template <typename O, typename... Otail>
     self& operator=(const sio<O, Otail...>& o)
     {
-      foreach_attribute_value([] (auto& a, const auto& b) { a = b; }, *this, o);
+      foreach(o) | [this] (auto& m) { (*this)[m.symbol()] = m.value(); };
       return *this;
     }
   

@@ -42,10 +42,10 @@ namespace iod
   struct run_tuple<N, 0>
   {
     template <typename... M, typename... T>
-    static decltype(auto) run(std::tuple<M...>& o, T&&... t)
+    static decltype(auto) run(std::tuple<M...>&, T&&... t)
     { return run_apply<N - 1>::run(std::forward<T>(t)...); }
     template <typename... M, typename... T>
-    static decltype(auto) run(const std::tuple<M...>& o, T&&... t)
+    static decltype(auto) run(const std::tuple<M...>&, T&&... t)
     { return run_apply<N - 1>::run(std::forward<T>(t)...); }
   };
   
@@ -130,7 +130,7 @@ namespace iod
     template<unsigned N, unsigned SIZE, typename T, typename F, typename G,  typename... U>
     inline
     decltype(auto)
-    tuple_proxy_apply(std::enable_if_t<(N == SIZE), int>*, T& t, G g, F f, U&&... u)
+    tuple_proxy_apply(std::enable_if_t<(N == SIZE), int>*, T&, G g, F f, U&&... u)
     {
       return f(g(std::forward<U>(u))...);
     }

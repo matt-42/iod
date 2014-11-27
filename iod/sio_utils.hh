@@ -105,8 +105,8 @@ namespace iod
   struct paste<S, S, O>
   {
     template <typename ...T, typename ...U>
-    static void run(sio<T...>& a,
-                    const sio<U...>& b)
+    static void run(sio<T...>&,
+                    const sio<U...>&)
     {
     }
   };
@@ -135,6 +135,16 @@ namespace iod
     iod_internals::array_fill<T, Tail...>(t, args..., res);
     return res;
   }
+
+    template <typename T>
+    struct is_sio
+    {
+      template<typename... C> 
+      static char test(sio<C...>*);
+      template<typename C>
+      static int test(C*);
+      static const bool value = sizeof(test((std::decay_t<T>*)0)) == 1;
+    };
 
 } // end of namespace iod.
 

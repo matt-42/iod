@@ -19,7 +19,7 @@ namespace iod
     template<unsigned N, unsigned SIZE, typename F, typename A, typename... R>
     inline
     decltype(auto)
-    foreach_loop_tuple(std::enable_if_t<N == SIZE>*, F f, A&& args_tuple, R&&... results)
+    foreach_loop_tuple(std::enable_if_t<N == SIZE>*, F, A&&, R&&... results)
     {
       return static_if<sizeof...(R) == 0>(
         [] () {},
@@ -55,7 +55,7 @@ namespace iod
     template<unsigned N, unsigned SIZE, typename F, typename A, typename... R>
     inline
     auto
-    foreach_loop_sio(std::enable_if_t<N == SIZE>*, F f, A&& args_tuple, R&&... results)
+    foreach_loop_sio(std::enable_if_t<N == SIZE>*, F, A&&, R&&... results)
     {
       return static_if<sizeof...(R) == 0>(
         [] () {},
@@ -157,8 +157,8 @@ namespace iod
     template<unsigned N, unsigned SIZE, typename F, typename A, typename P, typename... R>
     inline
     auto
-    foreach_loop_tuple_prev(std::enable_if_t<N == SIZE>*, F f, A&& args_tuple,
-                            P prev_init, R&&... results)
+    foreach_loop_tuple_prev(std::enable_if_t<N == SIZE>*, F, A&&,
+                            P, R&&... results)
     {
       return static_if<sizeof...(R) == 0>(
         [] () {},

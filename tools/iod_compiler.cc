@@ -7,9 +7,9 @@
 //
 //    Simple but useful syntaxic sugar on top of C++14.
 //
-//    Access to a symbol:                  :symbol      translated to    s::_Symbol
-//    Access to a member via a symbol:     o:symbol     translated to    s::_Symbol.member_access(o);
-//    Call to a method via a symbol:       o:symbol(42) translated to    s::_Symbol.method_call(o, 42);
+//    Access to a symbol:                  @symbol      translated to    s::_Symbol
+//    Access to a member via a symbol:     o@symbol     translated to    s::_Symbol.member_access(o);
+//    Call to a method via a symbol:       o@symbol(42) translated to    s::_Symbol.method_call(o, 42);
 //
 //    All the symbols used in a C++ file are declared at the beginning of the generated file.
 //
@@ -27,9 +27,25 @@ int main(int argc, char* argv[])
 
   set<string> symbols;
 
-  boost::regex symbol_regex1("^([[:alnum:]]*):([[:alnum:]]+)([(]?)");
-  boost::regex symbol_regex2("([^:A-Za-z0-9])([[:alnum:]]*):([[:alnum:]]+)([(]?)");
+  // Grammar:
 
+  //  identifier @ symbol_identifier (
+  
+  boost::regex symbol_regex1("^([[:alnum:]]*)([[:blank:]]*)@[[:blank:]]*([[:alnum:]]+)[[:blank:]]*([(]?)");
+
+  // 1: variable name
+  // 2: spaces
+  // 3: symbol
+  // 4: parenthesis
+  
+  boost::regex symbol_regex2("([^:A-Za-z0-9])([[:alnum:]]*)([[:blank:]]*)@[[:blank:]]*([[:alnum:]]+)[[:blank:]]*([(]?)");
+
+  // 1: prefix
+  // 2: variable name
+  // 3: spaces
+  // 4: symbol
+  // 5: parenthesis
+  
   vector<string> lines;
 
   auto to_safe_alias = [] (string s) {
@@ -62,23 +78,25 @@ int main(int argc, char* argv[])
       else
       {
         std::string prefix, symbol, variable_name, parenthesis;
-        bool offset = s.position() != 0;
-        prefix = offset == true ? string(s[1]) : string("");
+        bool offset = s.position() != 0 ? 1 : 0;
+        prefix = offset != 0 ? string(s[1]) : "";
         variable_name = s[1 + offset];
-        symbol = s[2 + offset];
-        parenthesis = s[3 + offset];
+        string spaces = s[2 + offset];
+        symbol = s[3 + offset]; 
+        parenthesis = s[4 + offset];
 
+        symbols.insert(symbol);
         ostringstream ss; ss << prefix;
 
-        ss << "s::" << to_safe_alias(symbol);
         if (variable_name.length() > 0)
         {
+          ss << "s::" << to_safe_alias(symbol);
           if (parenthesis.length())
-            ss << ".method_call(" << s[2] << ", ";
+            ss << ".method_call(" << variable_name << ", ";
           else
-            ss << ".member_access(" << s[2] << ")";
+            ss << ".member_access(" << variable_name << ")";
         }
-        else ss << parenthesis;
+        else ss << spaces << "s::" << to_safe_alias(symbol) << parenthesis;
 
         return ss.str();
       }

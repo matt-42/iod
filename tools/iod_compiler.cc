@@ -66,14 +66,13 @@ int main(int argc, char* argv[])
       if (is_in_string(s.position())) return s[0];
       else
       {
-        std::string prefix, symbol, variable_name, parenthesis;
-        prefix = "";
+        std::string symbol, variable_name, parenthesis;
         variable_name = s[1];
         string spaces = s[2];
         symbol = s[3]; 
         parenthesis = s[4];
         symbols.insert(symbol);
-        ostringstream ss; ss << prefix;
+        ostringstream ss;
 
         if (variable_name.length() > 0)
         {

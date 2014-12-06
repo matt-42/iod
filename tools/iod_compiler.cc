@@ -72,7 +72,6 @@ int main(int argc, char* argv[])
         string spaces = s[2];
         symbol = s[3]; 
         parenthesis = s[4];
-        std::cout  << parenthesis << std::endl;
         symbols.insert(symbol);
         ostringstream ss; ss << prefix;
 

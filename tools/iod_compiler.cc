@@ -27,17 +27,13 @@ int main(int argc, char* argv[])
 
   set<string> symbols;
 
-  // Grammar:
-
   //  prefix identifier @ symbol_identifier (
-  
-  boost::regex symbol_regex("([^:A-Za-z0-9])([[:alnum:]]*)([[:blank:]]*)@[[:blank:]]*([[:alnum:]]+)[[:blank:]]*(([(][[:blank:]]*[)]?)?)");
-
-  // 1: prefix
-  // 2: variable name
-  // 3: spaces
-  // 4: symbol
-  // 5: parenthesis
+  boost::regex symbol_regex("([[:alnum:]]*)([[:blank:]]*)@[[:blank:]]*([[:alnum:]]+)[[:blank:]]*(([(][[:blank:]]*[)]?)?)");
+  // Matches:
+  // 1: variable name
+  // 2: spaces
+  // 3: symbol
+  // 4: parenthesis
   
   vector<string> lines;
 
@@ -50,8 +46,6 @@ int main(int argc, char* argv[])
   while (!f.eof())
   {
     getline(f, line);
-
-    line = " " + line;
 
     std::vector<int> dbl_quotes_pos;
     bool escaped = false;
@@ -73,12 +67,12 @@ int main(int argc, char* argv[])
       else
       {
         std::string prefix, symbol, variable_name, parenthesis;
-        prefix = string(s[1]);
-        variable_name = s[2];
-        string spaces = s[3];
-        symbol = s[4]; 
-        parenthesis = s[5];
-
+        prefix = "";
+        variable_name = s[1];
+        string spaces = s[2];
+        symbol = s[3]; 
+        parenthesis = s[4];
+        std::cout  << parenthesis << std::endl;
         symbols.insert(symbol);
         ostringstream ss; ss << prefix;
 
@@ -90,11 +84,6 @@ int main(int argc, char* argv[])
             ss << ".method_call(" << variable_name;
             if (parenthesis.back() == ')') ss << ")";
             else ss << ", ";
-            // Add a comma only if the arg list is not empty.
-            // bool empty_args = true;
-            // int i = s[5].position();
-            // while (i < line.size() and std::isspace(line[i])) i++;
-            // if (i < line.size() and line[i] != ')') ss << ",";
           }
           else
             ss << ".member_access(" << variable_name << ")";
@@ -106,7 +95,7 @@ int main(int argc, char* argv[])
     };
     
     line = boost::regex_replace(line, symbol_regex, fmt);
-    lines.push_back(line.substr(1, line.size() - 1));
+    lines.push_back(line);
   }
 
   auto& os = cout;

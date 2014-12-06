@@ -29,16 +29,9 @@ int main(int argc, char* argv[])
 
   // Grammar:
 
-  //  identifier @ symbol_identifier (
+  //  prefix identifier @ symbol_identifier (
   
-  boost::regex symbol_regex1("^([[:alnum:]]*)([[:blank:]]*)@[[:blank:]]*([[:alnum:]]+)[[:blank:]]*([(]?)");
-
-  // 1: variable name
-  // 2: spaces
-  // 3: symbol
-  // 4: parenthesis
-  
-  boost::regex symbol_regex2("([^:A-Za-z0-9])([[:alnum:]]*)([[:blank:]]*)@[[:blank:]]*([[:alnum:]]+)[[:blank:]]*([(]?)");
+  boost::regex symbol_regex("([^:A-Za-z0-9])([[:alnum:]]*)([[:blank:]]*)@[[:blank:]]*([[:alnum:]]+)[[:blank:]]*(([(][[:blank:]]*[)]?)?)");
 
   // 1: prefix
   // 2: variable name
@@ -57,6 +50,8 @@ int main(int argc, char* argv[])
   while (!f.eof())
   {
     getline(f, line);
+
+    line = " " + line;
 
     std::vector<int> dbl_quotes_pos;
     bool escaped = false;
@@ -78,12 +73,11 @@ int main(int argc, char* argv[])
       else
       {
         std::string prefix, symbol, variable_name, parenthesis;
-        bool offset = s.position() != 0 ? 1 : 0;
-        prefix = offset != 0 ? string(s[1]) : "";
-        variable_name = s[1 + offset];
-        string spaces = s[2 + offset];
-        symbol = s[3 + offset]; 
-        parenthesis = s[4 + offset];
+        prefix = string(s[1]);
+        variable_name = s[2];
+        string spaces = s[3];
+        symbol = s[4]; 
+        parenthesis = s[5];
 
         symbols.insert(symbol);
         ostringstream ss; ss << prefix;
@@ -92,7 +86,16 @@ int main(int argc, char* argv[])
         {
           ss << "s::" << to_safe_alias(symbol);
           if (parenthesis.length())
-            ss << ".method_call(" << variable_name << ", ";
+          {
+            ss << ".method_call(" << variable_name;
+            if (parenthesis.back() == ')') ss << ")";
+            else ss << ", ";
+            // Add a comma only if the arg list is not empty.
+            // bool empty_args = true;
+            // int i = s[5].position();
+            // while (i < line.size() and std::isspace(line[i])) i++;
+            // if (i < line.size() and line[i] != ')') ss << ",";
+          }
           else
             ss << ".member_access(" << variable_name << ")";
         }
@@ -102,9 +105,8 @@ int main(int argc, char* argv[])
       }
     };
     
-    line = boost::regex_replace(line, symbol_regex1, fmt);
-    line = boost::regex_replace(line, symbol_regex2, fmt);
-    lines.push_back(line);
+    line = boost::regex_replace(line, symbol_regex, fmt);
+    lines.push_back(line.substr(1, line.size() - 1));
   }
 
   auto& os = cout;

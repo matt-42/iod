@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
   set<string> symbols;
 
   //  prefix identifier @ symbol_identifier (
-  boost::regex symbol_regex("([[:alnum:]]*)([[:blank:]]*)@[[:blank:]]*([[:alnum:]]+)[[:blank:]]*(([(][[:blank:]]*[)]?)?)");
+  boost::regex symbol_regex("([[:alnum:]_]*)([[:blank:]]*)@[[:blank:]]*([[:alnum:]_]+)[[:blank:]]*(([(][[:blank:]]*[)]?)?)");
   // Matches:
   // 1: variable name
   // 2: spaces
@@ -114,6 +114,7 @@ int main(int argc, char* argv[])
   {
     std::string safe_alias = to_safe_alias(s);
     os << "#ifndef IOD_SYMBOL_" << safe_alias << endl
+       << "  #define IOD_SYMBOL_" << safe_alias << endl
        << "  iod_define_symbol(" <<  s << ", " << safe_alias << ")" << endl
        << "#endif" << endl;
   }

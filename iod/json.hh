@@ -520,6 +520,7 @@ namespace iod
   template <typename ...Tail>
   inline void json_decode(sio<Tail...>& o, const stringview& str, int& n_read)
   {
+    if (o.size() == 0) return;
     json_internals::json_parser p(str);
     if (str.size() > 0)
       iod_from_json_(o, p);
@@ -531,16 +532,18 @@ namespace iod
   template <typename ...Tail>
   inline void json_decode(sio<Tail...>& o, const stringview& str)
   {
+    if (o.size() == 0) return;
     json_internals::json_parser p(str);
     if (str.size() > 0)
       iod_from_json_(o, p);
     else
       throw std::runtime_error("Empty string.");
   }
-
+  
   template <typename ...Tail>
   inline void json_decode(sio<Tail...>& o, std::istringstream& stream)
   {
+    if (o.size() == 0) return;
     json_internals::json_parser p(stream);
     if (stream.str().size() > 0)
       iod_from_json_(o, p);

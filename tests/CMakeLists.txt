@@ -31,3 +31,7 @@ add_test(foreach foreach)
 
 add_executable(readme readme.cc)
 add_test(readme readme)
+
+
+add_executable(di di.cc)
+add_test(di di)

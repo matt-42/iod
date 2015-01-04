@@ -134,7 +134,6 @@ namespace iod
     return internal::foreach_tuple_caller<decltype(std::forward_as_tuple(a1, args...))>
       (std::forward_as_tuple(a1, args...));
   }
-  
 
   template <typename... S, typename... T>
   auto foreach(sio<S...>& a1, T&&... args)

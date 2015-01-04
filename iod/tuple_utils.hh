@@ -18,6 +18,13 @@ namespace iod
   template <int N, typename... T, typename X>
   struct tuple_find_type2<N, std::tuple<const X&, T...>, X> : public std::integral_constant<int, N> {};
 
+  template <int N, typename... T, typename X>
+  struct tuple_find_type2<N, std::tuple<X, T...>, X&> : public std::integral_constant<int, N> {};
+  template <int N, typename... T, typename X>
+  struct tuple_find_type2<N, std::tuple<X, T...>, const X&> : public std::integral_constant<int, N> {};
+  template <int N, typename... T, typename X>
+  struct tuple_find_type2<N, std::tuple<X, T...>, const X> : public std::integral_constant<int, N> {};
+  
   template <int N, typename T1, typename... T, typename X>
   struct tuple_find_type2<N, std::tuple<T1, T...>, X> : public tuple_find_type2<N + 1, std::tuple<T...>, X> {};
 

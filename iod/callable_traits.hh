@@ -31,6 +31,13 @@ namespace iod
     typedef void return_type;
   };
 
+  template <typename F, typename X>
+  struct callable_traits<F&, X> : public callable_traits<F, X> {};
+  template <typename F, typename X>
+  struct callable_traits<F&&, X> : public callable_traits<F, X> {};
+  template <typename F, typename X>
+  struct callable_traits<const F&, X> : public callable_traits<F, X> {};
+  
   template <typename F>
   struct callable_traits<F, std::enable_if_t<internal::has_parenthesis_operator<F>::value>>
   {
@@ -85,7 +92,7 @@ namespace iod
 
   template <typename F>
   struct is_callable : public callable_traits<F>::is_callable {};
-
+  
   template <typename F, typename... A>
   struct callable_with
   {

@@ -134,7 +134,8 @@ namespace iod
     attribute_not_found& get_nth_attribute() { return *(attribute_not_found*)(0); }
     template <typename E, typename D>
     D get(const E&, const D default_) const { return default_; }
-    
+
+    auto symbols_as_tuple() const { return std::make_tuple(); }    
   };
 
   template <typename T, typename ...Tail>
@@ -223,7 +224,7 @@ namespace iod
     {
       return *static_cast<const _attribute<S>*>(this);
     }
-
+    
     // Access to a member from a symbol.
     template <typename E>
     auto& operator[](const E&)
@@ -302,6 +303,10 @@ namespace iod
                                                             static_cast<Tail*>(this)->value()...); }
     auto&& values_as_tuple() const { return std::forward_as_tuple(static_cast<const T*>(this)->value(),
                                                                   static_cast<const Tail*>(this)->value()...); }
+
+    auto symbols_as_tuple() const { return std::make_tuple(static_cast<const T*>(this)->symbol(),
+                                                           static_cast<const Tail*>(this)->symbol()...); }
+    
     // Assignment.
     template <typename O, typename... Otail>
     self& operator=(const sio<O, Otail...>& o)

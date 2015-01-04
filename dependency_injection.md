@@ -4,7 +4,7 @@ Non Intrusive Static Recursive Dependency Injection for C++14
 The IOD library implements a generic recursive dependency injection pattern.
 Given a C++ function f tacking a list of N arguments of types Ai with i >= 0 and i < N.
 and a set S of objects to inject, the di_call primitive calls f after building its argument
-list using the folowing, for each i:
+list using the following, for each i:
 
   - If S contains an element of type Ai, place it in the list.
   - Else if S contains an element e such that the method e.make returns the type Ai,

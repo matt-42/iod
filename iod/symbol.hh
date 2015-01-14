@@ -90,4 +90,6 @@ namespace iod
 
 }
 
+int __compiler_insert_symbols_here__();
+
 #endif

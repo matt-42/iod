@@ -33,6 +33,7 @@ int main(int argc, char* argv[])
   }
   
   set<string> symbols;
+  set<string> symbols_already_defined;
 
   //  prefix identifier @ symbol_identifier (
   boost::regex symbol_regex("([[:alnum:]_]*)([[:blank:]]*)@[[:blank:]]*([[:alnum:]_]+)[[:blank:]]*(([(][[:blank:]]*[)]?)?)");
@@ -98,9 +99,21 @@ int main(int argc, char* argv[])
         return ss.str();
       }
     };
-    
+
     line = boost::regex_replace(line, symbol_regex, fmt);
     lines.push_back(line);
+
+
+    // Check for symbols already defined.
+    {
+      boost::regex sab(".*namespace s { struct ([A-Za-z0-9_]+)_t.*");
+      boost::smatch what;
+      if (boost::regex_match(line, what, sab))
+      {
+        symbols_already_defined.insert(what[1]);
+      }
+    }
+
   }
 
   std::ofstream os(argv[2]);
@@ -116,11 +129,8 @@ int main(int argc, char* argv[])
   for (string s : symbols)
   {
     std::string safe_alias = to_safe_alias(s);
-    symbols_content << "#ifndef IOD_SYMBOL_" << safe_alias << endl
-                    << "  #define IOD_SYMBOL_" << safe_alias << endl
-                    << symbol_definition(s, safe_alias) << endl
-      //<< "  iod_define_symbol(" <<  s << ", " << safe_alias << ")" << endl
-                    << "#endif" << endl;
+    if (symbols_already_defined.find(safe_alias) == symbols_already_defined.end())
+      symbols_content << symbol_definition(s, safe_alias) << endl;
   }
 
   int i = 1;

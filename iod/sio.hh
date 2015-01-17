@@ -308,8 +308,8 @@ namespace iod
                                                            static_cast<const Tail*>(this)->symbol()...); }
     
     // Assignment.
-    template <typename O, typename... Otail>
-    self& operator=(const sio<O, Otail...>& o)
+    template <typename... Otail>
+    self& operator=(const sio<Otail...>& o)
     {
       foreach(o) | [this] (auto& m) { (*this)[m.symbol()] = m.value(); };
       return *this;

@@ -160,8 +160,9 @@ namespace iod
 
                            return iod::static_if<!std::is_same<FT, not_found>::value>(
                              // If to_inject embed a factory, call it.
-                             [&] (auto& deps, auto* e) -> auto {
-                               typedef iod::callable_arguments_tuple_t<decltype(&FT::make)> ARGS;
+                             [&] (auto& deps, auto* e, auto* ft_) -> auto {
+                               typedef std::remove_pointer_t<decltype(ft_)> FT_;
+                               typedef iod::callable_arguments_tuple_t<decltype(&FT_::make)> ARGS;
                                auto make = [&] (auto& ctx)
                                  {
                                    return call_factory_make(tuple_get_by_type<FT>(deps), ctx, (ARGS*)0);
@@ -169,7 +170,7 @@ namespace iod
                                return f(make, (ARGS*)0);
                              },
                              // If the argument type provide a static instantiate method, call it.
-                             [&] (auto& deps, auto* e) -> auto {
+                             [&] (auto& deps, auto* e, auto* ft_) -> auto {
                                typedef std::remove_pointer_t<decltype(e)> E2;
                                static_assert(has_make_static_method<E2>::value,
                                              "Dependency injection failed. Cannot resolve.");
@@ -178,7 +179,7 @@ namespace iod
                                return f(make, (ARGS*)0);
                                //return 1;
                              },
-                             to_inject, (E*)0);
+                             to_inject, (E*)0, (FT*)0);
                          },
                          to_inject);
     }

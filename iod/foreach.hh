@@ -23,7 +23,8 @@ namespace iod
     {
       return static_if<sizeof...(R) == 0>(
         [] () {},
-        [&] () { return std::forward_as_tuple(std::forward<R>(results)...);}); }
+        [&] () { return std::make_tuple(results...);});
+    }
 
     template<unsigned N, unsigned SIZE, typename F, typename A, typename... R>
     inline

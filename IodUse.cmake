@@ -21,7 +21,7 @@ function(add_iod_executable arg1)
     endforeach()
 
     add_custom_command(OUTPUT ${inputp_file}
-                       COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_DEFINES}  ${CMAKE_CXX_FLAGS} ${INCLUDE_FLAGS} -E ${SYMBOL_INCLUDE_FILE} ${input_file} > ${inputp_file}
+                       COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_DEFINES}  ${CMAKE_CXX_FLAGS} ${INCLUDE_FLAGS} -E ${input_file} > ${inputp_file}
                        IMPLICIT_DEPENDS CXX ${input_file})
 
     add_custom_command(OUTPUT ${output_file}

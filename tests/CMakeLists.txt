@@ -32,6 +32,8 @@ add_test(foreach foreach)
 add_executable(readme readme.cc)
 add_test(readme readme)
 
-
 add_executable(di di.cc)
 add_test(di di)
+
+add_executable(bind_method bind_method.cc)
+add_test(bind_method bind_method)

@@ -18,56 +18,56 @@ int main()
   using namespace iod;
   using namespace s;
 
-  typedef decltype(D(_Age2 = int(),
-                     _Age = int(), 
-                     _Name = std::string()))
+  typedef decltype(D(_age2 = int(),
+                     _age = int(), 
+                     _name = std::string()))
     Person;
 
   {
-    Person a = D(_Age2 = 3, _Age = 10, _Name = std::string("Tom"));
+    Person a = D(_age2 = 3, _age = 10, _name = std::string("Tom"));
     std::vector<Person> persons = {
-      D(_Age2 = 3, _Age = 10, _Name = ("Tom")),
-      D(_Age2 = 12, _Age = 1, _Name = ("Tim")),
-      D(_Age2 = 12, _Age = 12, _Name = ("Tam"))
+      D(_age2 = 3, _age = 10, _name = ("Tom")),
+      D(_age2 = 12, _age = 1, _name = ("Tim")),
+      D(_age2 = 12, _age = 12, _name = ("Tam"))
     };
     
     {
       linq.select()
-        .from(persons, _As(_Person))
+        .from(persons, _as(_person))
         |
         [] (const auto& r) { std::cout << r.person.name << " " << r.person.age <<  std::endl; };
     }
 
     {
       linq.select()
-        .from(persons, _As = _Person)
-        .order_by(_Person[_Age])
-        .where(_Person[_Age] < 12)
+        .from(persons, _as = _person)
+        .order_by(_person[_age])
+        .where(_person[_age] < 12)
         |
         [] (const auto& r) { std::cout << r.person.name << " " << r.person.age <<  std::endl; };
     }
 
     {
-      typedef decltype(D(_Age2 = int(), _Age = int(), _Name = std::string(), _Cp = std::string())) Person;
-      typedef decltype(D(_Name = std::string(), _Cp = std::string())) City;
+      typedef decltype(D(_age2 = int(), _age = int(), _name = std::string(), _cp = std::string())) Person;
+      typedef decltype(D(_name = std::string(), _cp = std::string())) City;
 
       std::vector<Person> persons = {
-        D(_Age2 = 3, _Age = 10, _Name = ("Tom"), _Cp = "92320"),
-        D(_Age2 = 12, _Age = 1, _Name = ("Tim"), _Cp = "75001"),
-        D(_Age2 = 12, _Age = 12, _Name = ("Tam"), _Cp = "75002")
+        D(_age2 = 3, _age = 10, _name = ("Tom"), _cp = "92320"),
+        D(_age2 = 12, _age = 1, _name = ("Tim"), _cp = "75001"),
+        D(_age2 = 12, _age = 12, _name = ("Tam"), _cp = "75002")
       };
 
       std::vector<City> cities = {
-        D(_Name = "Chatillon", _Cp = "92320"),
-        D(_Name = "Paris 1er", _Cp = "75001"),
-        D(_Name = "Paris 2eme", _Cp = "75002")
+        D(_name = "Chatillon", _cp = "92320"),
+        D(_name = "Paris 1er", _cp = "75001"),
+        D(_name = "Paris 2eme", _cp = "75002")
       };
 
-      linq.select(_Name = _Person[_Name], _City = _City[_Name], _Cp = _Cp, _Age = _Age2)
-        .from(persons, _As(_Person))
-        .inner_join(cities, _As(_City), _On(_City[_Cp] == _Person[_Cp]))
-        .order_by(_City[_Name])
-        .where(_Person[_Age] < 12) |
+      linq.select(_name = _person[_name], _city = _city[_name], _cp = _cp, _age = _age2)
+        .from(persons, _as(_person))
+        .inner_join(cities, _as(_city), _on(_city[_cp] == _person[_cp]))
+        .order_by(_city[_name])
+        .where(_person[_age] < 12) |
         [] (const auto& r) { 
         std::cout << r.name << " " << r.city << " " << r.cp <<  std::endl; 
       };
@@ -75,13 +75,13 @@ int main()
 
     {
       std::vector<Person> persons = {
-        D(_Age2 = 3, _Age = 10, _Name = ("Tom")),
-        D(_Age2 = 12, _Age = 1, _Name = ("Tim")),
-        D(_Age2 = 12, _Age = 12, _Name = ("Tam"))
+        D(_age2 = 3, _age = 10, _name = ("Tom")),
+        D(_age2 = 12, _age = 1, _name = ("Tim")),
+        D(_age2 = 12, _age = 12, _name = ("Tam"))
       };
 
-      linq.select(_Age = _Avg(_Age), _Sum = _Sum(_Person[_Age2]))
-        .from(persons, _As(_Person)).group_by(_Person[_Age2]).where(_Age > 2)
+      linq.select(_age = _avg(_age), _sum = _sum(_person[_age2]))
+        .from(persons, _as(_person)).group_by(_person[_age2]).where(_age > 2)
         |
         [] (const auto& r) { std::cout << "average(age): " << r.age << " "
                                        << "sum(age2): " << r.sum

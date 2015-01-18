@@ -13,22 +13,22 @@ namespace iod
   {
 
     template <typename M, typename C, typename... T>
-    auto call_factory_make(M& factory, C&& ctx, std::tuple<T...>*)
+    auto call_factory_instantiate(M& factory, C&& ctx, std::tuple<T...>*)
     {
-      return factory.make(tuple_get_by_type<T>(ctx)...);
+      return factory.instantiate(tuple_get_by_type<T>(ctx)...);
     }
 
     template <typename E, typename C, typename... T>
-    auto call_factory_make_static(C&& ctx, std::tuple<T...>*)
+    auto call_factory_instantiate_static(C&& ctx, std::tuple<T...>*)
     {
-      return E::make(tuple_get_by_type<T>(ctx)...);
+      return E::instantiate(tuple_get_by_type<T>(ctx)...);
     }
 
     // dependencies_of allows to forward dependencies of a function to another.
     template <typename B>
     struct dependencies_of_
     {
-      static auto make()
+      static auto instantiate()
       {
         return dependencies_of_<B>();
       }
@@ -41,7 +41,7 @@ namespace iod
     {
       dependencies_of_(D... d) : deps(d...) {}
 
-      static auto make(D&&... deps)
+      static auto instantiate(D&&... deps)
       {
         return dependencies_of_<std::tuple<D...>>(deps...);
       };
@@ -93,10 +93,10 @@ namespace iod
     }
 
     template <typename M>
-    struct has_make_static_method
+    struct has_instantiate_static_method
     {
       template <typename X>
-      static char test(decltype(&X::make));
+      static char test(decltype(&X::instantiate));
 
       template <typename X>
       static int test(...);
@@ -117,14 +117,14 @@ namespace iod
 
     template <typename T, typename... T2, typename I>
     struct find_di_factory_iterator<std::tuple<T, T2...>, I,
-                                    std::enable_if_t<!std::is_same<std::remove_reference_t<callable_return_type_t<decltype(&std::remove_reference_t<T>::make)> >,
+                                    std::enable_if_t<!std::is_same<std::remove_reference_t<callable_return_type_t<decltype(&std::remove_reference_t<T>::instantiate)> >,
                                                                    I>::value> >
       : public find_di_factory_iterator<std::tuple<T2...>, I>
     {};
     
     template <typename T, typename... T2, typename I>
     struct find_di_factory_iterator<std::tuple<T, T2...>, I,
-                                    std::enable_if_t<std::is_same<std::remove_reference_t<callable_return_type_t<decltype(&std::remove_reference_t<T>::make)> >,
+                                    std::enable_if_t<std::is_same<std::remove_reference_t<callable_return_type_t<decltype(&std::remove_reference_t<T>::instantiate)> >,
                                                                   I>::value> >
     {
       typedef T type;
@@ -135,9 +135,9 @@ namespace iod
   
     // Provide an element of type E:
     //   If \to_inject contains an element of type E, return it.
-    //   If \to_inject contains an element f and f.make return type is E,
-    //       return f.make(...). Note: \to_inject must contains the arguments of f::make.
-    //   Otherwise, call the static method E::make.
+    //   If \to_inject contains an element f and f.instantiate return type is E,
+    //       return f.instantiate(...). Note: \to_inject must contains the arguments of f::instantiate.
+    //   Otherwise, call the static method E::instantiate.
     struct X {};
     template <typename E, typename T, typename F>
     auto di_meta_instantiate(T&& to_inject, F f)
@@ -151,8 +151,8 @@ namespace iod
                        >(
                          [&] (auto& to_inject) -> auto {
                            // If to_inject already embeds an element of type E, return it.
-                           auto make = [&] (auto) { return tuple_get_by_type<E>(to_inject); };
-                           return f(make, (std::tuple<>*)0);
+                           auto instantiate = [&] (auto) { return tuple_get_by_type<E>(to_inject); };
+                           return f(instantiate, (std::tuple<>*)0);
                          },
                          [&] (auto& to_inject) -> auto {
 
@@ -162,21 +162,21 @@ namespace iod
                              // If to_inject embed a factory, call it.
                              [&] (auto& deps, auto* e, auto* ft_) -> auto {
                                typedef std::remove_pointer_t<decltype(ft_)> FT_;
-                               typedef iod::callable_arguments_tuple_t<decltype(&FT_::make)> ARGS;
-                               auto make = [&] (auto& ctx)
+                               typedef iod::callable_arguments_tuple_t<decltype(&FT_::instantiate)> ARGS;
+                               auto instantiate = [&] (auto& ctx)
                                  {
-                                   return call_factory_make(tuple_get_by_type<FT>(deps), ctx, (ARGS*)0);
+                                   return call_factory_instantiate(tuple_get_by_type<FT>(deps), ctx, (ARGS*)0);
                                  };
-                               return f(make, (ARGS*)0);
+                               return f(instantiate, (ARGS*)0);
                              },
                              // If the argument type provide a static instantiate method, call it.
                              [&] (auto& deps, auto* e, auto* ft_) -> auto {
                                typedef std::remove_pointer_t<decltype(e)> E2;
-                               static_assert(has_make_static_method<E2>::value,
+                               static_assert(has_instantiate_static_method<E2>::value,
                                              "Dependency injection failed. Cannot resolve.");
-                               typedef iod::callable_arguments_tuple_t<decltype(&E2::make)> ARGS;
-                               auto make = [&] (auto& ctx) { return call_factory_make_static<E>(ctx, (ARGS*)0); };
-                               return f(make, (ARGS*)0);
+                               typedef iod::callable_arguments_tuple_t<decltype(&E2::instantiate)> ARGS;
+                               auto instantiate = [&] (auto& ctx) { return call_factory_instantiate_static<E>(ctx, (ARGS*)0); };
+                               return f(instantiate, (ARGS*)0);
                                //return 1;
                              },
                              to_inject, (E*)0, (FT*)0);
@@ -188,9 +188,9 @@ namespace iod
     auto instantiate(T&& to_inject)
     {
       return di_meta_instantiate<E>(to_inject,
-                                    [&] (auto make, auto* args)
+                                    [&] (auto instantiate, auto* args)
                                     {
-                                      return make(to_inject);
+                                      return instantiate(to_inject);
                                     });
     }  
 
@@ -214,11 +214,11 @@ namespace iod
     auto create_di_ctx_rec(T& ctx)
     {
       return di_meta_instantiate<E>(ctx,
-                                    [&] (auto make, auto args)
+                                    [&] (auto instantiate, auto args)
                                     {
                                       typedef std::remove_pointer_t<decltype(args)> ARGS;
                                       auto deps = create_di_ctx_list_rec(ctx, (ARGS*)0);
-                                      auto n = make(deps);
+                                      auto n = instantiate(deps);
                                       return std::tuple_cat(deps, std::make_tuple(n));
                                     });
     }
@@ -240,7 +240,7 @@ namespace iod
     };
 
     // Call fun with its required argument A...
-    // by picking in args... or calling A::make()
+    // by picking in args... or calling A::instantiate()
     template <typename F, typename... A, typename... B>
     auto call_with_di2(F fun, std::tuple<A...>*, B&&... to_inject)
     {
@@ -248,7 +248,7 @@ namespace iod
       callable_arguments_tuple_t<F>* arguments;
 
       // Compute the context type containing the arguments plus the
-      // dependencies of the possible A::make(...) methods.
+      // dependencies of the possible A::instantiate(...) methods.
       typedef decltype(create_di_ctx_list_rec(std::make_tuple(to_inject...), arguments)) ctx_type;
 
       // Instantiate it.
@@ -260,7 +260,7 @@ namespace iod
 
   }
 
-  // Dependency injection entry point.
+  // Dependency injection entry point for function.
   //
   // di_call(fun, args_to_inject_or_factories...)
   //
@@ -275,4 +275,19 @@ namespace iod
     }
   } di_call;
 
+  // Dependency injection entry point for object methods.
+  //
+  // di_call(object, method, args_to_inject_or_factories...)
+  //
+  static const struct di_call_method_t
+  {
+    di_call_method_t() {}
+
+    template <typename O, typename F, typename... A>
+    auto operator()(O& o , F fun, A&&... to_inject) const
+    {
+      return di::call_with_di2(bind_method(o, fun), (callable_arguments_tuple_t<F>*)0, std::forward<A>(to_inject)...);
+    }
+  } di_call_method;
+  
 }

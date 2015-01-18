@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
   vector<string> lines;
 
   auto to_safe_alias = [] (string s) {
-    return string("_") + std::string(1, toupper(s[0])) + s.substr(1, s.size() - 1);
+    return string("_") + s;
   };
   
   std::string line;

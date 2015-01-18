@@ -10,8 +10,8 @@ int main()
 {
   using namespace iod;
 
-  using s::_Age;
-  using s::_Name;
+  using s::_age;
+  using s::_name;
 
   auto plus = [] (auto a, auto b) { return a + b; };
 
@@ -26,8 +26,8 @@ int main()
   iod::apply(t, [] (int x, int y, int s) { std::cout << s << std::endl; });
   iod::apply(u, 32, [] (int x, int y, int s, int p) { std::cout << s << "-" << p << std::endl; });
   
-  auto o1 = iod::D(_Name = "xxx", _Age = 12);
-  const auto o2 = iod::D(_Name = "xxx", _Age = 12);
+  auto o1 = iod::D(_name = "xxx", _age = 12);
+  const auto o2 = iod::D(_name = "xxx", _age = 12);
   iod::apply(o1, [] (std::string& s, int& a) { std::cout << s << std::endl; });
   iod::apply(o2, [] (const std::string& s, const int& a) { std::cout << s << std::endl; });
 

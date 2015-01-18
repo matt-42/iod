@@ -4,22 +4,22 @@
 
 
 struct A {
-  static A make() {
-    std::cout << " make A" << std::endl;
+  static A instantiate() {
+    std::cout << " instantiate A" << std::endl;
     return A();
   }
 };
 
 struct C {
-  static C make() {
-    std::cout << " make C " << std::endl;
+  static C instantiate() {
+    std::cout << " instantiate C " << std::endl;
     return C();
   }
 };
 
 struct B {
-  static B make(C c) {
-    std::cout << " make B" << std::endl;
+  static B instantiate(C c) {
+    std::cout << " instantiate B" << std::endl;
     return B();
   }
 };
@@ -32,9 +32,9 @@ struct D {
 
 struct D_factory
 {
-  D make()
+  D instantiate()
   {
-    std::cout << " make D" << std::endl;
+    std::cout << " instantiate D" << std::endl;
     return D();
   }
 
@@ -77,12 +77,12 @@ void fun7(A a)
 
 struct int_factory
 {
-  int make(float f) { return f + 1; }
+  int instantiate(float f) { return f + 1; }
 };
 
 struct float_factory
 {
-  float make() { return 2.f; }
+  float instantiate() { return 2.f; }
 };
 
 

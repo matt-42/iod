@@ -13,7 +13,7 @@ int main()
   using namespace s;
 
   {
-    auto o = D(_Name = "John", _Age = 12, _Children = { 1,2,3,4,5 }, _City = D(_Name = "Paris"));
+    auto o = D(_name = "John", _age = 12, _children = { 1,2,3,4,5 }, _city = D(_name = "Paris"));
     auto str = json_encode(o);
 
     decltype(o) p;
@@ -27,14 +27,14 @@ int main()
 
   {
     auto o = D(
-      _Name(_Optional, _Json_key = _My_json_name) = std::string("xxxx")
+      _name(_optional, _json_key = _my_json_name) = std::string("xxxx")
       );
 
     std::cout << json_encode(o) << std::endl;
   }
 
   { // UTF 8
-    auto o = D(_Name = std::string());
+    auto o = D(_name = std::string());
     auto s = R"json({"name":"\u00E2\u82AC\u00E2\u82AC\u00E2\u82AC\u00E2\u82AC\u00E2\u82AC"})json";
 
     json_decode(o, s);
@@ -42,9 +42,9 @@ int main()
   }
 
   {
-    typedef decltype(D(_Name(_Json_key = _Username) = std::string(),
-                       _Age(_Json_skip) = int(),
-                       _City = std::string())) User;
+    typedef decltype(D(_name(_json_key = _username) = std::string(),
+                       _age(_json_skip) = int(),
+                       _city = std::string())) User;
     
     User u("John", 23, "NYC");
     

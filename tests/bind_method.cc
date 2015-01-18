@@ -14,4 +14,5 @@ int main()
   A a;
   auto f = bind_method(a, &A::add);
   assert(f(1,2) == 3);
+  std::cout << f(1,2) << std::endl;
 }

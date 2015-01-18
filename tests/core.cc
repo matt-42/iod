@@ -17,32 +17,32 @@ int main()
   using namespace iod;
   using namespace s;
   {
-    auto o = D(_Name = "John", _Age = 12);
+    auto o = D(_name = "John", _age = 12);
     assert(o.name == "John");
     assert(o.age == 12);
 
-    assert(o[_Name] == "John");
-    assert(o[_Age] == 12);
+    assert(o[_name] == "John");
+    assert(o[_age] == 12);
 
-    assert(o.has(_Name));
-    assert(o.has(_Age));
+    assert(o.has(_name));
+    assert(o.has(_age));
 
-    assert(!o.has(_City));
+    assert(!o.has(_city));
 
-    auto p = D(_Name("John2"), _Age(123));
+    auto p = D(_name("John2"), _age(123));
     assert(p.name == "John2");
     assert(p.age == 123);
 
-    assert(p[_Name] == "John2");
-    assert(p[_Age] == 123);
+    assert(p[_name] == "John2");
+    assert(p[_age] == 123);
 
-    assert(p.has(_Name));
-    assert(p.has(_Age));
+    assert(p.has(_name));
+    assert(p.has(_age));
 
-    assert(!p.has(_City));
+    assert(!p.has(_city));
 
-    assert(p.get(_City, "Paris") == std::string("Paris"));
-    assert(p.get(_Name, "Mary") == "John2");
+    assert(p.get(_city, "Paris") == std::string("Paris"));
+    assert(p.get(_name, "Mary") == "John2");
 
     // Assignement
     o = p;
@@ -51,23 +51,23 @@ int main()
   }
 
   { // Arrays
-    auto o = D(_Name = "John", _Children = { "a", "b", "c"});
+    auto o = D(_name = "John", _children = { "a", "b", "c"});
     assert(o.children[2] == "c");
   }
 
   { // Arrays of iod.
-    auto o = D(_Name = "John",
-                 _Children = { 
-                   D(_Name = "a"),
-                   D(_Name = "b"),
-                   D(_Name = "c"),
+    auto o = D(_name = "John",
+                 _children = { 
+                   D(_name = "a"),
+                   D(_name = "b"),
+                   D(_name = "c"),
                      });
     assert(o.children[2].name == "c");
   }
 
   { // Cat
-    auto a = D(_Name = "John");
-    auto b = D(_Age = 42);
+    auto a = D(_name = "John");
+    auto b = D(_age = 42);
 
     auto c = iod::cat(a, b);
     decltype(a) d;
@@ -77,19 +77,19 @@ int main()
   }
 
   { // Default constructor when values are default constructible.
-    auto a = D(_Name = "John");
+    auto a = D(_name = "John");
     decltype(a) d;
   }
 
   { // Attribute value without default constructor should also work.
-    D(_Name = [] () {});
+    D(_name = [] () {});
     // But cannot be default constructed.
     // Do not compile: decltype(a) d;
   }
 
   {
-    static_assert(is_sio<decltype(D(_Name = std::string()))>::value, "is sio failled");
-    static_assert(is_sio<decltype(D(_Name = std::string()))&>::value, "is sio failled");
+    static_assert(is_sio<decltype(D(_name = std::string()))>::value, "is sio failled");
+    static_assert(is_sio<decltype(D(_name = std::string()))&>::value, "is sio failled");
     static_assert(!is_sio<int>::value, "is sio failled");
   }
 }

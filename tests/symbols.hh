@@ -1,40 +1,40 @@
-#ifndef IOD_SYMBOL__Name
-#define IOD_SYMBOL__Name
-    iod_define_symbol(name, _Name)
+#ifndef IOD_SYMBOL__name
+#define IOD_SYMBOL__name
+    iod_define_symbol(name, _name)
 #endif
-#ifndef IOD_SYMBOL__City
-#define IOD_SYMBOL__City
-    iod_define_symbol(city, _City)
+#ifndef IOD_SYMBOL__city
+#define IOD_SYMBOL__city
+    iod_define_symbol(city, _city)
 #endif
-#ifndef IOD_SYMBOL__Children
-#define IOD_SYMBOL__Children
-    iod_define_symbol(children, _Children)
+#ifndef IOD_SYMBOL__children
+#define IOD_SYMBOL__children
+    iod_define_symbol(children, _children)
 #endif
-#ifndef IOD_SYMBOL__Age
-#define IOD_SYMBOL__Age
-    iod_define_symbol(age, _Age)
+#ifndef IOD_SYMBOL__age
+#define IOD_SYMBOL__age
+    iod_define_symbol(age, _age)
 #endif
-#ifndef IOD_SYMBOL__Age2
-#define IOD_SYMBOL__Age2
-    iod_define_symbol(age2, _Age2)
+#ifndef IOD_SYMBOL__age2
+#define IOD_SYMBOL__age2
+    iod_define_symbol(age2, _age2)
 #endif
-#ifndef IOD_SYMBOL__Person
-#define IOD_SYMBOL__Person
-    iod_define_symbol(person, _Person)
+#ifndef IOD_SYMBOL__person
+#define IOD_SYMBOL__person
+    iod_define_symbol(person, _person)
 #endif
-#ifndef IOD_SYMBOL__City
-#define IOD_SYMBOL__City
-    iod_define_symbol(city, _City)
+#ifndef IOD_SYMBOL__city
+#define IOD_SYMBOL__city
+    iod_define_symbol(city, _city)
 #endif
-#ifndef IOD_SYMBOL__Cp
-#define IOD_SYMBOL__Cp
-    iod_define_symbol(cp, _Cp)
+#ifndef IOD_SYMBOL__cp
+#define IOD_SYMBOL__cp
+    iod_define_symbol(cp, _cp)
 #endif
-#ifndef IOD_SYMBOL__My_json_name
-#define IOD_SYMBOL__My_json_name
-    iod_define_symbol(my_json_name, _My_json_name)
+#ifndef IOD_SYMBOL__my_json_name
+#define IOD_SYMBOL__my_json_name
+    iod_define_symbol(my_json_name, _my_json_name)
 #endif
-#ifndef IOD_SYMBOL__Username
-#define IOD_SYMBOL__Username
-    iod_define_symbol(username, _Username)
+#ifndef IOD_SYMBOL__username
+#define IOD_SYMBOL__username
+    iod_define_symbol(username, _username)
 #endif

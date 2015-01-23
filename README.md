@@ -17,16 +17,16 @@ but powerful operator that is now possible with IOD symbols:
 #include <iostream>
 #include <iod/symbol.hh>
 
-iod_define_symbol(a, _A); // Refer to members and methods a with symbol _A
-iod_define_symbol(b, _B); // Refer to members and methods b with symbol _B
-iod_define_symbol(c, _C); // Refer to members and methods b with symbol _C
+iod_define_symbol(a, _a); // Refer to members and methods a with symbol _a
+iod_define_symbol(b, _b); // Refer to members and methods b with symbol _b
+iod_define_symbol(c, _c); // Refer to members and methods b with symbol _c
 
 int main() {
 
   // Symbols are located in namespace s to avoid name clash.
-  using s::_A;
-  using s::_B;
-  using s::_C;
+  using s::_a;
+  using s::_b;
+  using s::_c;
 
   auto print_member = [] (auto& obj, auto& m)
                       {
@@ -35,9 +35,9 @@ int main() {
                       };
 
   struct { int a; int b; int c; } obj{21, 42, 84};
-  print_member(obj, _A); // Prints "obj.a == 21"
-  print_member(obj, _B); // Prints "obj.b == 42"
-  print_member(obj, _C); // Prints "obj.c == 84"
+  print_member(obj, _a); // Prints "obj.a == 21"
+  print_member(obj, _b); // Prints "obj.b == 42"
+  print_member(obj, _c); // Prints "obj.c == 84"
 }
 ```
 
@@ -52,7 +52,7 @@ following:
 ```c++
 #ifndef IOD_SYMBOL__Mysymbol
 #define IOD_SYMBOL__Mysymbol
-  iod_define_symbol(mysymbol, _Mysymbol);
+  iod_define_symbol(mysymbol, _mysymbol);
 #endif
 }
 ```
@@ -70,15 +70,15 @@ Statically introspectable objects features are:
 
 ```c++
   // Define an object
-  auto o = D(_Name = "John", _Age = 42, _City = "NYC");
+  auto o = D(_name = "John", _age = 42, _city = "NYC");
   // Direct access to its members.
   assert(o.name == "John" && o.age == 42 && o.city == "NYC");
 
   // Static Introspection. It has no execution cost since these function
   // are computed at compile time.
-  assert(o.has(_Name) == true);
-  assert(o.has(_FirstName) == false);
-  assert(o.has(_FirstName) == false);
+  assert(o.has(_name) == true);
+  assert(o.has(_firstName) == false);
+  assert(o.has(_firstName) == false);
   assert(o.size() == 3);
 
   // Output the structure of the object to std::cout:
@@ -126,9 +126,9 @@ members if they are of type std::vector or std::string.
 // The type of the object contains attributes related to its json
 // representation such as alternative json keys and whether or not a
 // field should not be included in the json representation.
-typedef decltype(D(_Name(_Json_key = _Username) = std::string(),
-                   _Age(_Json_skip) = int(),
-                   _City = std::string())) User;
+typedef decltype(D(_name(_json_key = _username) = std::string(),
+                   _age(_json_skip) = int(),
+                   _city = std::string())) User;
   
 User u("John", 23, "NYC");
 
@@ -172,12 +172,12 @@ template <typename... O>
 void fun(int mandatory_arg, const O&... opts)
 {
   const auto options = D(opts...);
-  int optional_arg1 = options.get(_Optional_arg1, 1); // return options.optional_arg1 or 1 if not set.
-  int optional_arg2 = options.get(_Optional_arg2, 1);
-  int optional_arg3 = options.get(_Optional_arg3, 1);
+  int optional_arg1 = options.get(_optional_arg1, 1); // return options.optional_arg1 or 1 if not set.
+  int optional_arg2 = options.get(_optional_arg2, 1);
+  int optional_arg3 = options.get(_optional_arg3, 1);
 }
 
-fun(1, _Optional_arg3 = 2); // Set the thirds argument and leave the two others to their default value.
+fun(1, _optional_arg3 = 2); // Set the thirds argument and leave the two others to their default value.
 ```
 
 ## Foreach for tuple and SIO
@@ -192,7 +192,7 @@ auto my_tuple = std::make_tuple(1, "test", 34.f);
 // Prints 1 test 34.f.
 foreach(my_tuple) | [] (auto& e) { std::cout << e << " "; }
 
-auto my_sio = D(_Name = "John", _Age = 42);
+auto my_sio = D(_name = "John", _age = 42);
 // Prints name John age 42
 foreach(my_sio) | [] (auto& m) { std::cout << m.symbol().name() << " " << m.value() << " "; }
 ```
@@ -237,7 +237,7 @@ abstract syntax tree (AST) with symbols and values as terminals. Here
 is an example of a simple expression:
 
 ```c++
-auto exp = _A(23) + _B;
+auto exp = _a(23) + _b;
 ```
 
 This code does nothing except computing the AST type and storing the
@@ -259,8 +259,8 @@ ORDER BY, GROUP BY, and aggregates such as average or sum.
 Given two collection:
 
 ```c++
-std::vector<decltype(D(_Name = std::string(), _Age() = int(), _City_id = int()))> persons;
-std::vector<decltype(D(_Id = int(), _Name() = std::string(), _Zipcode = int()))> cities;
+std::vector<decltype(D(_name = std::string(), _age() = int(), _city_id = int()))> persons;
+std::vector<decltype(D(_id = int(), _name() = std::string(), _zipcode = int()))> cities;
 ```
 
 The following requests are valid:
@@ -272,7 +272,7 @@ linq.select().from(persons) | [] (auto& p) { std::cout << p.name << std::endl; }
 
 ```c++
 // SELECT myname = name from persons WHERE age > 42;
-linq.select(_Myname = _Name).from(persons).where(_Age > 42) |
+linq.select(_myname = _name).from(persons).where(_age > 42) |
   [] (auto& p) { std::cout << p.myname << std::endl; }
 ```
 
@@ -281,10 +281,10 @@ linq.select(_Myname = _Name).from(persons).where(_Age > 42) |
 //        FROM persons as person
 //        INNER JOIN cities as city
 //        ON person.city_id == city.id
-linq.select(_Name = _Person[_Name], _City = _City[_Name])
-    .from(persons, _As(_Person))
-    .inner_join(cities, _As(_City),
-              _On(_City[_Cp] == _Person[_Cp])) |
+linq.select(_name = _person[_name], _city = _city[_name])
+    .from(persons, _as(_person))
+    .inner_join(cities, _as(_city),
+              _on(_city[_cp] == _person[_cp])) |
   [] (auto& p) { std::cout << p.name << " lives in " << p.city << std::endl; }
 ```
 
@@ -293,9 +293,9 @@ linq.select(_Name = _Person[_Name], _City = _City[_Name])
 //        FROM persons
 //        GROUP BY city_id
 
-linq.select(_Age = _Avg(_Age), _City_id = _City_id)
+linq.select(_age = _avg(_age), _city_id = _city_id)
     .from(persons)
-    .group_by(_City_id) |
+    .group_by(_city_id) |
   [] (auto& p) { std::cout << p.age << " is the average age in city " << p.city_id << std::endl; }
 ```
 

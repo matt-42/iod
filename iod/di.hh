@@ -280,13 +280,6 @@ namespace iod
     template <typename C, typename... A>
     decltype(auto) create_di_ctx_list_rec(C&& ctx, std::tuple<A...>*)
     {
-      //void* x = *(std::tuple<C&&...>*)0;
-      // std::tuple<std::remove_reference_t<A>*...> tmp;
-      // return tuple_iterate(tmp, ctx) | [&] (auto* e, auto& prev) { // Foreach instantiate argument e.
-      //   typedef std::remove_reference_t<std::remove_pointer_t<decltype(e)>> E;
-      //   return create_di_ctx_rec<E>(prev);
-      // };
-      
       return create_di_ctx_iterator<A...>::template run(ctx);
     }
   

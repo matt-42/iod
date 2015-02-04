@@ -18,6 +18,10 @@ struct C {
 };
 
 struct B {
+  typedef B self;
+
+  B() {}
+  
   static B instantiate(C c) {
     std::cout << " instantiate B" << std::endl;
     return B();
@@ -32,6 +36,8 @@ struct D {
 
 struct D_factory
 {
+  D_factory() {}
+  
   D instantiate()
   {
     std::cout << " instantiate D" << std::endl;
@@ -44,18 +50,8 @@ struct NC
 {
   NC() : copy(false) {}
 
-  NC(const NC& n)
-  {
-    std::cout << "COPY!" << std::endl;
-    copy = true;
-  }
-
-  NC& operator=(const NC& n)
-  {
-    std::cout << "COPY!" << std::endl;
-    copy = true;
-    return *this;
-  }
+  NC(const NC& n) = delete;
+  NC& operator=(const NC& n) = delete;
   
   bool copy;
 };
@@ -138,8 +134,6 @@ struct with_data_instance
 
 struct with_data
 {
-  // with_data(std::string t) : s(t) {}
-  // with_data(std::string t) : s(t) {}
 
   with_data_instance instantiate() {
     std::cout << "instantiate " << s << std::endl;
@@ -152,8 +146,6 @@ struct with_data
 
 struct with_data_instance2
 {
-  // with_data(std::string t) : s(t) {}
-  // with_data(std::string t) : s(t) {}
 
   static with_data_instance2 instantiate(with_data& wd) {
     std::cout << "instantiate2 " << wd.s << std::endl;

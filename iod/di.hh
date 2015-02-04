@@ -269,7 +269,9 @@ namespace iod
       template <typename P>
       static decltype(auto) run(P&& prev)
       {
-        return create_di_ctx_iterator<A...>::template run(create_di_ctx_rec<A1>(prev));
+        typedef std::remove_reference_t<decltype(create_di_ctx_rec<A1>(prev))> D;
+        D& d = *(D*)0;
+        return create_di_ctx_iterator<A...>::template run(d);
       }
     };
     // Instantiate the injection list from the types A...
@@ -295,7 +297,9 @@ namespace iod
                                     [&] (auto instantiate, auto args) -> decltype(auto)
                                     {
                                       typedef std::remove_pointer_t<decltype(args)> ARGS;
-                                      auto deps = create_di_ctx_list_rec(ctx, (ARGS*)0);
+                                      typedef
+                                        std::remove_reference_t<decltype(create_di_ctx_list_rec(ctx, (ARGS*)0))> D;
+                                      D& deps = *(D*)0;
                                       return std::tuple_cat(deps, forward_as_tuple_no_rvalue(instantiate(deps)));
                                     });
     }
@@ -347,7 +351,6 @@ namespace iod
     decltype(auto) create_di_ctx2(std::enable_if_t<(N < sizeof...(T))>*,
                                   std::tuple<T...>& ctx, U&&... args)
     {
-      std::cout << N << std::endl;
       typedef std::remove_reference_t<decltype(std::get<N>(ctx))> X;
       new (&std::get<N>(ctx)) X(instantiate<std::tuple_element_t<N, std::tuple<T...>>>
                                 (std::tuple_cat(std::forward_as_tuple(args...),
@@ -364,12 +367,6 @@ namespace iod
         std::tuple_cat(std::forward_as_tuple(tuple_get_by_type<C>(ctx)...),
                        std::forward_as_tuple(to_inject...))
         );
-      // typedef std::remove_reference_t<A> A2;
-      // typedef std::remove_reference_t<tuple_find_type<C, A2>> X;
-      // return static_if<!std::is_same<X, not_found>::value>(
-      //   [&] (auto* i) -> decltype(auto) { return tuple_get_by_type<std::remove_pointer_t<decltype(i)>>(ctx); },
-      //   [&] (auto* i) -> decltype(auto) { return tuple_get_by_type<std::remove_pointer_t<decltype(i)>>(std::forward_as_tuple(to_inject...)); },
-      //   (A2*)0);
     }
 
     template <typename F>

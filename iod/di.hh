@@ -296,9 +296,10 @@ namespace iod
       return di_meta_instantiate<E>(ctx,
                                     [&] (auto instantiate, auto args) -> decltype(auto)
                                     {
+                                      auto& ctx2 = ctx; // Fix to import ctx in the closure with gcc 4.9.
                                       typedef std::remove_pointer_t<decltype(args)> ARGS;
                                       typedef
-                                        std::remove_reference_t<decltype(create_di_ctx_list_rec(ctx, (ARGS*)0))> D;
+                                        std::remove_reference_t<decltype(create_di_ctx_list_rec(ctx2, (ARGS*)0))> D;
                                       D& deps = *(D*)0;
                                       return std::tuple_cat(deps, forward_as_tuple_no_rvalue(instantiate(deps)));
                                     });

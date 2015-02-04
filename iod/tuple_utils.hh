@@ -8,8 +8,10 @@ namespace iod
   template <int N, typename T, typename X>
   struct tuple_find_type2;
 
+  // template <int N, typename X>
+  // struct tuple_find_type2<N, std::tuple<>, X> : public std::integral_constant<int, -1> {};
   template <int N, typename X>
-  struct tuple_find_type2<N, std::tuple<>, X> : public std::integral_constant<int, -1> {};
+  struct tuple_find_type2<N, std::tuple<>, X> : public not_found {};
 
   template <int N, typename... T, typename X>
   struct tuple_find_type2<N, std::tuple<X, T...>, X> : public std::integral_constant<int, N> {};

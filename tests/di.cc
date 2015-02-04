@@ -150,9 +150,29 @@ struct with_data
 };
 
 
+struct with_data_instance2
+{
+  // with_data(std::string t) : s(t) {}
+  // with_data(std::string t) : s(t) {}
+
+  static with_data_instance2 instantiate(with_data& wd) {
+    std::cout << "instantiate2 " << wd.s << std::endl;
+    return with_data_instance2{wd};
+  }
+
+  with_data& w;
+};
+
+
 void fun9(with_data_instance& wd)
 {
   std::cout << "fun9: " << wd.s << std::endl;
+}
+
+
+void fun10(with_data_instance2 wd)
+{
+  std::cout << "fun10: " << wd.w.s << std::endl;
 }
 
 int main()
@@ -185,6 +205,9 @@ int main()
   auto wd = with_data{"toto"};
   std::cout << "before: " << wd.s << std::endl;
   iod::di_call(fun9, with_data{"toto"});
+
+  iod::di_call(fun10, with_data{"toto"});
+
   
   //void* xx = iod::return_factory_type<D>(0);
 }

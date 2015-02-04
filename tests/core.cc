@@ -29,7 +29,7 @@ int main()
 
     assert(!o.has(_city));
 
-    auto p = D(_name("John2"), _age(123));
+    auto p = D(_name = "John2", _age = 123);
     assert(p.name == "John2");
     assert(p.age == 123);
 

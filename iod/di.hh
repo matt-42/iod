@@ -36,7 +36,29 @@ namespace iod
     {
       return std::tuple<remove_rvalue_reference_t<T>...>(std::forward<T>(t)...);
     }
+
+    template <typename T>
+    struct tuple_filter_references
+    {
+      typedef T type;
+    };
+
+    template <typename T1, typename... T>
+    struct tuple_filter_references<std::tuple<T1&, T...>>
+    {
+      typedef typename tuple_filter_references<std::tuple<T...>>::type type;
+    };
+
+    template <typename T1, typename... T>
+    struct tuple_filter_references<std::tuple<T1, T...> >
+    {
+      typedef decltype(std::tuple_cat(std::declval<std::tuple<T1>>(),
+                                      std::declval<typename tuple_filter_references<std::tuple<T...>>::type>())) type;
+    };
     
+    template <typename T>
+    using tuple_filter_references_t = typename tuple_filter_references<T>::type;
+
     template <typename M, typename C, typename... T>
     auto call_factory_instantiate(M& factory, C&& ctx, std::tuple<T...>*)
     {
@@ -294,6 +316,76 @@ namespace iod
                            (std::forward_as_tuple(args...)));
     };
 
+    template <unsigned N>
+    struct static_array
+    {
+      unsigned char data[N];
+    };
+    
+    template <unsigned N, typename... T, typename... U>
+    decltype(auto) create_di_ctx2(std::enable_if_t<(N == sizeof...(T))>*,
+                                  std::tuple<T...>& ctx, U&&... args)
+    {
+    };
+
+
+    template <unsigned N, typename... X, typename... T>
+    auto sub_tuple(std::enable_if_t<(N == 0)>*,
+                     std::tuple<X...>&& t, T&...)
+    {
+      return t;
+    }
+
+    template <unsigned N, typename... X, typename T1, typename... T>
+    auto sub_tuple(std::enable_if_t<(N > 0)>*,
+                     std::tuple<X...>&& t, T1& t1, T&... args)
+    {
+      return sub_tuple<N-1>(0, std::tuple_cat(t, std::forward_as_tuple(t1)), args...);
+    }
+    
+    template <unsigned N, typename... T, typename... U>
+    decltype(auto) create_di_ctx2(std::enable_if_t<(N < sizeof...(T))>*,
+                                  std::tuple<T...>& ctx, U&&... args)
+    {
+      std::cout << N << std::endl;
+      typedef std::remove_reference_t<decltype(std::get<N>(ctx))> X;
+      new (&std::get<N>(ctx)) X(instantiate<std::tuple_element_t<N, std::tuple<T...>>>
+                                (std::tuple_cat(std::forward_as_tuple(args...),
+                                                //std::forward_as_tuple(tuple_get_by_type<T>(ctx)...)
+                                                sub_tuple<N>(0, std::make_tuple(), tuple_get_by_type<T>(ctx)...)
+                                  )));
+      create_di_ctx2<N + 1>(0, ctx, std::forward<U>(args)...);
+    };
+    
+    template <typename A, typename... C, typename... B>
+    decltype(auto) get_from_ctx_or_args(std::tuple<C...>& ctx, B&&... to_inject)
+    {
+      return tuple_get_by_type<A>(
+        std::tuple_cat(std::forward_as_tuple(tuple_get_by_type<C>(ctx)...),
+                       std::forward_as_tuple(to_inject...))
+        );
+      // typedef std::remove_reference_t<A> A2;
+      // typedef std::remove_reference_t<tuple_find_type<C, A2>> X;
+      // return static_if<!std::is_same<X, not_found>::value>(
+      //   [&] (auto* i) -> decltype(auto) { return tuple_get_by_type<std::remove_pointer_t<decltype(i)>>(ctx); },
+      //   [&] (auto* i) -> decltype(auto) { return tuple_get_by_type<std::remove_pointer_t<decltype(i)>>(std::forward_as_tuple(to_inject...)); },
+      //   (A2*)0);
+    }
+
+    template <typename F>
+    struct desctructor_caller
+    {
+      desctructor_caller(F f) : f_(f) {}
+      ~desctructor_caller() { f_(); }
+      F f_;
+    };
+
+    template <typename F>
+    auto make_destructor_caller(F f)
+    {
+      return desctructor_caller<F>(f);
+    }
+
     // Call fun with its required argument A...
     // by picking in args... or calling A::instantiate()
     template <typename F, typename... A, typename... B>
@@ -314,10 +406,19 @@ namespace iod
 
       // Remove the rvalues references to be able to store the context.
       typedef tuple_remove_rvalues_t<ctx_type> ctx_type2;
+      typedef tuple_filter_references_t<ctx_type2> ctx_type3;
       // Instantiate it.
-      ctx_type2 ctx = create_di_ctx(0, (ctx_type2*)0, std::forward<B>(to_inject)...);
+      static_array<sizeof(ctx_type3)> ctx_buffer;
+      ctx_type3& ctx = *(ctx_type3*) &ctx_buffer;
+
+      // Destroy it at the end of the scope.
+      auto x = make_destructor_caller([&] () {  ctx.~ctx_type3(); });
+
+      // Create the needed dependencies:
+      create_di_ctx2<0>(0, ctx, std::forward<B>(to_inject)...);
+
       // Call the function.
-      return fun(tuple_get_by_type<A>(ctx)...);
+      return fun(get_from_ctx_or_args<A>(ctx, std::forward<B>(to_inject)...)...);
     }
 
   }

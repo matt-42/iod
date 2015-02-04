@@ -65,7 +65,7 @@ int main()
 
       linq.select(_name = _person[_name], _city = _city[_name], _cp = _cp, _age = _age2)
         .from(persons, _as(_person))
-        .inner_join(cities, _as(_city), _on(_city[_cp] == _person[_cp]))
+        .inner_join(cities, _as = _city, _on = (_city[_cp] == _person[_cp]))
         .order_by(_city[_name])
         .where(_person[_age] < 12) |
         [] (const auto& r) { 
@@ -80,7 +80,7 @@ int main()
         D(_age2 = 12, _age = 12, _name = ("Tam"))
       };
 
-      linq.select(_age = _avg(_age), _sum = _sum(_person[_age2]))
+      linq.select(_age = (_avg =  _age), _sum = (_sum = _person[_age2]))
         .from(persons, _as(_person)).group_by(_person[_age2]).where(_age > 2)
         |
         [] (const auto& r) { std::cout << "average(age): " << r.age << " "

@@ -36,10 +36,11 @@ namespace iod
     return *static_cast<const S*>(&s);
   }
 
-  template <typename S, typename T>
-  auto exp_to_variable(const function_call_exp<S, T>& c)
+  template <typename S, typename... ARGS>
+  auto exp_to_variable(const function_call_exp<S, ARGS...>& e)
   {
-    return typename S::template variable_type<T>(std::get<0>(c.args));
+    //return typename S::template variable_type<T>(std::get<0>(c.args));
+    return typename S::template variable_type<char, decltype(D(std::declval<ARGS>()...))>(0);
   }
 
   template <typename S, typename V>
@@ -65,6 +66,12 @@ namespace iod
 
     return result_type(exp_to_variable(args)...);
   }
+
+  struct D_caller
+  {
+    template <typename... X>
+    auto operator() (X... t) const { return D(t...); }
+  };
 
   template <int N>
   struct transform_runner

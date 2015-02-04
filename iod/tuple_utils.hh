@@ -16,10 +16,16 @@ namespace iod
   template <int N, typename... T, typename X>
   struct tuple_find_type2<N, std::tuple<X&, T...>, X> : public std::integral_constant<int, N> {};
   template <int N, typename... T, typename X>
+  struct tuple_find_type2<N, std::tuple<X&&, T...>, X> : public std::integral_constant<int, N> {};
+  template <int N, typename... T, typename X>
   struct tuple_find_type2<N, std::tuple<const X&, T...>, X> : public std::integral_constant<int, N> {};
+  template <int N, typename... T, typename X>
+  struct tuple_find_type2<N, std::tuple<const X, T...>, X> : public std::integral_constant<int, N> {};
 
   template <int N, typename... T, typename X>
   struct tuple_find_type2<N, std::tuple<X, T...>, X&> : public std::integral_constant<int, N> {};
+  template <int N, typename... T, typename X>
+  struct tuple_find_type2<N, std::tuple<X, T...>, X&&> : public std::integral_constant<int, N> {};
   template <int N, typename... T, typename X>
   struct tuple_find_type2<N, std::tuple<X, T...>, const X&> : public std::integral_constant<int, N> {};
   template <int N, typename... T, typename X>
@@ -34,8 +40,8 @@ namespace iod
   template <typename E, typename T>
   auto& tuple_get_by_type(T&& tuple)    
   {
-    return std::get<tuple_find_type<std::remove_reference_t<T>,
-                                    std::remove_reference_t<E>>::value>(tuple);
+    return std::get<tuple_find_type<std::remove_const_t<std::remove_reference_t<T>>,
+                                    std::remove_const_t<std::remove_reference_t<E>>>::value>(tuple);
   }
 
 

@@ -40,6 +40,28 @@ struct D_factory
 
 };
 
+struct NC
+{
+  NC() : copy(false) {}
+
+  NC(const NC& n)
+  {
+    std::cout << "COPY!" << std::endl;
+    copy = true;
+  }
+
+  NC& operator=(const NC& n)
+  {
+    std::cout << "COPY!" << std::endl;
+    copy = true;
+    return *this;
+  }
+  
+  bool copy;
+};
+
+
+
 void fun1()
 {
 }
@@ -65,14 +87,35 @@ void fun5(D d)
 }
 
 
+void fun5_2(D& d)
+{
+  std::cout << "fun5" << std::endl;
+}
+
+void fun5_3(const D& d)
+{
+  std::cout << "fun5" << std::endl;
+}
+
+void fun5_4(const D d)
+{
+  std::cout << "fun5" << std::endl;
+}
+
+
 void fun6(float x)
 {
 }
 
-
 void fun7(A a)
 {
   std::cout << "fun7" << std::endl;
+}
+
+
+void fun8(NC& a)
+{
+  std::cout << "fun8" << std::endl;
 }
 
 struct int_factory
@@ -86,6 +129,32 @@ struct float_factory
 };
 
 
+struct with_data_instance
+{
+  with_data_instance() { s = "trest"; };
+  with_data_instance(std::string x) { s = x; };
+  std::string s;
+};
+
+struct with_data
+{
+  // with_data(std::string t) : s(t) {}
+  // with_data(std::string t) : s(t) {}
+
+  with_data_instance instantiate() {
+    std::cout << "instantiate " << s << std::endl;
+    return with_data_instance{s};
+
+  }
+  std::string s;
+};
+
+
+void fun9(with_data_instance& wd)
+{
+  std::cout << "fun9: " << wd.s << std::endl;
+}
+
 int main()
 {
   float x = 1;
@@ -97,20 +166,25 @@ int main()
   iod::di_call(&fun3, y, x);
   iod::di_call(&fun3, y, x, A());
 
-  iod::di_call(&fun4, C(), B());
+  iod::di_call(&fun4, B());
   iod::di_call(&fun4, D_factory());  
 
   iod::di_call(&fun5, D_factory());
   iod::di_call(fun6, 2.f);
   iod::di_call(fun7);
 
-
-  
+  // Check if no copy happend.
+  NC nc;
+  iod::di_call(fun8, nc);
 
   auto f = [] (int x, float y) {};
   int_factory int_f;
   float_factory float_f;
   iod::di_call(f, int_f, float_f);
+
+  auto wd = with_data{"toto"};
+  std::cout << "before: " << wd.s << std::endl;
+  iod::di_call(fun9, with_data{"toto"});
   
   //void* xx = iod::return_factory_type<D>(0);
 }

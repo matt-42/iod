@@ -8,7 +8,7 @@ namespace iod
     struct has_parenthesis_operator
     {
       template<typename C> 
-      static char test(int x, decltype(&C::operator())* = 0);
+      static char test(decltype(&C::operator()));
       template<typename C>
       static int test(...);
       static const bool value = sizeof(test<T>(0)) == 1;

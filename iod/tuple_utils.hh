@@ -58,5 +58,24 @@ namespace iod
 
   template <typename T1, typename... T, typename U>
   struct tuple_embeds<std::tuple<T1, T...>, U> : public tuple_embeds<std::tuple<T...>, U> {};
+
+
+  template <typename T>
+  struct tuple_remove_references;
+  template <typename... T>
+  struct tuple_remove_references<std::tuple<T...>> { typedef std::tuple<std::remove_reference_t<T>...> type; };
+
+  template <typename T>
+  using tuple_remove_references_t = typename tuple_remove_references<T>::type;
+  
+  template <typename T>
+  struct tuple_remove_references_and_const;
+  template <typename... T>
+  struct tuple_remove_references_and_const<std::tuple<T...>> {
+    typedef std::tuple<std::remove_const_t<std::remove_reference_t<T>>...> type;
+  };
+
+  template <typename T>
+  using tuple_remove_references_and_const_t = typename tuple_remove_references_and_const<T>::type;
   
 }

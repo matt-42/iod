@@ -99,6 +99,13 @@ namespace iod
     {
       return f(std::forward<T>(t)...);
     }
+
+    template <typename F, typename... T>
+    static decltype(auto) run(F&& f, T&&... t)
+    {
+      return f(std::forward<T>(t)...);
+    }
+
   };
   
   template <typename... T>

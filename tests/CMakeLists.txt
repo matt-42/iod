@@ -37,3 +37,6 @@ add_test(di di)
 
 add_executable(bind_method bind_method.cc)
 add_test(bind_method bind_method)
+
+add_executable(tuple tuple.cc)
+add_test(tuple tuple)

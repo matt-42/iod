@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tuple>
+#include <iod/tags.hh>
 
 namespace iod
 {
@@ -77,5 +78,44 @@ namespace iod
 
   template <typename T>
   using tuple_remove_references_and_const_t = typename tuple_remove_references_and_const<T>::type;
+
+  template <typename T, typename U, typename E>
+  struct tuple_remove_element2;
+
+  template <typename... T, typename... U, typename E1>
+  struct tuple_remove_element2<std::tuple<E1, T...>, std::tuple<U...>, E1> :
+    public tuple_remove_element2<std::tuple<T...>, std::tuple<U...>, E1> {};
+
+  template <typename... T, typename... U, typename T1, typename E1>
+  struct tuple_remove_element2<std::tuple<T1, T...>, std::tuple<U...>, E1> :
+    public tuple_remove_element2<std::tuple<T...>, std::tuple<U..., T1>, E1> {};
+    
+  template <typename... U, typename E1>
+  struct tuple_remove_element2<std::tuple<>, std::tuple<U...>, E1>
+  {
+    typedef std::tuple<U...> type;
+  };
+
+  template <typename T, typename E>
+  struct tuple_remove_element : public tuple_remove_element2<T, std::tuple<>, E> {};
+
+  template <typename T, typename... E>
+  struct tuple_remove_elements;
+
+  template <typename... T, typename E1, typename... E>
+  struct tuple_remove_elements<std::tuple<T...>, E1, E...>
+  {
+    typedef typename tuple_remove_elements<typename tuple_remove_element<std::tuple<T...>, E1>::type, E...>::type
+    type;
+  };
+
+  template <typename... T>
+  struct tuple_remove_elements<std::tuple<T...>>
+  {
+    typedef std::tuple<T...> type;
+  };
+
+  template <typename T, typename... E>
+  using tuple_remove_elements_t = typename tuple_remove_elements<T, E...>::type;
   
 }

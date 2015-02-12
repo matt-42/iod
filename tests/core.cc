@@ -76,6 +76,14 @@ int main()
     assert(c.age == 42);
   }
 
+  { // Intersect
+    auto a = D(_age = 42);
+    auto b = D(_age = 41);
+    auto i = iod::intersect(a, b);
+    assert(i.age == 42);
+    assert(i.size() == 1);
+  }
+  
   { // Default constructor when values are default constructible.
     auto a = D(_name = "John");
     decltype(a) d;

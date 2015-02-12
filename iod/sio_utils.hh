@@ -126,6 +126,7 @@ namespace iod
                                   *static_cast<const U*>(&b)...);
   }
 
+  
   template <typename ...T, typename V>
   inline auto cat(const sio<T...>& a,
                   const V& variable)
@@ -134,6 +135,17 @@ namespace iod
       (*static_cast<const T*>(&a)..., exp_to_variable(variable));
   }
 
+  template <typename ...T, typename ...U>
+  inline auto intersect(const sio<T...>& a,
+                        const sio<U...>& b)
+  {
+    return foreach(a) | [] (auto& m) {
+      return static_if<has_symbol<sio<U...>, std::decay_t<decltype(m.symbol())>>::value>(
+        [&] () { return m; },
+        [&] () { });
+    };
+  }
+  
   template <typename T, typename ...Tail>
   inline std::vector<T> iod_array(const T& t, Tail... args)
   {

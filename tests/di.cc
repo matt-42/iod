@@ -38,12 +38,13 @@ struct D_factory
 {
   D_factory() {}
   
-  D instantiate()
+  D& instantiate()
   {
     std::cout << " instantiate D" << std::endl;
-    return D();
+    return d;
   }
 
+  D d;
 };
 
 struct NC
@@ -185,11 +186,11 @@ int main()
   iod::di_call(fun6, 2.f);
   iod::di_call(fun7);
 
-  // Check if no copy happend.
+  //Check if no copy happend.
   NC nc;
   iod::di_call(fun8, nc);
-
-  auto f = [] (int x, float y) {};
+ 
+  auto f = [] (int x, float f) {};
   int_factory int_f;
   float_factory float_f;
   iod::di_call(f, int_f, float_f);
@@ -199,7 +200,4 @@ int main()
   iod::di_call(fun9, with_data{"toto"});
 
   iod::di_call(fun10, with_data{"toto"});
-
-  
-  //void* xx = iod::return_factory_type<D>(0);
 }

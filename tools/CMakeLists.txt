@@ -13,3 +13,7 @@ target_link_libraries(iod_generate_symbols boost_regex)
 install(TARGETS iodc
         EXPORT IodTargets
         DESTINATION bin)
+
+install(TARGETS iod_generate_symbols
+        EXPORT IodTargets
+        DESTINATION bin)

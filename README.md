@@ -17,9 +17,9 @@ but powerful operator that is now possible with IOD symbols:
 #include <iostream>
 #include <iod/symbol.hh>
 
-iod_define_symbol(a, _a); // Refer to members and methods a with symbol _a
-iod_define_symbol(b, _b); // Refer to members and methods b with symbol _b
-iod_define_symbol(c, _c); // Refer to members and methods c with symbol _c
+iod_define_symbol(a); // Refer to members and methods a with symbol _a
+iod_define_symbol(b); // Refer to members and methods b with symbol _b
+iod_define_symbol(c); // Refer to members and methods c with symbol _c
 
 int main() {
 
@@ -50,9 +50,9 @@ to avoid multiple definition, guards should be used such as in the
 following:
 
 ```c++
-#ifndef IOD_SYMBOL__Mysymbol
-#define IOD_SYMBOL__Mysymbol
-  iod_define_symbol(mysymbol, _mysymbol);
+#ifndef IOD_SYMBOL_mysymbol
+#define IOD_SYMBOL_mysymbol
+  iod_define_symbol(mysymbol);
 #endif
 }
 ```

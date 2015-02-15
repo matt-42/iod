@@ -1,9 +1,9 @@
 #include <iostream>
 #include <iod/symbol.hh>
 
-iod_define_symbol(a, _a); // Refer to members and methods a with symbol _a
-iod_define_symbol(b, _b); // Refer to members and methods b with symbol _b
-iod_define_symbol(c, _c); // Refer to members and methods b with symbol _c
+iod_define_symbol(a); // Refer to members and methods a with symbol _a
+iod_define_symbol(b); // Refer to members and methods b with symbol _b
+iod_define_symbol(c); // Refer to members and methods b with symbol _c
 
 int main() {
 

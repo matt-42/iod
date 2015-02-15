@@ -59,13 +59,13 @@ namespace iod
       value_type SYMBOL; \
     };
 
-#define iod_define_symbol(SYMBOL, NAME)                         \
+#define iod_define_symbol(SYMBOL)                         \
   namespace s {                                                 \
-  struct NAME##_t : iod::symbol<NAME##_t>                       \
+  struct _##SYMBOL##_t : iod::symbol<_##SYMBOL##_t>                       \
   {                                                             \
-  iod_define_symbol_body(SYMBOL, NAME)                          \
+  iod_define_symbol_body(SYMBOL, _##SYMBOL)                          \
   };                                                            \
-  constexpr NAME##_t NAME;                                      \
+  constexpr _##SYMBOL##_t _##SYMBOL;                                      \
   }
 
   template <int N>

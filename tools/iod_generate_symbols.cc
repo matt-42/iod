@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
   }
   
   set<string> symbols;
-  boost::regex symbol_regex("_([[:alnum:]_]+)");
+  boost::regex symbol_regex(".?_([[:alnum:]_]+)");
 
   auto parse_file = [&] (std::string filename) {
     
@@ -59,8 +59,11 @@ int main(int argc, char* argv[])
       boost::match_flag_type flags = boost::match_default;
       while(regex_search(start, end, what, symbol_regex, flags))
       {
-        std::cout << what[1] << std::endl;
-        if (!is_in_string(what.position()))
+        std::string m = what[0];
+        std::string s = what[1];
+
+        bool is_type = s.size() >= 2 and s[s.size() - 2] == '_' and s[s.size() - 1] == 't';
+        if (!std::isalnum(m[0]) and !is_in_string(what.position()) and !is_type)
           symbols.insert(what[1]);
         start = what[0].second;      
       }
@@ -89,9 +92,22 @@ int main(int argc, char* argv[])
 
 std::string symbol_definition(std::string s)
 {
-  std::string body = R"cpp(#ifndef IOD_SYMBOL____S__
-#define IOD_SYMBOL____S__
-    iod_define_symbol(__S__, ___S__)
+  std::string body;
+  if (std::isdigit(s[0]))
+  {
+    body = R"cpp(#ifndef IOD_SYMBOL___S__
+#define IOD_SYMBOL___S__
+    iod_define_number_symbol(__S__)
+#endif
+)cpp";
+    // Check the string is actually a number.
+    for (int i = 0; i < s.size(); i++)
+      if (!std::isdigit(s[i])) return "";
+  }
+  else
+    body = R"cpp(#ifndef IOD_SYMBOL___S__
+#define IOD_SYMBOL___S__
+    iod_define_symbol(__S__)
 #endif
 )cpp";
 

@@ -33,6 +33,10 @@ namespace iod
   template <typename ...T>
   inline std::string json_encode(const sio<T...>& o);
 
+  // Encode \o into a json string.
+  template <typename T>
+  inline std::string json_encode(const std::vector<T>& v);
+  
   // Encode \o into a stream.
   template <typename S, typename ...Tail>
   inline void json_encode(const sio<Tail...>& o, S& stream);
@@ -565,6 +569,14 @@ namespace iod
     json_internals::json_encode_(o, stream);
   }
 
+  template <typename T>
+  inline std::string json_encode(const std::vector<T>& v)
+  {
+    std::stringstream ss;
+    json_internals::json_encode_(v, ss);
+    return ss.str();    
+  }
+  
 }
 
 #endif

@@ -1,7 +1,8 @@
+#include <set>
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <boost/regex.hpp>
+#include <regex>
 
 std::string symbol_definition(std::string s);
 
@@ -20,8 +21,8 @@ int main(int argc, char* argv[])
     return 1;
   }
   
-  set<string> symbols;
-  boost::regex symbol_regex(".?_([[:alnum:]_]+)");
+  std::set<string> symbols;
+  std::regex symbol_regex(".?_([[:alnum:]_]+)");
   std::set<std::string> keywords = {"alignas", "alignof", "and", "and_eq", "asm", "auto", "bitand", "bitor", "bool", "break", "case", "catch", "char", "char16_t", "char32_t", "class", "compl", "const", "constexpr", "const_cast", "continue", "decltype", "default", "delete", "do", "double", "dynamic_cast", "else", "enum", "explicit", "export", "extern", "false", "float", "for", "friend", "goto", "if", "inline", "int", "long", "mutable", "namespace", "new", "noexcept", "not", "not_eq", "nullptr", "operator", "or", "or_eq", "private", "protected", "public", "register", "reinterpret_cast", "return", "short", "signed", "sizeof", "static", "static_assert", "static_cast", "struct", "switch", "template", "this", "thread_local", "throw", "true", "try", "typedef", "typeid", "typename", "union", "unsigned", "using", "virtual", "void", "volatile", "wchar_t", "while", "xor", "xor_eq"};
   
   auto parse_file = [&] (std::string filename) {
@@ -56,8 +57,8 @@ int main(int argc, char* argv[])
       std::string::const_iterator start, end;
       start = line.begin();
       end = line.end();
-      boost::match_results<std::string::const_iterator> what;
-      boost::match_flag_type flags = boost::match_default;
+      std::match_results<std::string::const_iterator> what;
+      std::regex_constants::match_flag_type flags = std::regex_constants::match_default;
       while(regex_search(start, end, what, symbol_regex, flags))
       {
         std::string m = what[0];
@@ -114,7 +115,7 @@ std::string symbol_definition(std::string s)
 #endif
 )cpp";
 
-  boost::regex s_regex("__S__");
-  body = boost::regex_replace(body, s_regex, s);
+  std::regex s_regex("__S__");
+  body = std::regex_replace(body, s_regex, s);
   return body;
 }

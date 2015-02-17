@@ -25,7 +25,6 @@ configure_file(IodConfigVersion.cmake.in
   "${PROJECT_BINARY_DIR}/IodConfigVersion.cmake" @ONLY)
 
 install(FILES
-  "${PROJECT_SOURCE_DIR}/IodUse.cmake"
   "${PROJECT_BINARY_DIR}/IodConfig.cmake"
   "${PROJECT_BINARY_DIR}/IodConfigVersion.cmake"
   DESTINATION share/iod)

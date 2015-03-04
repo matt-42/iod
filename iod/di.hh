@@ -63,13 +63,13 @@ namespace iod
     template <typename M, typename C, typename... T>
     decltype(auto) call_factory_instantiate(M& factory, C&& ctx, std::tuple<T...>*)
     {
-      return factory.instantiate(tuple_get_by_type<T>(ctx)...);
+      return factory.instantiate(std::forward<T>(tuple_get_by_type<T>(ctx))...);
     }
 
     template <typename E, typename C, typename... T>
     decltype(auto) call_factory_instantiate_static(C&& ctx, std::tuple<T...>*)
     {
-      return std::decay_t<E>::instantiate(tuple_get_by_type<T>(ctx)...);
+      return std::decay_t<E>::instantiate(std::forward<T>(tuple_get_by_type<T>(ctx))...);
     }
 
     // dependencies_of allows to forward dependencies of a function to another.
@@ -203,8 +203,10 @@ namespace iod
 
       return static_if<tuple_embeds<T2, E2>::value or
                        tuple_embeds<T2, E2&>::value or
-                       tuple_embeds<T2, E2&&>::value
-                       >(
+                       tuple_embeds<T2, E2&&>::value or
+                       tuple_embeds<T2, const E2>::value or
+                       tuple_embeds<T2, const E2&>::value or
+                       tuple_embeds<T2, const E2&&>::value>(
                          [&] (auto& to_inject) -> decltype(auto) {
                            // If to_inject already embeds an element of type E, return it.
                            auto instantiate = [&] (auto) -> decltype(auto) {

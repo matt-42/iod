@@ -5,6 +5,7 @@
 #include <iod/callable_traits.hh>
 #include <iod/tuple_utils.hh>
 #include <iod/utils.hh>
+#include <iod/bind_method.hh>
 
 namespace iod
 {
@@ -60,15 +61,15 @@ namespace iod
     using tuple_filter_references_t = typename tuple_filter_references<T>::type;
 
     template <typename M, typename C, typename... T>
-    auto call_factory_instantiate(M& factory, C&& ctx, std::tuple<T...>*)
+    decltype(auto) call_factory_instantiate(M& factory, C&& ctx, std::tuple<T...>*)
     {
-      return factory.instantiate(tuple_get_by_type<T>(ctx)...);
+      return factory.instantiate(std::forward<T>(tuple_get_by_type<T>(ctx))...);
     }
 
     template <typename E, typename C, typename... T>
-    auto call_factory_instantiate_static(C&& ctx, std::tuple<T...>*)
+    decltype(auto) call_factory_instantiate_static(C&& ctx, std::tuple<T...>*)
     {
-      return std::decay_t<E>::instantiate(tuple_get_by_type<T>(ctx)...);
+      return std::decay_t<E>::instantiate(std::forward<T>(tuple_get_by_type<T>(ctx))...);
     }
 
     // dependencies_of allows to forward dependencies of a function to another.
@@ -202,8 +203,10 @@ namespace iod
 
       return static_if<tuple_embeds<T2, E2>::value or
                        tuple_embeds<T2, E2&>::value or
-                       tuple_embeds<T2, E2&&>::value
-                       >(
+                       tuple_embeds<T2, E2&&>::value or
+                       tuple_embeds<T2, const E2>::value or
+                       tuple_embeds<T2, const E2&>::value or
+                       tuple_embeds<T2, const E2&&>::value>(
                          [&] (auto& to_inject) -> decltype(auto) {
                            // If to_inject already embeds an element of type E, return it.
                            auto instantiate = [&] (auto) -> decltype(auto) {
@@ -215,17 +218,17 @@ namespace iod
                            typedef find_di_factory_t<T2, E2> FT;
                            return iod::static_if<!std::is_same<FT, not_found>::value>(
                              // If to_inject embed a factory, call it.
-                             [&] (auto&& deps, auto* e, auto* ft_) -> auto {
+                             [&] (auto&& deps, auto* e, auto* ft_) -> decltype(auto) {
                                typedef std::remove_pointer_t<decltype(ft_)> FT_;
                                typedef iod::callable_arguments_tuple_t<decltype(&FT_::instantiate)> ARGS;
-                               auto instantiate = [&] (auto&& ctx)
+                               auto instantiate = [&] (auto&& ctx) -> decltype(auto)
                                  {
                                    return call_factory_instantiate(tuple_get_by_type<FT>(deps), ctx, (ARGS*)0);
                                  };
                                return f(instantiate, (ARGS*)0);
                              },
                              // If the argument type provide a static instantiate method, call it.
-                             [&] (auto&& deps, auto* e, auto* ft_) -> auto {
+                             [&] (auto&& deps, auto* e, auto* ft_) -> decltype(auto) {
                                typedef std::remove_pointer_t<std::remove_pointer_t<decltype(e)>> E2;
                                static_assert(has_instantiate_static_method<E2>::value,
                                              "Dependency injection failed. Cannot resolve.");
@@ -339,7 +342,8 @@ namespace iod
       typedef tuple_remove_rvalues_t<ctx_type> ctx_type2;
       typedef tuple_filter_references_t<ctx_type2> ctx_type3;
 
-      return create_stack_and_call((ctx_type3*)0, (std::tuple<A...>*)0, fun, to_inject...);
+      //void* x = *(ctx_type3*)0;
+      return create_stack_and_call((ctx_type2*)0, (std::tuple<A...>*)0, fun, to_inject...);
     }
 
   }

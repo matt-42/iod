@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cassert>
 
 #include <iod/di.hh>
 
@@ -25,6 +26,15 @@ struct B {
   static B instantiate(C c) {
     std::cout << " instantiate B" << std::endl;
     return B();
+  }
+};
+
+
+int mref_int = 42;
+
+struct Mref {
+  int& instantiate() {
+    return mref_int;
   }
 };
 
@@ -200,4 +210,13 @@ int main()
   iod::di_call(fun9, with_data{"toto"});
 
   iod::di_call(fun10, with_data{"toto"});
+
+  y = 10;
+  auto f2 = [] (int& x) { x+= 20; };
+  iod::di_call(f2, y);
+  assert(y == 30);
+
+  // test reference.
+  auto f3 = [] (int& x) { assert(&x == &mref_int); };
+  iod::di_call(f3, Mref());
 }

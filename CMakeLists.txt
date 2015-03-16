@@ -14,7 +14,7 @@ set(CMAKE_CONFIG_DEST "share/iod")
 
 include(CMakePackageConfigHelpers)
 configure_package_config_file (                         
-        ${CMAKE_SOURCE_DIR}/IodConfig.cmake.in
+        ${CMAKE_CURRENT_LIST_DIR}/IodConfig.cmake.in
         ${CMAKE_BINARY_DIR}/IodConfig.cmake
         INSTALL_DESTINATION ${CMAKE_CONFIG_DEST}
         PATH_VARS IOD_INCLUDE_DIR CMAKE_CONFIG_DEST)

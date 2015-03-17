@@ -1,3 +1,16 @@
+IF(BIICODE)
+
+  ADD_BIICODE_TARGETS()
+
+IF(APPLE)
+   TARGET_COMPILE_OPTIONS(${BII_BLOCK_TARGET} INTERFACE "-std=c++14 -stdlib=libc++")
+ELSEIF (WIN32 OR UNIX)
+   TARGET_COMPILE_OPTIONS(${BII_BLOCK_TARGET} INTERFACE "-std=c++14")
+ENDIF(APPLE)
+
+ELSE()
+
+
 cmake_minimum_required(VERSION 2.8)
 project(Iod)
 
@@ -9,6 +22,7 @@ install(DIRECTORY iod DESTINATION include
   FILES_MATCHING PATTERN "*.hpp")
 
 add_subdirectory(tools)
+add_subdirectory(tests)
 
 #set(IOD_INCLUDE_DIR "include")
 #set(CMAKE_CONFIG_DEST "share/iod")
@@ -32,3 +46,5 @@ add_subdirectory(tools)
  
 # Install the export set for use with the install-tree
 #install(EXPORT IodTargets DESTINATION ${CMAKE_CONFIG_DEST})
+
+ENDIF() # BIICODE

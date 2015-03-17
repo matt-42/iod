@@ -1,0 +1,2 @@
+cmake: {generator: Unix Makefiles}
+os: {arch: 64bit, family: Linux}

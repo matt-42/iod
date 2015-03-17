@@ -7,5 +7,3 @@
 set_and_check(IOD_INCLUDE_DIR "@PACKAGE_IOD_INCLUDE_DIR@")
 
 include("@PACKAGE_CMAKE_CONFIG_DEST@/IodTargets.cmake")
-
-set_and_check(IOD_USE_FILE "@PACKAGE_CMAKE_CONFIG_DEST@/IodUse.cmake")

@@ -24,9 +24,7 @@ iod_define_symbol(c); // Refer to members and methods c with symbol _c
 int main() {
 
   // Symbols are located in namespace s to avoid name clash.
-  using s::_a;
-  using s::_b;
-  using s::_c;
+  using s;
 
   auto print_member = [] (auto& obj, auto& m)
                       {
@@ -45,7 +43,7 @@ Without symbols (or other similar constructs), it is not possible to
 write such a generic print_member function. Without, one would have to
 write the three version accessing the three different members.
 
-By convention all the symbols starts with _[uppercase character]. And
+By convention all the symbols starts with _[lowercase character]. And
 to avoid multiple definition, guards should be used such as in the
 following:
 

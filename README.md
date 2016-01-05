@@ -158,7 +158,7 @@ json_decode(u2, R"({"username":"John","city":22})");
 In classic C++, you would define a function taking optional arguments as :
 
 ```c++
-void fun(int mandatory_arg, int optional_arg1 = 1, int optional_arg2 = 12, int optional_arg3 = 12);
+void fun(int mandatory_arg, int optional_arg1 = 1, int optional_arg2 = 12, int optional_arg3 = 32);
 ```
 
 This has to drawbacks: First, it is not practical if the user need to
@@ -171,8 +171,8 @@ void fun(int mandatory_arg, const O&... opts)
 {
   const auto options = D(opts...);
   int optional_arg1 = options.get(_optional_arg1, 1); // return options.optional_arg1 or 1 if not set.
-  int optional_arg2 = options.get(_optional_arg2, 1);
-  int optional_arg3 = options.get(_optional_arg3, 1);
+  int optional_arg2 = options.get(_optional_arg2, 12);
+  int optional_arg3 = options.get(_optional_arg3, 32);
 }
 
 fun(1, _optional_arg3 = 2); // Set the thirds argument and leave the two others to their default value.

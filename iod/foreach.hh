@@ -70,7 +70,7 @@ namespace iod
     {
       auto h = [] (auto&& a) -> auto&& // avoid the lambda to convert references to values.
         {
-          return std::forward<decltype(a.template get_nth_attribute<N>())>(a.template get_nth_attribute<N>()); 
+          return std::forward<decltype(a.template get_nth_member<N>())>(a.template get_nth_member<N>()); 
         };
       typedef decltype(h) H;
       typedef decltype(proxy_apply(args_tuple, std::declval<H>(), f)) return_type;
@@ -89,6 +89,7 @@ namespace iod
 
     }
 
+    
     
     template <typename T>
     struct foreach_tuple_caller

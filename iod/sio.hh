@@ -7,6 +7,7 @@
 
 #include <iod/tags.hh>
 #include <iod/grammar.hh>
+#include <iod/type_list_utils.hh>
 
 namespace iod
 {
@@ -103,7 +104,7 @@ namespace iod
     iod_foreach_runner<std::add_const_t, T::_size - 1, decltype(g), T, U...>::run(g, arg, tail...);
   }
 
-  struct attribute_not_found
+  struct member_not_found
   {
     typedef not_found symbol_type;
     typedef int value_type;
@@ -129,113 +130,96 @@ namespace iod
     template <unsigned N>
     not_found get_nth() const { return not_found(); }
     template <unsigned N>
-    const attribute_not_found& get_nth_attribute() const { return *(attribute_not_found*)(0); }
+    const member_not_found& get_nth_attribute() const { return *(member_not_found*)(0); }
     template <unsigned N>
-    attribute_not_found& get_nth_attribute() { return *(attribute_not_found*)(0); }
+    member_not_found& get_nth_attribute() { return *(member_not_found*)(0); }
     template <typename E, typename D>
     D get(const E&, const D default_) const { return default_; }
 
     auto symbols_as_tuple() const { return std::make_tuple(); }    
   };
 
-  template <typename T, typename ...Tail>
-  struct sio<T, Tail...> : public T, public sio<Tail...>
+  template <typename ...Ms>
+  struct sio : public Ms...
   {
-    typedef sio<T, Tail...> self;
-    typedef sio<Tail...> super;
-    typedef std::tuple<T, Tail...> tuple_type;
+    typedef sio<Ms...> self;
+    typedef std::tuple<Ms...> tuple_type;
 
-    enum { _size = 1 + sizeof...(Tail), _empty = 0 };
+    enum { _size = sizeof...(Ms), _empty = sizeof...(Ms) == 0 };
 
-    template <unsigned N, typename U, typename P = void>
-    struct _nth_attribute_ {};
-
-    template <unsigned N, typename U>
-    struct _nth_attribute_<N, U, std::enable_if_t<(N < _size)>>
-    { typedef typename std::tuple_element<N, U>::type type; };
-
-    template <unsigned N, typename U>
-    struct _nth_attribute_<N, U, std::enable_if_t<(N >= _size)>>
-    { typedef attribute_not_found type; };
-
-    template <unsigned N>
-    using _nth_attribute = typename _nth_attribute_<N, std::tuple<T, Tail...>>::type;
+    // Get the type of the nth member.
+    template <std::size_t N>
+    using nth_member_type = tl::get_nth_type<N, Ms...>;
 
     // -----------------------------------------
-    // Retrive type of attribute with symbol S.
+    // Retrieve type of member with symbol S.
     // -----------------------------------------
-    template <unsigned N, typename C, typename S>
-    struct _attribute_;
+    template <std::size_t N, typename M, typename S, typename Sr, typename B = void>
+    struct _member_type_;
 
-    template <typename C, typename S>
-    struct _attribute_<_size, C, S>
+    template <typename M, typename S, typename Sr>
+    struct _member_type_<_size - 1, M, S, Sr, std::enable_if_t<!std::is_same<S, Sr>::value>>
     {
-      typedef attribute_not_found type;
+      typedef member_not_found type;
     };
 
-    template <unsigned N, typename S>
-    struct _attribute_<N, S, S>
+    template <std::size_t N, typename M, typename S>
+    struct _member_type_<N, M, S, S>
     {
-      typedef _nth_attribute<N> type;
+      typedef M type;
     };
-
-    template <unsigned N, typename C, typename S>
-    struct _attribute_
-    {
-      typedef typename _attribute_<N+1, typename _nth_attribute<N+1>::symbol_type, S>::type type;
-    };
-
-    template <typename S>
-    using _attribute = typename _attribute_<0, typename _nth_attribute<0>::symbol_type, S>::type;
-
-    template <typename S>
-    using attribute_value_type = typename _attribute_<0, typename _nth_attribute<0>::symbol_type, S>::type::value_type;
-
-    template <int V>
-    struct simple_enum { enum { value = V}; };
     
-    template <typename E>
-    using _has = simple_enum<not std::is_same<_attribute<E>, attribute_not_found>::value>;
+    template <std::size_t N, typename M, typename S, typename Sr>
+      struct _member_type_<N, M, S, Sr, std::enable_if_t<(N < _size - 1 and !std::is_same<S, Sr>::value)>>
+    {
+      typedef nth_member_type<N+1> Next;
+      typedef typename _member_type_<N+1, Next, typename Next::symbol_type, Sr>::type type;
+    };
+    
+    template <typename S>
+    using symbol_to_member_type = typename _member_type_<0, nth_member_type<0>,
+                                                         typename nth_member_type<0>::symbol_type, S>::type;
+
+    
+    template <typename S>
+    using member_value_type = typename symbol_to_member_type<S>::value_type;
+
+    // template <int V>
+    // struct simple_enum { enum { value = V}; };
+    
+    template <typename S>
+    using _has = std::integral_constant<bool, not std::is_same<symbol_to_member_type<S>, member_not_found>::value>;
 
     // Constructor.
     inline sio() = default;
+    inline sio(Ms&&... members) : Ms(members)... {}
+    inline sio(const Ms&... members) : Ms(members)... {}
 
-    inline sio(const T&& attr, const Tail&&... tail)
-      : T(attr),
-        sio<Tail...>(std::forward<const Tail>(tail)...)
-      {
-      }
-
-    inline sio(const T& attr, const Tail&... tail)
-      : T(attr),
-        sio<Tail...>(std::forward<const Tail>(tail)...)
-      {
-      }
-
-    // Get the attribute associated with the symbol S.
+    // Get the member associated with the symbol S.
+    // Compile time complexity: O(N)
     template <typename S>
-    auto& symbol_to_attribute(S = S())
+    auto& symbol_to_member(S = S())
     {
-      return *static_cast<_attribute<S>*>(this);
+      return *static_cast<symbol_to_member_type<S>*>(this);
     }
 
     template <typename S>
-    const auto& symbol_to_attribute(S = S()) const
+    const auto& symbol_to_member(S = S()) const
     {
-      return *static_cast<const _attribute<S>*>(this);
+      return *static_cast<const symbol_to_member_type<S>*>(this);
     }
     
     // Access to a member from a symbol.
     template <typename E>
     auto& operator[](const E&)
     {
-      return symbol_to_attribute<typename E::symbol_type>().value();
+      return symbol_to_member<typename E::symbol_type>().value();
     }
 
     template <typename E>
     const auto& operator[](const E&) const
     {
-      return symbol_to_attribute<E>().value();
+      return symbol_to_member<E>().value();
     }
 
     template <typename E, typename D>
@@ -270,42 +254,24 @@ namespace iod
       return _size == 0;
     }
 
-    // Access to the super attribute.
-    super& get_super() { return *this; }
-    const super& get_super() const { return *this; }
-
     // Get the nth attribute.
     template <unsigned N>
-    typename std::enable_if<N!=0, _nth_attribute<N>&>::type
-    get_nth_attribute() { return get_super().template get_nth_attribute<N-1>(); }
+    decltype(auto) get_nth_member() { return *static_cast<nth_member_type<N>*>(this); }
+    template <unsigned N>
+    decltype(auto) get_nth_member() const { return *static_cast<const nth_member_type<N>*>(this); }
 
     template <unsigned N>
-    typename std::enable_if<N==0, _nth_attribute<N>&>::type
-    get_nth_attribute() { return *static_cast<T*> (this); }
+    decltype(auto)
+    get_nth() const { return get_nth_member<N>().value(); }
 
     template <unsigned N>
-    typename std::enable_if<N!=0, const _nth_attribute<N>&>::type
-    get_nth_attribute() const { return get_super().template get_nth_attribute<N-1>(); }
+    decltype(auto)
+    get_nth() { return get_nth_member<N>().value(); }
 
-    template <unsigned N>
-    typename std::enable_if<N==0, const _nth_attribute<N>&>::type
-    get_nth_attribute() const { return *static_cast<const T*> (this); }
+    auto&& values_as_tuple() { return std::forward_as_tuple(static_cast<Ms*>(this)->value()...); }
+    auto&& values_as_tuple() const { return std::forward_as_tuple(static_cast<const Ms*>(this)->value()...); }
 
-    template <unsigned N>
-    const typename _nth_attribute<N>::value_type&
-    get_nth() const { return get_nth_attribute<N>().value(); }
-
-    template <unsigned N>
-    typename _nth_attribute<N>::value_type&
-    get_nth() { return get_nth_attribute<N>().value(); }
-
-    auto&& values_as_tuple() { return std::forward_as_tuple(static_cast<T*>(this)->value(),
-                                                            static_cast<Tail*>(this)->value()...); }
-    auto&& values_as_tuple() const { return std::forward_as_tuple(static_cast<const T*>(this)->value(),
-                                                                  static_cast<const Tail*>(this)->value()...); }
-
-    auto symbols_as_tuple() const { return std::make_tuple(static_cast<const T*>(this)->symbol(),
-                                                           static_cast<const Tail*>(this)->symbol()...); }
+    auto symbols_as_tuple() const { return std::make_tuple(Ms::symbol()...); }
     
     // Assignment.
     template <typename... Otail>

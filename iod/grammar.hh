@@ -50,7 +50,7 @@ namespace iod
   struct symbol;
 
   template <typename E>
-  struct member_accessible;
+  struct array_subscriptable;
 
   template <typename E>
   struct callable;
@@ -58,6 +58,15 @@ namespace iod
   template <typename E>
   struct assignable;
 
+  template <typename E>
+  struct array_subscriptable;
+
+  // template <typename E>
+  // struct dividable;
+
+  // template <typename E>
+  // struct multipliable;
+  
   template <typename... S, typename... T>
   auto foreach_prev(std::tuple<S...>& a1, T&&... args);
   template <typename... S, typename... T>
@@ -223,13 +232,13 @@ namespace iod
 
   template <typename M, typename... A>
   struct function_call_exp :
-    public member_accessible<function_call_exp<M, A...>>,
+    public array_subscriptable<function_call_exp<M, A...>>,
     public callable<function_call_exp<M, A...>>,
     public assignable<function_call_exp<M, A...>>,
     public Exp<function_call_exp<M, A...>>
   {
     using assignable<function_call_exp<M, A...>>::operator=;
-    using member_accessible<function_call_exp<M, A...>>::operator[];
+    using array_subscriptable<function_call_exp<M, A...>>::operator[];
 
     function_call_exp() {}
     function_call_exp(const M& m, A&&... a)
@@ -269,16 +278,16 @@ namespace iod
   };
 
   template <typename O, typename M>
-  struct member_accessor_exp :
-    public member_accessible<member_accessor_exp<O, M>>,
-    public callable<member_accessor_exp<O, M>>,
-    public assignable<member_accessor_exp<O, M>>,
-    public Exp<member_accessor_exp<O, M>>
+  struct array_subscript_exp :
+    public array_subscriptable<array_subscript_exp<O, M>>,
+    public callable<array_subscript_exp<O, M>>,
+    public assignable<array_subscript_exp<O, M>>,
+    public Exp<array_subscript_exp<O, M>>
   {
-    using assignable<member_accessor_exp<O, M>>::operator=;
+    using assignable<array_subscript_exp<O, M>>::operator=;
 
-    member_accessor_exp() {}
-    member_accessor_exp(const O& o, const M& m) : object(o), member(m) {}
+    array_subscript_exp() {}
+    array_subscript_exp(const O& o, const M& m) : object(o), member(m) {}
 
     template <typename F>
     auto visit(F f) { return std::make_tuple(f(object), f(member)); }         
@@ -286,7 +295,7 @@ namespace iod
     auto transform(F f, C ctx) {
       auto o = exp_transform(object, f, ctx);
       auto m = exp_transform(member, f, ctx);
-      return member_accessor_exp<decltype(o), decltype(m)>(o, m);
+      return array_subscript_exp<decltype(o), decltype(m)>(o, m);
     }
 
     template <typename F, typename C>
@@ -294,7 +303,7 @@ namespace iod
     {                                                                   
       auto l = exp_transform_iterate(object, f, ctx);
       auto r = exp_transform_iterate(member, f, l.second);
-      return std::make_pair(member_accessor_exp<decltype(l.first), decltype(r.first)>
+      return std::make_pair(array_subscript_exp<decltype(l.first), decltype(r.first)>
                             (l.first, r.first), r.second);
     }
 
@@ -343,15 +352,90 @@ namespace iod
     R right;
   };
 
+
+  // template <typename L, typename R>
+  // struct multiply_exp :
+  //   public dividable<multiply_exp<L, R>>,
+  //   public multipliable<multiply_exp<L, R>>,
+  //   public assignable<multiply_exp<L, R>>,
+  //   public Exp<multiply_exp<L, R>>
+  // {
+  //   multiply_exp(L&& l, R&& r) : left(l), right(r) {}
+  //   multiply_exp(const L& l, const R& r) : left(l), right(r) {}
+
+  //   template <typename F>
+  //   auto visit(F f) { return std::make_tuple(f(left), f(right)); }
+
+  //   template <typename F, typename C>
+  //   auto transform(F f, C ctx) {
+  //     auto l = exp_transform(left, f, ctx);
+  //     auto r = exp_transform(right, f, ctx);      
+  //     return multiply_exp<decltype(l), decltype(r)>(l, r);
+  //   }
+
+  //   template <typename F, typename C>
+  //   decltype(auto) transform_iterate(F f, C ctx)                                  
+  //   {                                                                   
+  //     auto l = exp_transform_iterate(left, f, ctx);
+  //     auto r = exp_transform_iterate(right, f, l.second);
+  //     return std::make_pair(multiply_exp<decltype(l.first), decltype(r.first)>
+  //                           (l.first, r.first), r.second);
+  //   }
+  //   auto children_tuple() { return std::make_tuple(left, right); }
+  //   template <typename M, typename C>
+  //   inline decltype(auto) evaluate(M eval, C& ctx) {
+  //     return exp_evaluate(left, eval, ctx) = exp_evaluate(right, eval, ctx);
+  //   }
+  //   L left;
+  //   R right;
+  // };
+
+  // template <typename L, typename R>
+  // struct divide_exp :
+  //   public dividable<divide_exp<L, R>>,
+  //   public multipliable<divide_exp<L, R>>,
+  //   public assignable<divide_exp<L, R>>,
+  //   public Exp<divide_exp<L, R>>
+  // {
+  //   divide_exp(L&& l, R&& r) : left(l), right(r) {}
+  //   divide_exp(const L& l, const R& r) : left(l), right(r) {}
+
+  //   template <typename F>
+  //   auto visit(F f) { return std::make_tuple(f(left), f(right)); }
+
+  //   template <typename F, typename C>
+  //   auto transform(F f, C ctx) {
+  //     auto l = exp_transform(left, f, ctx);
+  //     auto r = exp_transform(right, f, ctx);      
+  //     return divide_exp<decltype(l), decltype(r)>(l, r);
+  //   }
+
+  //   template <typename F, typename C>
+  //   decltype(auto) transform_iterate(F f, C ctx)                                  
+  //   {                                                                   
+  //     auto l = exp_transform_iterate(left, f, ctx);
+  //     auto r = exp_transform_iterate(right, f, l.second);
+  //     return std::make_pair(divide_exp<decltype(l.first), decltype(r.first)>
+  //                           (l.first, r.first), r.second);
+  //   }
+  //   auto children_tuple() { return std::make_tuple(left, right); }
+  //   template <typename M, typename C>
+  //   inline decltype(auto) evaluate(M eval, C& ctx) {
+  //     return exp_evaluate(left, eval, ctx) = exp_evaluate(right, eval, ctx);
+  //   }
+  //   L left;
+  //   R right;
+  // };
+  
   template <typename E>
-  struct member_accessible
+  struct array_subscriptable
   {
   public:
     // Member accessor
     template <typename S>
     constexpr auto operator[](const S& s) const
     {
-      return member_accessor_exp<E, S>(*static_cast<const E*>(this), s);
+      return array_subscript_exp<E, S>(*static_cast<const E*>(this), s);
     }
 
   };
@@ -370,6 +454,30 @@ namespace iod
 
   };
 
+  // template <typename E>
+  // struct multipliable
+  // {
+  // public:
+  //   template <typename A>
+  //   constexpr auto operator*(A a) const
+  //   {
+  //     return multiply_exp<E, grammar_value_type_t<A>>(*static_cast<const E*>(this),
+  //                                                     std::forward<grammar_value_type_t<A>>(a));
+  //   }
+  // };
+ 
+  // template <typename E>
+  // struct dividable
+  // {
+  // public:
+  //   template <typename A>
+  //   constexpr auto operator/(A a) const
+  //   {
+  //     return divide_exp<E, grammar_value_type_t<A>>(*static_cast<const E*>(this),
+  //                                                   std::forward<grammar_value_type_t<A>>(a));
+  //   }
+  // };
+ 
   template <typename E>
   struct assignable
   {
@@ -403,8 +511,11 @@ namespace iod
 
 #define iod_query_declare_binary_op(OP, NAME)                           \
   template <typename A, typename B>                                     \
-  struct NAME##_exp : public Exp<NAME##_exp<A, B>>                      \
+  struct NAME##_exp :                                                   \
+   public assignable<NAME##_exp<A, B>>,                                 \
+  public Exp<NAME##_exp<A, B>>                                          \
   {                                                                     \
+    using assignable<NAME##_exp<A, B>>::operator=; \
     NAME##_exp()  {}                                                    \
     NAME##_exp(A a, B b) : lhs(a), rhs(b) {}                            \
     typedef A lhs_type;                                                 \

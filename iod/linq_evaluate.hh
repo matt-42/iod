@@ -73,7 +73,7 @@ namespace iod
     // Access to attributes of a named variable: variable[attribute]
     template <typename O, typename M, typename T>
     inline auto
-    evaluate(const member_accessor_exp<O, M>& s, const T& ctx)
+    evaluate(const array_subscript_exp<O, M>& s, const T& ctx)
     {
       return M().member_access(evaluate(s.object, ctx));
     }

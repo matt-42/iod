@@ -206,7 +206,8 @@ namespace iod
                        tuple_embeds<T2, E2&&>::value or
                        tuple_embeds<T2, const E2>::value or
                        tuple_embeds<T2, const E2&>::value or
-                       tuple_embeds<T2, const E2&&>::value>(
+                       tuple_embeds<T2, const E2&&>::value
+                       >(
                          [&] (auto& to_inject) -> decltype(auto) {
                            // If to_inject already embeds an element of type E, return it.
                            auto instantiate = [&] (auto) -> decltype(auto) {
@@ -340,7 +341,7 @@ namespace iod
 
       // Remove the rvalues references to be able to store the context.
       typedef tuple_remove_rvalues_t<ctx_type> ctx_type2;
-      typedef tuple_filter_references_t<ctx_type2> ctx_type3;
+      //typedef tuple_filter_references_t<ctx_type2> ctx_type3;
 
       //void* x = *(ctx_type3*)0;
       return create_stack_and_call((ctx_type2*)0, (std::tuple<A...>*)0, fun, to_inject...);

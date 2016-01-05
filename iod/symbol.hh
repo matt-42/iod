@@ -10,7 +10,7 @@ namespace iod
 {
 
   template <typename E>
-  struct symbol : public member_accessible<E>, public callable<E>,
+  struct symbol : public array_subscriptable<E>, public callable<E>,
                   public assignable<E>,
                   public Exp<E>
   {
@@ -46,6 +46,7 @@ namespace iod
       typedef T value_type;                                             \
       typedef INFO attributes_type;                                     \
       typedef NAME##_t symbol_type;                                     \
+      typedef iod::variable<variable_type<T, INFO>> super;              \
                                                                         \
       variable_type() {}                                                \
       template <typename V>                                             \

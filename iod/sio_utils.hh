@@ -155,16 +155,37 @@ namespace iod
     return res;
   }
 
-    template <typename T>
-    struct is_sio
-    {
-      template<typename... C> 
-      static char test(sio<C...>*);
-      template<typename C>
-      static int test(C*);
-      static const bool value = sizeof(test((std::decay_t<T>*)0)) == 1;
-    };
+  template <typename T>
+  struct is_sio
+  {
+    template<typename... C> 
+    static char test(sio<C...>*);
+    template<typename C>
+    static int test(C*);
+    static const bool value = sizeof(test((std::decay_t<T>*)0)) == 1;
+  };
 
+  template <typename T>
+  struct is_tuple
+  {
+    template<typename... C> 
+    static char test(std::tuple<C...>*);
+    template<typename C>
+    static int test(C*);
+    static const bool value = sizeof(test((std::decay_t<T>*)0)) == 1;
+  };
+
+
+  template <typename T>
+  struct is_symbol
+  {
+    template<typename C> 
+    static char test(symbol<C>*);
+    static int test(...);
+    static const bool value = sizeof(test((std::decay_t<T>*)0)) == 1;
+  };
+  
+  
 } // end of namespace iod.
 
 #include <iod/symbol.hh>

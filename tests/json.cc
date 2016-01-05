@@ -11,7 +11,7 @@ int main()
 {
   using namespace iod;
   using namespace s;
-
+  
   {
     auto o = D(_name = "John", _age = 12, _children = { 1,2,3,4,5 }, _city = D(_name = "Paris"));
     auto str = json_encode(o);
@@ -59,4 +59,18 @@ int main()
     
   }
 
+  // Decode with scheme.
+  {
+    typedef decltype(D(_name(_json_key = _username) = std::string(),
+                       _age = int(),
+                       _city = std::string())) user_scheme;
+
+    struct { std::string name, city; int age; } custom_user;
+
+    std::string str = R"({"username":"John","age":12,"city":"NYC"})";
+
+    json_decode<user_scheme>(custom_user, str);
+
+    std::cout << custom_user.name << " " << custom_user.age << " " << custom_user.city  << std::endl;
+  }
 }

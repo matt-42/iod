@@ -115,6 +115,16 @@ namespace iod
     typedef std::tuple<T...> type;
   };
 
+
+  template <typename A, typename B>
+  struct tuple_minus;
+
+  template <typename... T, typename... R>
+  struct tuple_minus<std::tuple<T...>, std::tuple<R...>>
+  {
+    typedef typename tuple_remove_elements<std::tuple<T...>, R...>::type type;
+  };
+  
   template <typename T, typename... E>
   using tuple_remove_elements_t = typename tuple_remove_elements<T, E...>::type;
   

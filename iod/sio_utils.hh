@@ -7,6 +7,8 @@
 
 #include <iod/tags.hh>
 #include <iod/sio.hh>
+#include <iod/apply.hh>
+#include <iod/tuple_utils.hh>
 #include <iod/grammar.hh>
 
 namespace iod
@@ -184,7 +186,42 @@ namespace iod
     static int test(...);
     static const bool value = sizeof(test((std::decay_t<T>*)0)) == 1;
   };
+
+  template <typename S1, typename S2>
+  auto deep_merge_2_sios(S1 s1, S2 s2) { return s1; }
+  template <typename S2>
+  auto deep_merge_2_sios(member_not_found s1, S2 s2) { return s2; }
+  template <typename S1>
+  auto deep_merge_2_sios(S1 s1, member_not_found s2) { return s1; }
+
+  template <typename... S1, typename... S2>
+  auto deep_merge_2_sios(sio<S1...> s1, sio<S2...> s2)
+  {
+    auto symbols1 = s1.symbols_as_tuple();
+    auto symbols2 = s2.symbols_as_tuple();
+
+    using symbols_t = typename tuple_minus<std::decay_t<decltype(symbols1)>, std::decay_t<decltype(symbols2)>>::type;
+    auto t = foreach(std::tuple_cat(symbols_t(), symbols2)) | [&] (auto s)
+    {
+      return s = deep_merge_2_sios(s1.get(s, member_not_found()), s2.get(s, member_not_found()));
+    };
+
+    return iod::apply(t, D_caller());
+  }
+
+  template <unsigned I, typename... S1, typename... O>
+  auto deep_merge_sios_in_tuple_rec(const std::tuple<sio<S1...>, O...>& t)
+  {
+    return static_if<(I < sizeof...(O))>(
+      [](const auto& t){ return deep_merge_2_sios(std::get<I>(t), deep_merge_sios_in_tuple_rec<I+1>(t)); },
+      [](const auto& t){ return std::get<I>(t); }, t);
+  }
   
+  template <typename... S1, typename... O>
+  auto deep_merge_sios_in_tuple(const std::tuple<sio<S1...>, O...>& t)
+  {
+    return deep_merge_sios_in_tuple_rec<0>(t);
+  }
   
 } // end of namespace iod.
 

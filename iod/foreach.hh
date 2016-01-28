@@ -21,9 +21,7 @@ namespace iod
     decltype(auto)
     foreach_loop_tuple(std::enable_if_t<N == SIZE>*, F, A&&, R&&... results)
     {
-      return static_if<sizeof...(R) == 0>(
-        [] () {},
-        [&] () { return std::make_tuple(results...);});
+      return std::make_tuple(results...);
     }
 
     template<unsigned N, unsigned SIZE, typename F, typename A, typename... R>
@@ -243,5 +241,44 @@ namespace iod
   // {
   //   return internal::foreach_loop_sio<0, sizeof...(S)>(0, f, std::forward_as_tuple(a1, args...));
   // }
+
+  template<unsigned N, unsigned SIZE, typename F, typename O, typename P>
+  inline
+  auto
+  sio_iterate_loop(std::enable_if_t<N < SIZE>*, F f, const O& o, const P& prev)
+  {
+    auto new_prev = f(o.template get_nth_member<N>(), prev);
+    return sio_iterate_loop<N+1, SIZE>(0, f, o, new_prev);
+  }
+
+  template<unsigned N, unsigned SIZE, typename F, typename O, typename P>
+  inline
+  auto
+  sio_iterate_loop(std::enable_if_t<N == SIZE>*, F f, const O& o, const P& prev)
+  {
+    return prev;
+  }
+
+  template <typename O, typename P>
+  struct sio_iterate_caller
+  {
+    sio_iterate_caller(O o, P init) : o_(o), init_(init) {}
+
+    template <typename F>
+    auto operator|(F f)
+      {
+        const int size = O::size();
+        return sio_iterate_loop<0, size>(0, f, o_, init_);
+      }
+
+    const O o_;
+    P init_;
+  };
+  
+  template <typename O, typename I>
+  auto sio_iterate(O o, I init)
+  {
+    return sio_iterate_caller<O, I>(o, init);
+  }
 
 }

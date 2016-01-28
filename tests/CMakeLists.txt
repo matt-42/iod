@@ -40,3 +40,7 @@ add_test(bind_method bind_method)
 
 add_executable(tuple tuple.cc)
 add_test(tuple tuple)
+
+
+add_executable(deep_merge deep_merge.cc)
+add_test(deep_merge deep_merge)

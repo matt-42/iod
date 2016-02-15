@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <map>
 #include <boost/lexical_cast.hpp>
+#include <boost/utility/string_ref.hpp>
 
 #include <iod/sio.hh>
 #include <iod/foreach.hh>
@@ -44,6 +45,22 @@ namespace iod
   namespace json_internals
   {
 
+    struct my_ostringstream
+    {
+      my_ostringstream() { str_.reserve(20); }
+
+      template <typename T>
+      my_ostringstream& operator<<(const T& t) { str_ += boost::lexical_cast<std::string>(t); return *this; }
+
+      my_ostringstream& operator<<(const std::string& t) { str_.append(t); return *this; }
+      my_ostringstream& operator<<(const char t) { str_.append(&t, 1); return *this; }
+      my_ostringstream& operator<<(const char* t) { str_.append(t); return *this; }
+      my_ostringstream& operator<<(const boost::string_ref& t) { str_.append(&t[0], t.size()); return *this; }
+      
+      const std::string& str() { return str_; }
+      std::string str_;
+    };
+    
     // Json encoder.
     // =============================================
     template <typename T, typename S>
@@ -64,6 +81,14 @@ namespace iod
       ss << '"';
       for (int i = 0; i < s.len; i++)
         ss << s.str[i];
+      ss << '"';
+    }
+
+    template <typename S>
+    inline void json_encode_(const boost::string_ref& s, S& ss)
+    {
+      ss << '"';
+      ss << s;
       ss << '"';
     }
     
@@ -590,7 +615,7 @@ namespace iod
   template <typename ...Tail>
   inline std::string json_encode(const sio<Tail...>& o)
   {
-    std::stringstream ss;
+    json_internals::my_ostringstream ss;
     json_internals::json_encode_(o, ss);
     return ss.str();
   }

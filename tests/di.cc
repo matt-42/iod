@@ -167,6 +167,18 @@ struct with_data_instance2
 };
 
 
+struct with_data_instance3
+{
+
+  static with_data_instance3 instantiate(with_data& wd) {
+    std::cout << "instantiate3 " << wd.s << std::endl;
+    return with_data_instance3{wd};
+  }
+
+  with_data& w;
+};
+
+
 void fun9(with_data_instance& wd)
 {
   std::cout << "fun9: " << wd.s << std::endl;
@@ -183,6 +195,9 @@ int main()
   float x = 1;
   int y = 2;
 
+  // auto t=  std::make_tuple([&] () -> decltype(auto) { return y; });
+  // typedef decltype(t) T2;
+  // static_assert(iod::di::tuple_embeds_fun_with_return_type<T2, int>::value, "");
   iod::di_call(&fun1);
   iod::di_call(&fun1, 1);
   iod::di_call(&fun2, 1);
@@ -219,4 +234,8 @@ int main()
   // test reference.
   auto f3 = [] (int& x) { assert(&x == &mref_int); };
   iod::di_call(f3, Mref());
+
+
+  auto f4 = [] (with_data_instance2, with_data_instance3) {};
+  iod::di_call(f4, wd);
 }

@@ -2,64 +2,49 @@
 
 #include <tuple>
 #include <iod/tags.hh>
-
+#include "utils.hh"
 namespace iod
 {
 
-  template <int N, typename T, typename X>
-  struct tuple_find_type2;
 
-  // template <int N, typename X>
-  // struct tuple_find_type2<N, std::tuple<>, X> : public std::integral_constant<int, -1> {};
-  template <int N, typename X>
-  struct tuple_find_type2<N, std::tuple<>, X> : public not_found {};
-
-  template <int N, typename... T, typename X>
-  struct tuple_find_type2<N, std::tuple<X, T...>, X> : public std::integral_constant<int, N> {};
-  template <int N, typename... T, typename X>
-  struct tuple_find_type2<N, std::tuple<X&, T...>, X> : public std::integral_constant<int, N> {};
-  template <int N, typename... T, typename X>
-  struct tuple_find_type2<N, std::tuple<X&&, T...>, X> : public std::integral_constant<int, N> {};
-  template <int N, typename... T, typename X>
-  struct tuple_find_type2<N, std::tuple<const X&, T...>, X> : public std::integral_constant<int, N> {};
-  template <int N, typename... T, typename X>
-  struct tuple_find_type2<N, std::tuple<const X, T...>, X> : public std::integral_constant<int, N> {};
-
-  template <int N, typename... T, typename X>
-  struct tuple_find_type2<N, std::tuple<X, T...>, X&> : public std::integral_constant<int, N> {};
-  template <int N, typename... T, typename X>
-  struct tuple_find_type2<N, std::tuple<X, T...>, X&&> : public std::integral_constant<int, N> {};
-  template <int N, typename... T, typename X>
-  struct tuple_find_type2<N, std::tuple<X, T...>, const X&> : public std::integral_constant<int, N> {};
-  template <int N, typename... T, typename X>
-  struct tuple_find_type2<N, std::tuple<X, T...>, const X> : public std::integral_constant<int, N> {};
+  constexpr int count_first_falses() { return 0; }
   
-  template <int N, typename T1, typename... T, typename X>
-  struct tuple_find_type2<N, std::tuple<T1, T...>, X> : public tuple_find_type2<N + 1, std::tuple<T...>, X> {};
-
-  template <typename T, typename X>
-  struct tuple_find_type : public tuple_find_type2<0, T, X> {};
-
-  template <typename E, typename T>
-  auto& tuple_get_by_type(T&& tuple)    
+  template <typename... B>
+  constexpr int count_first_falses(bool b1, B... b)
   {
-    return std::get<tuple_find_type<std::remove_const_t<std::remove_reference_t<T>>,
-                                    std::remove_const_t<std::remove_reference_t<E>>>::value>(tuple);
+    if (b1) return 0;
+    else return 1 + count_first_falses(b...);
   }
 
+  template <typename E, typename... T>
+  decltype(auto) tuple_get_by_type(std::tuple<T...>& tuple)    
+  {
+    typedef std::decay_t<E> DE;
+    return std::get<count_first_falses((std::is_same<std::decay_t<T>, DE>::value)...)>(tuple);
+  }
+
+
+  template <typename E, typename... T>
+  decltype(auto) tuple_get_by_type(std::tuple<T...>&& tuple)    
+  {
+    typedef std::decay_t<E> DE;
+    return std::get<count_first_falses((std::is_same<std::decay_t<T>, DE>::value)...)>(tuple);
+  }
+  
 
   template <typename T, typename U>
   struct tuple_embeds : public std::false_type {};
 
-  template <typename U>
-  struct tuple_embeds<std::tuple<>, U> : public std::false_type {};
+  template <typename... T, typename U>
+  struct tuple_embeds<std::tuple<T...>, U> :
+    public std::integral_constant<bool, count_first_falses(std::is_same<T, U>::value...) != sizeof...(T)>
+  {};
 
-  template <typename T1, typename... T>
-  struct tuple_embeds<std::tuple<T1, T...>, T1> : public std::true_type {};
-
-  template <typename T1, typename... T, typename U>
-  struct tuple_embeds<std::tuple<T1, T...>, U> : public tuple_embeds<std::tuple<T...>, U> {};
-
+  template <typename U, typename... T>
+  struct tuple_embeds_any_ref_of : public std::false_type {};
+  template <typename U, typename... T>
+  struct tuple_embeds_any_ref_of<std::tuple<T...>, U> : public tuple_embeds<std::tuple<std::decay_t<T>...>, std::decay_t<U>> {};
+  
 
   template <typename T>
   struct tuple_remove_references;

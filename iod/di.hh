@@ -13,60 +13,14 @@ namespace iod
   namespace di
   {
 
-    template <typename T>
-    struct remove_rvalue_reference { typedef T type; };
-    template <typename T>
-    struct remove_rvalue_reference<T&&> { typedef T type; };
-
-    template <typename T>
-    using remove_rvalue_reference_t = typename remove_rvalue_reference<T>::type;
-
-    template <typename... T>
-    struct tuple_remove_rvalues;
-    template <typename... T>
-    struct tuple_remove_rvalues<std::tuple<T...> >
-    {
-      typedef std::tuple<typename remove_rvalue_reference<T>::type...> type;
-    };
-
-    template <typename T>
-    using tuple_remove_rvalues_t = typename tuple_remove_rvalues<T>::type;
-
-    template <typename... T>
-    decltype(auto) forward_as_tuple_no_rvalue(T&&... t)
-    {
-      return std::tuple<remove_rvalue_reference_t<T>...>(std::forward<T>(t)...);
-    }
-
-    template <typename T>
-    struct tuple_filter_references
-    {
-      typedef T type;
-    };
-
-    template <typename T1, typename... T>
-    struct tuple_filter_references<std::tuple<T1&, T...>>
-    {
-      typedef typename tuple_filter_references<std::tuple<T...>>::type type;
-    };
-
-    template <typename T1, typename... T>
-    struct tuple_filter_references<std::tuple<T1, T...> >
-    {
-      typedef decltype(std::tuple_cat(std::declval<std::tuple<T1>>(),
-                                      std::declval<typename tuple_filter_references<std::tuple<T...>>::type>())) type;
-    };
-    
-    template <typename T>
-    using tuple_filter_references_t = typename tuple_filter_references<T>::type;
     template <typename M, typename C, typename... T>
-    decltype(auto) call_factory_instantiate(M& factory, C&& ctx, std::tuple<T...>*)
+    decltype(auto) call_factory_instantiate(M& factory, C&& ctx, typelist<T...>*)
     {
       return factory.instantiate(std::forward<T>(tuple_get_by_type<T>(ctx))...);
     }
 
     template <typename E, typename C, typename... T>
-    decltype(auto) call_factory_instantiate_static(C&& ctx, std::tuple<T...>*)
+    decltype(auto) call_factory_instantiate_static(C&& ctx, typelist<T...>*)
     {
       return std::decay_t<E>::instantiate(std::forward<T>(tuple_get_by_type<T>(ctx))...);
     }
@@ -98,46 +52,6 @@ namespace iod
   
     template <typename F>
     using dependencies_of = dependencies_of_<callable_arguments_tuple_t<F>>;
-
-    // // tuple_iterate provides an iteration on a tuple with knowledge of the
-    // // return value of the previous loop step.
-    // template<unsigned N, unsigned SIZE, typename F, typename A, typename P>
-    // inline
-    // auto
-    // tuple_iterate_loop(std::enable_if_t<N == SIZE>*, F, A&&, P&& prev)
-    // {
-    //   return prev;
-    // }
-  
-    // template<unsigned N, unsigned SIZE, typename F, typename A, typename P>
-    // inline
-    // auto
-    // tuple_iterate_loop(std::enable_if_t<N < SIZE>*, F f, A&& t, P&& prev)
-    // {
-    //   return tuple_iterate_loop<N + 1, SIZE>(0, f, t, f(std::get<N>(t), prev));
-    // }
-
-    // template <typename T, typename P>
-    // struct tuple_iterate_caller
-    // {
-    //   tuple_iterate_caller(T&& t, P&& prev_init) : t_(t), prev_init_(prev_init) {}
-
-    //   template <typename F>
-    //   auto operator|(F f)
-    //   {
-    //     const int size = std::tuple_size<std::remove_reference_t<T>>::value;
-    //     return tuple_iterate_loop<0, size>(0, f, t_, prev_init_);
-    //   }
-
-    //   const T t_;
-    //   P prev_init_;
-    // };
-  
-    // template <typename T, typename C>
-    // auto tuple_iterate(T&& t, C&& init)
-    // {
-    //   return tuple_iterate_caller<T, C>(t, init);
-    // }
 
     template <typename M>
     struct has_instantiate_static_method
@@ -200,51 +114,48 @@ namespace iod
       typedef std::decay_t<T> T2;
       typedef std::remove_const_t<std::remove_reference_t<E>> E2;
 
-      return static_if<tuple_embeds_any_ref_of<T2, E2>::value>(
-                         [&] (auto& to_inject) -> decltype(auto) {
-                           // If to_inject already embeds an element of type E, return it.
-                           auto instantiate = [&] (auto ctx) -> decltype(auto) {
-                             return tuple_get_by_type<E2>(ctx); };
-                           return f(instantiate, (std::tuple<>*)0);
-                         },
-                         [&] (auto& to_inject) -> decltype(auto) {
-
-                           typedef find_di_factory_t<T2, E2> FT;
-                           return iod::static_if<!std::is_same<FT, not_found>::value>(
-                             // If to_inject embed a factory, call it.
-                             [f] (auto&& deps, auto* e, auto* ft_) -> decltype(auto) {
-                               typedef std::remove_pointer_t<decltype(ft_)> FT_;
-                               typedef iod::callable_arguments_tuple_t<decltype(&FT_::instantiate)> ARGS;
-                               auto instantiate = [&] (auto&& ctx) -> decltype(auto)
-                                 {
-                                   return call_factory_instantiate(tuple_get_by_type<FT>(ctx), ctx, (ARGS*)0);
-                                 };
-                               return f(instantiate, (ARGS*)0);
-                             },
-                             // If the argument type provide a static instantiate method, call it.
-                             [f] (auto&& deps, auto* e, auto* ft_) -> decltype(auto) {
-                               typedef std::remove_pointer_t<std::remove_pointer_t<decltype(e)>> E2;
-                               static_assert(has_instantiate_static_method<E2>::value,
-                                             "Dependency injection failed. Cannot resolve.");
-                               typedef iod::callable_arguments_tuple_t<decltype(&E2::instantiate)> ARGS;
-                               auto instantiate = [&] (auto&& ctx) { return call_factory_instantiate_static<std::remove_pointer_t<E>>(ctx, (ARGS*)0); };
-                               return f(instantiate, (ARGS*)0);
-                             },
-                             to_inject, (E2*)0, (FT*)0);
-                         },
-                         to_inject);
+      typedef find_di_factory_t<T2, E2> FT;
+      return iod::static_if<!std::is_same<FT, not_found>::value>(
+        // If to_inject embed a factory, call it.
+        [f] (auto&& deps, auto* e, auto* ft_) -> decltype(auto) {
+          typedef std::remove_pointer_t<decltype(ft_)> FT_;
+          typedef iod::callable_arguments_list_t<decltype(&FT_::instantiate)> ARGS;
+          auto instantiate = [&] (auto&& ctx) -> decltype(auto)
+            {
+              return call_factory_instantiate(tuple_get_by_type<FT>(ctx), ctx, (ARGS*)0);
+            };
+          return f(instantiate, (ARGS*)0);
+        },
+        // If the argument type provide a static instantiate method, call it.
+        [f] (auto&& deps, auto* e, auto* ft_) -> decltype(auto) {
+          typedef std::remove_pointer_t<std::remove_pointer_t<decltype(e)>> E2;
+          static_assert(has_instantiate_static_method<E2>::value,
+                        "Dependency injection failed. Cannot resolve.");
+          typedef iod::callable_arguments_list_t<decltype(&E2::instantiate)> ARGS;
+          auto instantiate = [&] (auto&& ctx) -> decltype(auto) { return call_factory_instantiate_static<std::remove_pointer_t<E>>(ctx, (ARGS*)0); };
+          return f(instantiate, (ARGS*)0);
+        },
+        to_inject, (E2*)0, (FT*)0);
     }
 
-    template <typename E,typename T>
-    decltype(auto) instantiate(T&& to_inject)
+    template <typename E,typename... T>
+    decltype(auto) instantiate(std::enable_if_t<!typelist_embeds_any_ref_of<typelist<T...>, E>::value>*,
+                               T&&... to_inject)
     {
-      return di_meta_instantiate<E>(to_inject,
+      return di_meta_instantiate<E>(std::forward_as_tuple(to_inject...),
                                     [&] (auto instantiate, auto* args) -> decltype(auto)
-                                    {
-                                      return instantiate(to_inject);
-                                    });
-    }  
+        {
+          return instantiate(std::forward_as_tuple(to_inject...));
+        });      
+    }
 
+    template <typename E,typename... T>
+    decltype(auto) instantiate(std::enable_if_t<typelist_embeds_any_ref_of<typelist<T...>, E>::value>*,
+                               T&&... to_inject)
+    {
+      return arg_get_by_type<E>(std::forward<T>(to_inject)...);
+    }
+    
     template <typename E, typename T>
     decltype(auto) create_di_ctx_rec(T&& ctx);
 
@@ -276,7 +187,7 @@ namespace iod
     // returns the concatenation of ctx, elements of type A... and
     // the elements required to build them.
     template <typename C, typename... A>
-    decltype(auto) create_di_ctx_list_rec(C&& ctx, std::tuple<A...>*)
+    decltype(auto) create_di_ctx_list_rec(C&& ctx, typelist<A...>*)
     {
       return create_di_ctx_iterator<A...>::template run(ctx);
     }
@@ -284,44 +195,42 @@ namespace iod
     template <typename E, typename T>
     decltype(auto) create_di_ctx_rec(T&& ctx)
     {
-      return static_if<tuple_embeds_any_ref_of<std::decay_t<T>, E>::value>(
-        [] (auto ctx) { return ctx; },
-        [] (auto ctx) {
-          return di_meta_instantiate<E>(ctx,
+      return static_if<typelist_embeds_any_ref_of<std::decay_t<T>, E>::value>(
+        [] (auto&& ctx) { return ctx; },
+        [] (auto&& ctx) {
+          return di_meta_instantiate<E>(*(typelist_to_tuple_t<std::decay_t<T>>*)0,
                                         [&] (auto instantiate, auto args) -> decltype(auto)
             {
               typedef std::remove_pointer_t<decltype(args)> ARGS;
               auto deps = create_di_ctx_list_rec(ctx, (ARGS*)0);
-              return std::tuple_cat(deps, forward_as_tuple_no_rvalue(instantiate(deps)));
+              return typelist_cat(deps, typelist<E>());
             });
         }, ctx);
     }
 
-
-    
     template <typename... B, typename... A, typename F>
-    decltype(auto) create_stack_and_call(std::tuple<>*,
-                                         std::tuple<A...>*,
+    decltype(auto) create_stack_and_call(typelist<>*,
+                                         typelist<A...>*,
                                          F fun, B&&... to_inject)
     {
-      return fun(tuple_get_by_type<A>(std::forward_as_tuple(to_inject...))...);
+      return fun(arg_get_by_type<A>(std::forward<B>(to_inject)...)...);
     }
 
     template <typename C1, typename... C, typename... A, typename... B, typename F>
-    decltype(auto) create_stack_and_call(std::tuple<C1, C...>*,
-                                         std::tuple<A...>* args,
+    decltype(auto) create_stack_and_call(typelist<C1, C...>*,
+                                         typelist<A...>* args,
                                          F fun, B&&... to_inject)
     {
-      return create_stack_and_call((std::tuple<C...>*)0, args, fun,
+      return create_stack_and_call((typelist<C...>*)0, args, fun,
                                    std::forward<B>(to_inject)...,
-                                   instantiate<C1>(std::forward_as_tuple(to_inject...)));
+                                   instantiate<C1>(0, std::forward<B>(to_inject)...));
       
     }
     
     // Call fun with its required argument A...
     // by picking in args... or calling A::instantiate()
     template <typename F, typename... A, typename... B>
-    typename callable_traits<F>::return_type
+    decltype(auto)
     call_with_di2(F fun, std::tuple<A...>* arguments, B&&... to_inject)
     {
       // Compute the context type containing the arguments plus the
@@ -329,11 +238,12 @@ namespace iod
       typedef
         std::remove_reference_t<
         decltype(create_di_ctx_list_rec(
-                   std::declval<std::tuple<B...>>(),
-                   arguments))
+                   std::declval<typelist<B...>>(),
+                   (typelist<A...>*)0))
         > ctx_type;
 
-      return create_stack_and_call((ctx_type*)0, (std::tuple<A...>*)0, fun, to_inject...);
+      // typedef typename tuple_to_list<ctx_type>::type ctx_typelist;
+      return create_stack_and_call((ctx_type*)0, (typelist<A...>*)0, fun, to_inject...);
     }
 
   }

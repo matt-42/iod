@@ -3,9 +3,9 @@
 #include <tuple>
 #include <iod/tags.hh>
 #include "utils.hh"
+
 namespace iod
 {
-
 
   constexpr int count_first_falses() { return 0; }
   
@@ -16,6 +16,49 @@ namespace iod
     else return 1 + count_first_falses(b...);
   }
 
+
+  template <typename E, typename T1, typename... T>
+  decltype(auto) arg_get_by_type_(std::enable_if_t<std::is_same<E,
+                                 std::decay_t<T1>>::value>*,
+                                 T1&& a1, T&&... args)
+  {
+    return std::forward<T1>(a1);
+  }
+
+
+  // template <typename E, typename T1, typename T2, typename... T>
+  // decltype(auto) arg_get_by_type_(std::enable_if_t<!std::is_same<E,
+  //                                std::decay_t<T1>>::value and std::is_same<E,
+  //                                std::decay_t<T2>>::value>*,
+  //                                T1&& a1, T2&& a2, T&&... args)
+  // {
+  //   return std::forward<T2>(a2);
+  // }
+  
+  template <typename E, typename T1, typename... T>
+  decltype(auto) arg_get_by_type_(std::enable_if_t<!std::is_same<E,
+                                 std::decay_t<T1>>::value>*,
+                                 T1&&, T&&... args)
+  {
+    return arg_get_by_type_<E>(0, std::forward<T>(args)...);
+  }
+
+  template <typename E, typename T1, typename T2, typename... T>
+  decltype(auto) arg_get_by_type_(std::enable_if_t<!std::is_same<E,
+                                  std::decay_t<T1>>::value and !std::is_same<E,
+                                  std::decay_t<T2>>::value>*,
+                                  T1&&, T2&&, T&&... args)
+  {
+    
+    return arg_get_by_type_<E>(0, std::forward<T>(args)...);
+  }
+  
+  template <typename E, typename... T>
+  decltype(auto) arg_get_by_type(T&&... args)
+  {
+    return arg_get_by_type_<std::decay_t<E>>(0, args...);
+  }
+  
   template <typename E, typename... T>
   decltype(auto) tuple_get_by_type(std::tuple<T...>& tuple)    
   {

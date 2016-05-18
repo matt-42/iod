@@ -48,9 +48,9 @@ namespace iod
       typedef NAME##_t symbol_type;                                     \
       typedef iod::variable<variable_type<T, INFO>> super;              \
                                                                         \
-      variable_type() {}                                                \
+      variable_type() = default;                                        \
       template <typename V>                                             \
-      variable_type(V v) : SYMBOL(v) {}                                 \
+      variable_type(V v, std::enable_if_t<std::is_constructible<value_type, V>::value>* = 0) : SYMBOL(v) {}                              \
       inline value_type& value() { return SYMBOL; }                     \
       inline const value_type& value() const { return SYMBOL; }         \
       auto symbol() const { return NAME##_t(); }                        \

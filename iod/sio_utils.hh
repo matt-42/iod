@@ -141,7 +141,7 @@ namespace iod
   inline auto intersect(const sio<T...>& a,
                         const sio<U...>& b)
   {
-    return foreach(a) | [] (auto& m) {
+    return foreach2(a) | [] (auto& m) {
       return static_if<has_symbol<sio<U...>, std::decay_t<decltype(m.symbol())>>::value>(
         [&] () { return m; },
         [&] () { });

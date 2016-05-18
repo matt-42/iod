@@ -155,5 +155,78 @@ namespace iod
   
   template <typename T, typename... E>
   using tuple_remove_elements_t = typename tuple_remove_elements<T, E...>::type;
+
+
+  template<typename F, size_t... I, typename... T>
+  inline F tuple_map(std::tuple<T...>& t, F f, std::index_sequence<I...>)
+  {
+    return (void)std::initializer_list<int>{((void)f(std::get<I>(t)), 0)...}, f;
+  }
+
+  template<typename F, typename... T>
+  inline void tuple_map(std::tuple<T...>& t, F f)
+  {
+    tuple_map(t, f, std::index_sequence_for<T...>{});
+  }
+
+  template<typename F, size_t... I, typename T>
+  inline decltype(auto) tuple_transform(T&& t, F f, std::index_sequence<I...>)
+  {
+    return std::make_tuple(f(std::get<I>(std::forward<T>(t)))...);
+  }
+
+  template<typename F, typename T>
+  inline decltype(auto) tuple_transform(T&& t, F f)
+  {
+    return tuple_transform(std::forward<T>(t), f,
+                           std::make_index_sequence<std::tuple_size<std::decay_t<T>>{}>{});
+  }
+
+  template <template <class> class F, typename T, typename I, typename R, typename X = void>
+  struct tuple_filter_sequence;
+
+  template <template <class> class F, typename... T, typename R>
+  struct tuple_filter_sequence<F, std::tuple<T...>,
+                               std::index_sequence<>,
+                               R>
+  {
+    using ret = R;
+  };
+
+  template <template <class> class F, typename T1, typename... T, size_t I1, size_t... I, size_t... R>
+  struct tuple_filter_sequence<F, std::tuple<T1, T...>,
+                               std::index_sequence<I1, I...>,
+                               std::index_sequence<R...>,
+                               std::enable_if_t<F<T1>::value>>
+  {
+    using ret = typename tuple_filter_sequence<F, std::tuple<T...>,
+                                           std::index_sequence<I...>,
+                                           std::index_sequence<R..., I1>>::ret;
+  };
+
+  template <template <class> class F, typename T1, typename... T, size_t I1, size_t... I, size_t... R>
+  struct tuple_filter_sequence<F, std::tuple<T1, T...>,
+                               std::index_sequence<I1, I...>,
+                               std::index_sequence<R...>,
+                               std::enable_if_t<!F<T1>::value>>
+  {
+    using ret = typename tuple_filter_sequence<F, std::tuple<T...>, std::index_sequence<I...>,
+                                               std::index_sequence<R...>>::ret;
+  };
+
+
+  template <std::size_t... I, typename T>
+  decltype(auto) tuple_filter_impl(std::index_sequence<I...>, T&&t)
+  {
+    return std::make_tuple(std::get<I>(t)...);
+  }
   
+  template <template <class> class F, typename T>
+  decltype(auto) tuple_filter(T&& t)
+  {
+    using seq = typename tuple_filter_sequence<F, std::decay_t<T>,
+                                               std::make_index_sequence<std::tuple_size<std::decay_t<T>>::value>,
+                                               std::index_sequence<>>::ret;
+    return tuple_filter_impl(seq{}, t);
+  }
 }

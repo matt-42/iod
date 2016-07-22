@@ -20,7 +20,7 @@ int main()
     auto o = D(_name = "John", _age = 12);
 
     static_assert(!std::is_same<decltype(o)::symbol_to_member_type<_name_t>(), member_not_found>::value, "");
-    static_assert(std::is_same<decltype(o)::symbol_to_member_type<_children_t>, member_not_found>::value, "");
+    // Does not compile : decltype(o)::symbol_to_member_type<_children_t>;
 
     assert(o.name == "John");
     assert(o.age == 12);

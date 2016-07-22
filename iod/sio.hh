@@ -151,36 +151,13 @@ namespace iod
     template <std::size_t N>
     using nth_member_type = tl::get_nth_type<N, Ms...>;
 
-    // -----------------------------------------
-    // Retrieve type of member with symbol S.
-    // -----------------------------------------
-    template <std::size_t N, typename M, typename S, typename Sr, typename B = void>
-    struct _member_type_;
-
-    template <typename M, typename S, typename Sr>
-    struct _member_type_<_size - 1, M, S, Sr, std::enable_if_t<!std::is_same<S, Sr>::value>>
-    {
-      typedef member_not_found type;
-    };
-
-    template <std::size_t N, typename M, typename S>
-    struct _member_type_<N, M, S, S>
-    {
-      typedef M type;
-    };
-    
-    template <std::size_t N, typename M, typename S, typename Sr>
-      struct _member_type_<N, M, S, Sr, std::enable_if_t<(N < _size - 1 and !std::is_same<S, Sr>::value)>>
-    {
-      typedef nth_member_type<N+1> Next;
-      typedef typename _member_type_<N+1, Next, typename Next::symbol_type, Sr>::type type;
-    };
-    
+    // Get the position of a given symbol    
     template <typename S>
-    using symbol_to_member_type = typename _member_type_<0, nth_member_type<0>,
-                                                         typename nth_member_type<0>::symbol_type, S>::type;
-
+    using symbol_to_member_type = nth_member_type<
+      tl::get_type_position<S, typename Ms::symbol_type...>::value
+                                  >;
     
+    // Get the value type of a diven symbol.
     template <typename S>
     using member_value_type = typename symbol_to_member_type<S>::value_type;
 
@@ -188,7 +165,7 @@ namespace iod
     // struct simple_enum { enum { value = V}; };
     
     template <typename S>
-    using _has = std::integral_constant<bool, not std::is_same<symbol_to_member_type<S>, member_not_found>::value>;
+    using _has = std::integral_constant<bool, tl::type_list_has<S, typename Ms::symbol_type...>::value>;
 
     // Constructor.
     inline sio() = default;

@@ -62,6 +62,51 @@ namespace iod
     template <std::size_t N, typename... T>
     using get_nth_type = decltype(get_nth<N>(std::declval<T>()...));
 
+    // Get the position of a type in a type list.
+    template <typename T, int N, typename... L>
+    struct get_type_position_;
+
+    template <typename T, int N, typename L1, typename... L>
+    struct get_type_position_<T, N, L1, L...>
+    {
+      enum { value = get_type_position_<T, N + 1, L...>::value };
+    };
+
+    template <typename T, int N, typename... L>
+    struct get_type_position_<T, N, T, L...>
+    {
+      enum { value = N };
+    };
+
+
+    template <typename T, int N>
+    struct get_type_position_<T, N>
+    {
+      static_assert(N == -1, "get type position error: type not found.");
+      enum { value = N };
+    };
+
+    template <typename T, typename... L>
+    struct get_type_position
+    {
+      static const std::size_t value = get_type_position_<T, 0, L...>::value;
+    };
+
+    // Check if a list contains a type.
+    template <typename T, typename... L>
+    struct type_list_has;
+
+    template <typename T, typename L1, typename... L>
+    struct type_list_has<T, L1, L...>
+    {
+      enum { value = type_list_has<T, L...>::value };
+    };
+
+    template <typename T, typename... L>
+    struct type_list_has<T, T, L...> { enum { value = true }; };
+    template <typename T>
+    struct type_list_has<T>          { enum { value = false }; };
+    
     //find_first.
     template <typename F, typename T1, typename... T>
     auto find_first(F pred, T1 e, T&&... l)

@@ -313,7 +313,7 @@ namespace iod
         float res = 0;
           
         int ent = 0;
-        fill_int<int, 20>(ent);
+        fill_int<int, 10>(ent);
 
         res = ent;
 
@@ -322,7 +322,7 @@ namespace iod
           eat_one();
           unsigned int floating = 0;
           int start = pos;
-          fill_int<unsigned int, 20>(floating);
+          fill_int<unsigned int, 10>(floating);
           int end = pos;
           res += float(floating) / pow_10(end - start);
         }

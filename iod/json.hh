@@ -293,8 +293,10 @@ namespace iod
 
         const char* s = str.data() + pos;
 
+        int fz = 0;
+        while(s[fz] == '0') { fz++; end++; }
         
-        for (int i = 0; i < N; i++)
+        for (int i = fz; i < N + fz; i++)
         {
           if (s[i] < '0' or s[i] > '9') break;
           val = val * 10 + (s[i] - '0');
@@ -310,10 +312,14 @@ namespace iod
       
       inline json_parser& fill(float& val)
       {
+        int sign = 1;
+        if (str[pos] == '-') { sign = -1; eat_one(); }
+        else if (str[pos] == '+') { eat_one(); }
+
         float res = 0;
           
         int ent = 0;
-        fill_int<int, 20>(ent);
+        fill_int<int, 10>(ent);
 
         res = ent;
 
@@ -322,7 +328,7 @@ namespace iod
           eat_one();
           unsigned int floating = 0;
           int start = pos;
-          fill_int<unsigned int, 20>(floating);
+          fill_int<unsigned int, 10>(floating);
           int end = pos;
           res += float(floating) / pow_10(end - start);
         }
@@ -335,7 +341,7 @@ namespace iod
           res *= pow_10(exp);
         }
 
-        val = res;
+        val = sign * res;
         return *this;
       }
       

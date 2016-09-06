@@ -42,6 +42,9 @@ namespace iod
   template <typename S, typename ...Tail>
   inline void json_encode(const sio<Tail...>& o, S& stream);
 
+  
+  struct json_string { std::string str; };
+
   namespace json_internals
   {
 
@@ -358,6 +361,52 @@ namespace iod
         return *this;
       }
 
+
+      // Fill a json_string object with the next json entity.
+      inline json_parser& operator>>(json_string& t)
+      {
+        int start = pos;
+        int end = pos;
+
+        bool in_str = false;
+        int parent_level = 0;
+        int array_level = 0;
+        bool done = false;
+        
+        while (!eof() and !done)
+        {
+          if (parent_level == 0 and array_level == 0 and !in_str and
+              (str[pos] == ','  or str[pos] == '}' or str[pos] == ']' ))
+            break;
+
+          if (str[pos] == '"') // strings.
+          {
+            do 
+            {
+              pos++;
+            } while (!eof() and (str[pos] != '"' or str[pos - 1] == '\\'));
+          }
+          else if (str[pos] == '{' ) // start a json object
+            parent_level++;
+          else if (str[pos] == '}' ) // end a json object
+            parent_level--;
+          else if (str[pos] == '[' ) // start a json array
+            array_level++;
+          else if (str[pos] == ']' ) // end a json array
+            array_level--;
+
+          pos++; // go to next char.
+
+          // skip spaces
+          while (!eof() and std::isspace(str[pos])) pos++;
+        }
+
+        end = pos;
+        t.str.resize(end - start);
+        memcpy((void*)t.str.data(), (void*) (str.data() + start), end - start);
+        return *this;
+      }
+      
       template <typename T>
       inline json_parser& operator>>(fill_<T>&& t)
       {
@@ -560,6 +609,13 @@ namespace iod
       else
         throw std::runtime_error("Empty string.");
     }
+
+    template <typename S>
+    inline void iod_from_json_(S*, json_string& s, json_parser& p)
+    {
+      p >> s;
+    }
+    
   }
 
   template <typename ...Tail>

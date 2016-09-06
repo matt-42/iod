@@ -73,4 +73,29 @@ int main()
 
     std::cout << custom_user.name << " " << custom_user.age << " " << custom_user.city  << std::endl;
   }
+
+  // json_string :
+  {
+    typedef decltype(D(_city = json_string())) city;
+    typedef decltype(D(_city = json_string(), _name = std::string())) city2;
+
+    city c;
+    city2 c2;
+
+    std::string str = R"({"city": { "age":12,"city":{"age" : { "age" : [[12,12,34]]}}}})";
+    json_decode(c, str);
+    assert(c.city.str == R"({ "age":12,"city":{"age" : { "age" : [[12,12,34]]}}})");
+
+    str = R"({"city":  "te{}}{}\"st"}})";
+    json_decode(c, str);    
+    assert(c.city.str == R"("te{}}{}\"st")");
+
+    str = R"({"city":  "test", "name": "john"})";
+    json_decode(c2, str);
+    assert(c2.city.str == R"("test")");
+
+    str = R"({"city":  1234, "name": "john"})";
+    json_decode(c2, str);
+    assert(c2.city.str == R"(1234)");
+  }
 }

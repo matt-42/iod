@@ -56,6 +56,7 @@ namespace iod
       my_ostringstream& operator<<(const T& t) { str_ += boost::lexical_cast<std::string>(t); return *this; }
 
       my_ostringstream& operator<<(const std::string& t) { str_.append(t); return *this; }
+      my_ostringstream& operator<<(const json_string& t) { str_.append(t.str); return *this; }
       my_ostringstream& operator<<(const char t) { str_.append(&t, 1); return *this; }
       my_ostringstream& operator<<(const char* t) { str_.append(t); return *this; }
       my_ostringstream& operator<<(const boost::string_ref& t) { str_.append(&t[0], t.size()); return *this; }

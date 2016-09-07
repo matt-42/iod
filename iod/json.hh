@@ -676,6 +676,27 @@ namespace iod
     else
       throw std::runtime_error("Empty string.");
   }
+
+
+  template <typename O>
+  inline void json_decode(json_string& o, const stringview& str)
+  {
+    json_internals::json_parser p(str);
+    if (str.size() > 0)
+      iod_from_json_((json_string*)0, o, p);
+    else
+      throw std::runtime_error("Empty string.");
+  }
+  
+  template <typename O>
+  inline void json_decode(json_string& o, std::istringstream& stream)
+  {
+    json_internals::json_parser p(stream);
+    if (stream.str().size() > 0)
+      iod_from_json_((json_string*)0, o, p);
+    else
+      throw std::runtime_error("Empty string.");
+  }
   
   template <typename ...Tail>
   inline std::string json_encode(const sio<Tail...>& o)

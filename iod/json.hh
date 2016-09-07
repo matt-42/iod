@@ -43,7 +43,9 @@ namespace iod
   inline void json_encode(const sio<Tail...>& o, S& stream);
 
   
+  
   struct json_string { std::string str; };
+  inline std::string json_encode(const json_string& o);
 
   namespace json_internals
   {
@@ -681,6 +683,11 @@ namespace iod
     json_internals::my_ostringstream ss;
     json_internals::json_encode_(o, ss);
     return ss.str();
+  }
+
+  inline std::string json_encode(const json_string& o)
+  {
+    return o.str;
   }
 
   template <typename S, typename ...Tail>

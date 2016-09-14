@@ -75,6 +75,21 @@
     iod_define_symbol(on)
 #endif
 
+#ifndef IOD_SYMBOL_opt1
+#define IOD_SYMBOL_opt1
+    iod_define_symbol(opt1)
+#endif
+
+#ifndef IOD_SYMBOL_opt2
+#define IOD_SYMBOL_opt2
+    iod_define_symbol(opt2)
+#endif
+
+#ifndef IOD_SYMBOL_opt3
+#define IOD_SYMBOL_opt3
+    iod_define_symbol(opt3)
+#endif
+
 #ifndef IOD_SYMBOL_optional
 #define IOD_SYMBOL_optional
     iod_define_symbol(optional)

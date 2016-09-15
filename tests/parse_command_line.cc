@@ -128,22 +128,42 @@ int main()
   // Description.
   {
     const char* argv[] = {"./test_program", "--help"};
-    auto opts = parse_command_line(2, argv,
-                                   cl::required(_opt1, _a),
-                                   cl::positionals(_opt2),
-                                   cl::description(
-                                     "This is a test program",
-                                     _opt1 = "Set the first option of our test program.\n second line",
-                                     _opt2 = "Set the second option of our test program."),
+    try
+    {
+      auto opts = parse_command_line(2, argv,
+                                     cl::required(_opt1, _a),
+                                     cl::positionals(_opt1, _opt2),
+                                     cl::description(
+                                       "This is a test program",
+                                       _opt1 = "Set the first option of our test program.\n second line",
+                                       _opt2 = "Set the second option of our test program.",
+                                       _opt3 = "A vector of strings."),
 
-                                   _opt1 | _1 = int(),
-                                   _opt2 | _2 = std::string(),
-                                   _opt3 = std::vector<std::string>(),
-                                   _a = bool(),
-                                   _b = bool(),
-                                   _c = bool(),
-                                   _d = bool()
-      );
+                                     _opt1 | _1 = int(),
+                                     _opt2 | _2 = std::string(),
+                                     _opt3 = std::vector<std::string>(),
+                                     _a = bool(),
+                                     _b = bool(),
+                                     _c = bool(),
+                                     _d = bool()
+        );
+
+// This should print:
+// Usage: ./test_program [options...] [opt1] [opt2]
+// This is a test program
+
+//   --opt1|-1 int            [REQUIRED] Set the first option of our test program.
+//                             second line
+//   --opt2|-2 string         Set the second option of our test program.
+//   --opt3 vector<string>    A vector of strings.
+//   -a                       [REQUIRED] 
+//   -b                       
+//   -c                       
+//   -d   
+    }
+    catch(...)
+    {
+    }
   }
   
 }

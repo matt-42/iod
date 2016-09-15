@@ -2,7 +2,7 @@ The IOD Library
 ==========================
 
 The IOD library enhances C++14 meta programming with a symbol based
-paradigm. It provides a compile-time a way to introspect objects and
+paradigm. It provides a compile-time way to introspect objects and
 generate code matching their data structures. It also contains few
 utilies built with symbol meta-programming.
 

@@ -1,14 +1,18 @@
+#include <iomanip>
+#include <sstream>
 #include <map>
 #include <iostream>
 #include <boost/lexical_cast.hpp>
 
 #include "stringview.hh"
+#include "symbol_definitions.hh"
 #include "grammar.hh"
 
 
 namespace iod
 {
-  
+  using namespace s;
+
   void parse_command_line(int argc, const char** argv,
                           std::map<std::string, std::vector<stringview>>& args_map,
                           std::vector<stringview>& positionals)
@@ -52,6 +56,9 @@ namespace iod
             ndash = 0;
           }
         }
+        else
+          args_map[arg_name.to_std_string()].push_back("1");
+
       }
 
 
@@ -60,14 +67,8 @@ namespace iod
         auto value = stringview(arg, len);
         if (arg_name.data())
         {
-          
-          if (arg_name.size() > 1)
-            args_map[arg_name.to_std_string()].push_back(value);
-          else
-          {
-            assert(args_map[arg_name.to_std_string()].size() > 0);
-            args_map[arg_name.to_std_string()].back() = value;
-          }
+          assert(args_map[arg_name.to_std_string()].size() > 0);
+          args_map[arg_name.to_std_string()].back() = value;
         }
         else
           positionals.push_back(value);
@@ -131,16 +132,46 @@ namespace iod
     *v = boost::lexical_cast<V>(str.str);
   }
 
-  template <typename... T>
-  auto positionals(T&&... s)
+  namespace cl
   {
-    return std::make_tuple(s...);
+    template <typename... T>
+    auto positionals(T&&... s)
+    {
+      return s::_iod_pcl_positionals = std::make_tuple(s...);
+    }
+
+    template <typename... T>
+    auto required(T&&... s)
+    {
+      return s::_iod_pcl_required = std::make_tuple(s...);
+    }
+
+    template <typename... T>
+    auto description(const std::string& gs, T&&... s)
+    {
+      return s::_iod_pcl_description = D(_description = gs,
+                                         _options = D(s...));
+    }
   }
 
+  inline const std::string pcl_type_string(const void*) { return "void"; }
+  inline const std::string pcl_type_string(const std::string*) { return "string"; }
+  inline const std::string pcl_type_string(const int*) { return "int"; }
+  inline const std::string pcl_type_string(const float*) { return "float"; }
+  inline const std::string pcl_type_string(const double*) { return "double"; }
+  inline const std::string pcl_type_string(const bool*) { return ""; }
+  template <typename T>
+  inline const std::string pcl_type_string(const std::vector<T>*) {
+    return std::string("vector<") + pcl_type_string((T*)0) + ">";
+  }
   
-  template <typename... T, typename... P>
-  auto parse_command_line(int argc, const char** argv,
-                          std::tuple<P...> positionals,
+  template <typename T>
+  inline const std::string pcl_type_string(const T*) { return "value"; }
+  template <typename T>
+  inline const std::string pcl_type_string(const T&) { return pcl_type_string((const T*)0); }
+  
+  template <typename... A, typename... T>
+  auto parse_command_line(std::tuple<A...> attrs, int argc, const char** argv,
                           T&&... opts)
   {
 
@@ -149,7 +180,64 @@ namespace iod
     parse_command_line(argc, argv, args_map, positional_values);
 
     auto options = D((get_option_symbol(opts) = get_option_value(opts))...);
+    auto attrs_sio = iod::apply(attrs, D_caller());
+    auto positionals = attrs_sio.get(_iod_pcl_positionals, std::make_tuple());
 
+    auto required = attrs_sio.get(_iod_pcl_required, std::make_tuple());
+    auto description = attrs_sio.get(_iod_pcl_description, D(_description = "", _options = D()));
+
+    // Generation of the help message
+    auto print_help = [&] ()
+    {
+      std::cout << "Usage: " << argv[0] << " [options...]";
+      foreach(positionals) | [] (auto p)
+      {
+        std::cout << " [" << p.name() << "]";
+      };
+      std::cout << std::endl;
+      std::cout << description.description << std::endl << std::endl;
+      foreach(std::make_tuple(opts...)) | [&] (auto o)
+      {
+        auto opt_symbol = get_option_symbol(o);
+        auto symbol = std::string(get_option_symbol(o).name());
+        auto short_symbol = std::string(get_option_short_symbol(o).name());
+
+        std::string symbols_str = (symbol.size() > 1 ? "--" : "-") + symbol;
+        if (short_symbol != symbol)
+          symbols_str += std::string("|") + (short_symbol.size() > 1 ? "--" : "-") + short_symbol;
+
+        std::string req;
+        foreach(required) | [&] (auto r) { if (r.equals(opt_symbol)) req += "[REQUIRED] "; };
+
+        std::string desc = description.options.get(opt_symbol, "");
+        std::string type_s = pcl_type_string(options[opt_symbol]);
+        if (type_s.size()) type_s = " " + type_s;
+        std::cout << "  " << std::setw(25) << std::left << (symbols_str + type_s) << req;
+        for (unsigned i = 0; i < desc.size(); i++)
+        {
+          if (desc[i] != '\n')
+            std::cout << desc[i];
+          else std::cout << std::endl << std::setw(27) << " ";
+        }
+        std::cout << std::endl;
+      };
+    };
+
+
+    // Display help on the --help switch.
+    if (args_map.find("help") != args_map.end())
+    {
+      print_help();
+#ifndef IOD_PCL_WITH_EXCEPTIONS
+      std::cerr << err << std::endl;
+      exit(0);
+#endif
+      throw std::runtime_error("help");
+      
+    }
+
+    // Parse options.
+    std::map<std::string, bool> filled;
     foreach(std::make_tuple(opts...)) | [&] (auto o)
     {
       auto symbol = get_option_symbol(o);
@@ -164,6 +252,7 @@ namespace iod
       {
         for (auto elt : it->second)
           parse_option_value(elt, options[symbol]);
+        filled[symbol.name()] = true;
       }
       else // Positional ?
       {
@@ -173,6 +262,7 @@ namespace iod
           if (p.name() == symbol.name() and
               position < positional_values.size())
           {
+            filled[symbol.name()] = true;
             parse_option_value(positional_values[position],
                                options[symbol]);
           }
@@ -182,13 +272,71 @@ namespace iod
       
     };
 
+    // Check required args.
+    std::vector<std::string> missing;
+    foreach(required) | [&] (auto s)
+    {
+      if (filled.find(s.name()) == filled.end())
+        missing.push_back(s.name());
+    };
+
+    // Error if at least one missing.
+    if (missing.size() > 0)
+    {
+      std::stringstream err;
+      if (missing.size() > 1)
+      {
+        err << "Error missing command line parameters: " << std::endl;
+        for (auto m : missing)
+          err << "  - " << m << std::endl;
+      }
+      else
+        err << "Error missing required command line parameter " << missing[0] << std::endl;
+
+#ifndef IOD_PCL_WITH_EXCEPTIONS
+      std::cerr << err << std::endl;
+      exit(1);
+#endif
+      throw std::runtime_error(err.str());
+    }
+
+
     return options;
   }
 
-  template <typename... T>
-  auto parse_command_line(int argc, const char** argv, T&&... opts)
+
+  template <typename... Q, typename... T, typename PS>
+  auto parse_command_line(std::tuple<Q...> attrs,
+                          int argc, const char** argv,
+                          assign_exp<_iod_pcl_positionals_t, PS> ps,
+                          T&&... opts)
   {
-    return parse_command_line(argc, argv, positionals(), opts...);
+    return parse_command_line(std::tuple_cat(attrs, std::make_tuple(ps)), argc, argv, opts...);
   }
 
+  template <typename... Q, typename... T, typename PS>
+  auto parse_command_line(std::tuple<Q...> attrs,
+                          int argc, const char** argv,
+                          assign_exp<_iod_pcl_required_t, PS> ps,
+                          T&&... opts)
+  {
+    return parse_command_line(std::tuple_cat(attrs, std::make_tuple(ps)), argc, argv, opts...);
+  }
+
+  template <typename... Q, typename... T, typename PS>
+  auto parse_command_line(std::tuple<Q...> attrs,
+                          int argc, const char** argv,
+                          assign_exp<_iod_pcl_description_t, PS> ps,
+                          T&&... opts)
+  {
+    return parse_command_line(std::tuple_cat(attrs, std::make_tuple(ps)), argc, argv, opts...);
+  }
+  
+
+  template <typename... T>
+  auto parse_command_line(int argc, const char** argv,
+                          T&&... opts)
+  {
+    return parse_command_line(std::make_tuple(), argc, argv, opts...);
+  }
 }

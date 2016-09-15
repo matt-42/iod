@@ -1,3 +1,5 @@
+#define IOD_PCL_WITH_EXCEPTIONS
+
 #include "symbols.hh"
 #include "iod/parse_command_line.hh" 
 #include "iod/json.hh"
@@ -22,13 +24,13 @@ int main()
   {
     const char* argv[] = {"", "abc", "1.23", "--opt1" , "12"};
     auto opts = parse_command_line(5, argv,
-                                   positionals(_opt2, _opt3),
+                                   cl::positionals(_opt2, _opt3),
                                    _opt1 = int(),
                                    _opt2 = std::string(),
                                    _opt3 = float());
 
     assert(opts.opt1 == 12 and opts.opt2 == "abc" and std::abs(opts.opt3 - 1.23) < 0.00001);
-    std::cout << json_encode(opts) << std::endl;
+    //std::cout << json_encode(opts) << std::endl;
   }
 
   // Defaults
@@ -81,7 +83,7 @@ int main()
     assert(opts.opt1 == 43 and opts.a == 23);
   }
   
-  // short names
+  // shortcuts names
   {
     const char* argv[] = {"", "-1" , "3", "-2", "abc"};
     auto opts = parse_command_line(5, argv,
@@ -104,34 +106,44 @@ int main()
            opts.a[3] == 4);
   }
 
-  // Todo :
   
-  // // required args
-  // {
-  //   const char* argv[] = {"", "-1" , "3", "-2", "abc"};
-  //   auto opts = parse_command_line(1, argv,
-  //                                  required(_opt1, _opt2),
-  //                                  _opt1 | _1 = int(),
-  //                                  _opt2 | _2 = std::string());
+  // required args
+  {
+    const char* argv[] = {"", "-opt1" , "3"};
+    std::string err;
+    try
+    {
+      auto opts = parse_command_line(3, argv,
+                                     cl::required(_opt1, _opt2),
+                                     _opt1 | _1 = int(),
+                                     _opt2 | _2 = std::string());
+    }
+    catch (std::runtime_error e)
+    {
+      err = e.what();
+    };
+    assert(err == "Error missing required command line parameter opt2\n");
+  }
 
-  //   assert(opts.opt1 == 3 and opts.opt2 == "abc");
-  //   std::cout << json_encode(opts) << std::endl;
-  // }
+  // Description.
+  {
+    const char* argv[] = {"./test_program", "--help"};
+    auto opts = parse_command_line(2, argv,
+                                   cl::required(_opt1, _a),
+                                   cl::positionals(_opt2),
+                                   cl::description(
+                                     "This is a test program",
+                                     _opt1 = "Set the first option of our test program.\n second line",
+                                     _opt2 = "Set the second option of our test program."),
 
-  // // Description.
-  // {
-  //   const char* argv[] = {"", "-1" , "3", "-2", "abc"};
-  //   auto opts = parse_command_line(1, argv,
-  //                                  description(
-  //                                    _opt1 = "Set the first option of our test program."
-  //                                    _opt2 = "Set the second option of our test program.")
-
-  //                                    ),
-  //                                  _opt1 | _1 = int(),
-  //                                  _opt2 | _2 = std::string());
-
-  //   assert(opts.opt1 == 3 and opts.opt2 == "abc");
-  //   std::cout << json_encode(opts) << std::endl;
-  // }
+                                   _opt1 | _1 = int(),
+                                   _opt2 | _2 = std::string(),
+                                   _opt3 = std::vector<std::string>(),
+                                   _a = bool(),
+                                   _b = bool(),
+                                   _c = bool(),
+                                   _d = bool()
+      );
+  }
   
 }

@@ -31,6 +31,9 @@ namespace iod
     using super::operator=;                                             \
                                                                         \
     inline const char* name() const { return #SYMBOL; }                 \
+    inline constexpr bool equals(_##SYMBOL##_t) const { return true; } \
+    template <typename T> \
+    inline constexpr bool equals(T) const { return false; }           \
                                                                         \
     template <typename T>                                               \
     inline const auto& member_access(const T& o) const { return o.SYMBOL; } \
@@ -75,6 +78,11 @@ namespace iod
     constexpr int_symbol() {}
     typedef iod::symbol<iod::int_symbol<N>> super;
     using super::operator=;
+
+    inline constexpr bool equals(int_symbol<N>) const { return true; } 
+    template <typename T>
+    inline constexpr bool equals(T) const { return false; }
+    
     static constexpr const int to_int = N;
     static const char* name_str_;
     inline const char* name() const { return name_str_; }

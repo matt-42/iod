@@ -20,19 +20,14 @@
     iod_define_symbol(as)
 #endif
 
-#ifndef IOD_SYMBOL_attribute
-#define IOD_SYMBOL_attribute
-    iod_define_symbol(attribute)
-#endif
-
-#ifndef IOD_SYMBOL_attribute_
-#define IOD_SYMBOL_attribute_
-    iod_define_symbol(attribute_)
-#endif
-
 #ifndef IOD_SYMBOL_avg
 #define IOD_SYMBOL_avg
     iod_define_symbol(avg)
+#endif
+
+#ifndef IOD_SYMBOL_begin
+#define IOD_SYMBOL_begin
+    iod_define_symbol(begin)
 #endif
 
 #ifndef IOD_SYMBOL_compiler_insert_symbols_here__
@@ -55,6 +50,11 @@
     iod_define_symbol(criteria)
 #endif
 
+#ifndef IOD_SYMBOL_description
+#define IOD_SYMBOL_description
+    iod_define_symbol(description)
+#endif
+
 #ifndef IOD_SYMBOL_elt
 #define IOD_SYMBOL_elt
     iod_define_symbol(elt)
@@ -63,6 +63,11 @@
 #ifndef IOD_SYMBOL_empty
 #define IOD_SYMBOL_empty
     iod_define_symbol(empty)
+#endif
+
+#ifndef IOD_SYMBOL_end
+#define IOD_SYMBOL_end
+    iod_define_symbol(end)
 #endif
 
 #ifndef IOD_SYMBOL_exp
@@ -90,6 +95,21 @@
     iod_define_symbol(inner_join)
 #endif
 
+#ifndef IOD_SYMBOL_iod_pcl_description
+#define IOD_SYMBOL_iod_pcl_description
+    iod_define_symbol(iod_pcl_description)
+#endif
+
+#ifndef IOD_SYMBOL_iod_pcl_positionals
+#define IOD_SYMBOL_iod_pcl_positionals
+    iod_define_symbol(iod_pcl_positionals)
+#endif
+
+#ifndef IOD_SYMBOL_iod_pcl_required
+#define IOD_SYMBOL_iod_pcl_required
+    iod_define_symbol(iod_pcl_required)
+#endif
+
 #ifndef IOD_SYMBOL_json_key
 #define IOD_SYMBOL_json_key
     iod_define_symbol(json_key)
@@ -110,11 +130,6 @@
     iod_define_symbol(nth_attribute)
 #endif
 
-#ifndef IOD_SYMBOL_nth_attribute_
-#define IOD_SYMBOL_nth_attribute_
-    iod_define_symbol(nth_attribute_)
-#endif
-
 #ifndef IOD_SYMBOL_on
 #define IOD_SYMBOL_on
     iod_define_symbol(on)
@@ -123,6 +138,11 @@
 #ifndef IOD_SYMBOL_optional
 #define IOD_SYMBOL_optional
     iod_define_symbol(optional)
+#endif
+
+#ifndef IOD_SYMBOL_options
+#define IOD_SYMBOL_options
+    iod_define_symbol(options)
 #endif
 
 #ifndef IOD_SYMBOL_order

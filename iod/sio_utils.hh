@@ -147,6 +147,21 @@ namespace iod
         [&] () { });
     };
   }
+
+
+  template <typename ...T, typename ...S>
+  inline auto remove_symbols(const sio<T...>& a,
+                             const std::tuple<S...>& b)
+  {
+    using res_symbols = typename tuple_minus<std::decay_t<decltype(a.symbols_as_tuple())>,
+                                             std::decay_t<decltype(b)>>::type;
+
+    // auto t1 = iod::apply(res_symbols(), D_caller());
+    auto t = foreach(res_symbols()) | [&] (auto& s) {
+      return s = a[s];
+    };
+    return iod::apply(t, D_caller());
+  }
   
   template <typename T, typename ...Tail>
   inline std::vector<T> iod_array(const T& t, Tail... args)

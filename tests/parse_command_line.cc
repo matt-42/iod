@@ -80,20 +80,20 @@ int main()
     std::cout << json_encode(opts) << std::endl;
     assert(opts.opt1 == 43 and opts.a == 23);
   }
+  
+  // short names
+  {
+    const char* argv[] = {"", "-1" , "3", "-2", "abc"};
+    auto opts = parse_command_line(5, argv,
+                                   _opt1 | _1 = int(),
+                                   _opt2 | _2 = std::string());
+
+    std::cout << json_encode(opts) << std::endl;
+    assert(opts.opt1 == 3 and opts.opt2 == "abc");
+  }
 
   // Todo :
   
-  // // short names
-  // {
-  //   const char* argv[] = {"", "-1" , "3", "-2", "abc"};
-  //   auto opts = parse_command_line(1, argv,
-  //                                  _opt1 | _1 = int(),
-  //                                  _opt2 | _2 = std::string());
-
-  //   assert(opts.opt1 == 3 and opts.opt2 == "abc");
-  //   std::cout << json_encode(opts) << std::endl;
-  // }
-
   // // required args
   // {
   //   const char* argv[] = {"", "-1" , "3", "-2", "abc"};

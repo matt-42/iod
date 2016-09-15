@@ -60,6 +60,7 @@ namespace iod
         auto value = stringview(arg, len);
         if (arg_name.data())
         {
+          
           if (arg_name.size() > 1)
             args_map[arg_name.to_std_string()].push_back(value);
           else
@@ -80,10 +81,29 @@ namespace iod
     
   }
 
+
   template <typename S, typename V>
-  decltype(auto) get_option_symbol(const assign_exp<S, V>& o)
+  auto get_option_short_symbol(const assign_exp<S, V>& o)
   {
     return o.left;
+  }
+
+  template <typename S, typename V>
+  auto get_option_symbol(const assign_exp<S, V>& o)
+  {
+    return o.left;
+  }
+  
+  template <typename S1, typename S2, typename V>
+  auto get_option_symbol(const assign_exp<logical_or_exp<S1, S2>, V>& o)
+  {
+    return S1();
+  }
+
+  template <typename S1, typename S2, typename V>
+  auto get_option_short_symbol(const assign_exp<logical_or_exp<S1, S2>, V>& o)
+  {
+    return S2();
   }
 
   template <typename S, typename V>
@@ -126,10 +146,11 @@ namespace iod
     foreach(std::make_tuple(opts...)) | [&] (auto o)
     {
       auto symbol = get_option_symbol(o);
-      auto short_symbol = get_option_symbol(o);
+      auto short_symbol = get_option_short_symbol(o);
 
       auto it = args_map.find(symbol.name());
-      if (it == args_map.end())
+      if (it == args_map.end() and
+          strcmp(short_symbol.name(), symbol.name()))
         it = args_map.find(short_symbol.name());
 
       if (it != args_map.end() and it->second.size() > 0)

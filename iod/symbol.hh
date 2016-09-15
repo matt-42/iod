@@ -76,6 +76,8 @@ namespace iod
     typedef iod::symbol<iod::int_symbol<N>> super;
     using super::operator=;
     static constexpr const int to_int = N;
+    static const char* name_str_;
+    inline const char* name() const { return name_str_; }
   };
 
   template <typename T> struct is_int_symbol               : std::false_type {};
@@ -87,6 +89,8 @@ namespace iod
   namespace s {                                                         \
   typedef iod::int_symbol<NUMBER>  _##NUMBER##_t; \
   constexpr _##NUMBER##_t _##NUMBER;                                    \
+  template<> \
+  const char* iod::int_symbol<NUMBER>::name_str_ = #NUMBER;                         \
   }
 
 }

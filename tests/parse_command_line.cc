@@ -1,6 +1,6 @@
 //
 // This file gives a small tour of the iod::parse_command_line features.
-// (and test also it)
+// (and also test it)
 //
 
 #define IOD_PCL_WITH_EXCEPTIONS

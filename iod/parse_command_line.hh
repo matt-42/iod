@@ -112,6 +112,13 @@ namespace iod
     return o.right;
   }
 
+
+  template <typename V>
+  void parse_option_value(stringview str, std::vector<V>& v)
+  {
+    v.push_back(boost::lexical_cast<V>(str.str));
+  }
+  
   template <typename V>
   void parse_option_value(stringview str, V& v)
   {

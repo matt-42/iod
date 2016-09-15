@@ -92,6 +92,18 @@ int main()
     assert(opts.opt1 == 3 and opts.opt2 == "abc");
   }
 
+  // vectors
+  {
+    const char* argv[] = {"", "-a", "1", "-a", "2", "-a", "3", "-a", "4" };
+    auto opts = parse_command_line(9, argv, _a = std::vector<int>());
+    std::cout << json_encode(opts) << std::endl;
+    assert(opts.a.size() == 4 and
+           opts.a[0] == 1 and
+           opts.a[1] == 2 and
+           opts.a[2] == 3 and
+           opts.a[3] == 4);
+  }
+
   // Todo :
   
   // // required args

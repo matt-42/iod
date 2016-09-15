@@ -93,13 +93,13 @@ namespace iod
   template <typename T> struct is_int_symbol<const T> : is_int_symbol<T> {};
   template <typename T> struct is_int_symbol<T&> : is_int_symbol<T> {};
 
-#define iod_define_number_symbol(NUMBER)                                \
-  namespace s {                                                         \
-  typedef iod::int_symbol<NUMBER>  _##NUMBER##_t; \
-  constexpr _##NUMBER##_t _##NUMBER;                                    \
-  template<> \
-  const char* iod::int_symbol<NUMBER>::name_str_ = #NUMBER;                         \
-  }
+#define iod_define_number_symbol(NUMBER)                        \
+  namespace s {                                                 \
+    typedef ::iod::int_symbol<NUMBER>  _##NUMBER##_t;           \
+  constexpr _##NUMBER##_t _##NUMBER;                            \
+  }                                                             \
+  template<>                                                    \
+  const char* ::iod::int_symbol<NUMBER>::name_str_ = #NUMBER; 
 
 }
 

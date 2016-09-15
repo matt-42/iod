@@ -162,7 +162,8 @@ namespace iod
 
       if (it != args_map.end() and it->second.size() > 0)
       {
-        parse_option_value(it->second[0], options[symbol]);
+        for (auto elt : it->second)
+          parse_option_value(elt, options[symbol]);
       }
       else // Positional ?
       {

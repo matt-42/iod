@@ -3,7 +3,8 @@ The IOD Library
 
 The IOD library enhances C++14 meta programming with a symbol based
 paradigm. It provides a compile-time a way to introspect objects and
-generate code matching their data structures.
+generate code matching their data structures. It also contains few
+utilies built with symbol meta-programming.
 
 ## What is a IOD symbol?
 
@@ -87,6 +88,25 @@ Statically introspectable objects features are:
                                         << m.value() << std::end; }
 
 ```
+## Command line parser.
+
+Iod provides an easy to use, type safe command line parser :
+
+```c++
+const char* argv[] = {"", "--opt1" , "12", "--opt2", "abc"};
+int argc = 5;
+auto opts = parse_command_line(argc, argv,
+                               _opt1 = int(),
+                               _opt2 = std::string());
+// With
+// ./a.out --opt1 12 --opt2 abc
+// It should give
+// opts.opt1 == 12
+// opts.opt2 == "abc"
+```
+
+More example can be found in the test here:
+https://github.com/matt-42/iod/blob/master/tests/parse_command_line.cc
 
 ## A Fast, Malloc-Free Json Parser / Encoder.
 

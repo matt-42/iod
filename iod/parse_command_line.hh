@@ -20,27 +20,62 @@ namespace iod
       const char* arg = argv[ai];
       int len = strlen(arg);
 
+      int ndash = 0;
       
-      if (arg[0] == '-' and arg[1] == '-' and len > 3)
-        arg_name = stringview(arg + 2, arg + len);
+      if (arg[0] == '-')
+        ndash = arg[1] == '-' ? 2 : 1;
 
-      else if (arg[0] == '-' and arg[1] != '-' and len > 2)
-        arg_name = stringview(arg + 1, arg + len);
-
-      else
+      if (ndash > 0)
       {
-                
+        arg_name = stringview(arg + ndash, arg + len);
+
+        // if we have an equal assignement -o=12.
+        for (int i = 0; i < arg_name.size(); i++)
+        {
+          if (arg_name[i] == '=')
+          {
+            arg_name = stringview(arg_name.str, i);
+            arg = arg_name.str + i + 1;
+            len = strlen(arg);
+            break;
+          }
+        }
+
+        // Register swithes.
+        if (ndash == 1)
+        {
+          for (int i = 0; i < arg_name.size(); i++)
+            args_map[std::string(1, arg_name[i])].push_back("1");
+          if (arg_name.size() > 1)
+          {
+            arg_name = stringview();
+            ndash = 0;
+          }
+        }
+      }
+
+
+      if (arg[0] != '-')
+      {
         auto value = stringview(arg, len);
         if (arg_name.data())
         {
-          args_map[arg_name.to_std_string()].push_back(value);
+          if (arg_name.size() > 1)
+            args_map[arg_name.to_std_string()].push_back(value);
+          else
+          {
+            assert(args_map[arg_name.to_std_string()].size() > 0);
+            args_map[arg_name.to_std_string()].back() = value;
+          }
         }
         else
           positionals.push_back(value);
 
         arg_name = stringview();
+        ndash = 0;
         
       }
+
     }
     
   }

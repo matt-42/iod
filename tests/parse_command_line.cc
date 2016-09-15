@@ -14,8 +14,8 @@ int main()
                                    _opt1 = int(),
                                    _opt2 = std::string());
 
-    assert(opts.opt1 == 12 and opts.opt2 == "abc");
     std::cout << json_encode(opts) << std::endl;
+    assert(opts.opt1 == 12 and opts.opt2 == "abc");
   }
 
   // Positionals
@@ -51,36 +51,38 @@ int main()
 
     assert(opt1 == 42);
   }
+
+  // Switches
+  {
+    const char* argv[] = {"", "--opt1", "0", "-abc", "-d=0"};
+    auto opts = parse_command_line(4, argv,
+                                   _opt1 = bool(),
+                                   _a = bool(),
+                                   _b = bool(),
+                                   _c = bool(),
+                                   _d = bool());
+
+    assert(opts.opt1 == false and
+           opts.a == true and
+           opts.b == true and
+           opts.c == true and
+           opts.d == false);
+    std::cout << json_encode(opts) << std::endl;
+  }
   
+  // equals option assignments
+  {
+    const char* argv[] = {"", "--opt1=43", "-a=23"};
+    auto opts = parse_command_line(3, argv,
+                                   _opt1 = int(),
+                                   _a = int(3));
+
+    std::cout << json_encode(opts) << std::endl;
+    assert(opts.opt1 == 43 and opts.a == 23);
+  }
+
   // Todo :
-
-  // // flags
-  // {
-  //   const char* argv[] = {"", "--opt1", "0", "-abc"};
-  //   auto opts = parse_command_line(5, argv,
-  //                                  _opt1 = bool(),
-  //                                  _a = bool(),
-  //                                  _b = bool(),
-  //                                  _c = bool());
-
-  //   assert(opts.opt1 == true and
-  //          opts.a == true and
-  //          opts.b == true and
-  //          opts.c == true);
-  //   std::cout << json_encode(opts) << std::endl;
-  // }
-
-  // // equals option assignments
-  // {
-  //   const char* argv[] = {"", "--opt1=42"};
-  //   auto opts = parse_command_line(5, argv,
-  //                                  _opt1 = int());
-
-  //   assert(opts.opt1 == 42);
-  //   std::cout << json_encode(opts) << std::endl;
-  // }
   
-
   // // short names
   // {
   //   const char* argv[] = {"", "-1" , "3", "-2", "abc"};

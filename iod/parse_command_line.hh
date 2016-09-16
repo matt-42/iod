@@ -13,7 +13,7 @@ namespace iod
 {
   using namespace s;
 
-  void parse_command_line(int argc, const char** argv,
+  void parse_command_line(int argc, const char* argv[],
                           std::map<std::string, std::vector<stringview>>& args_map,
                           std::vector<stringview>& positionals)
   {
@@ -171,7 +171,7 @@ namespace iod
   inline const std::string pcl_type_string(const T&) { return pcl_type_string((const T*)0); }
   
   template <typename... A, typename... T>
-  auto parse_command_line(std::tuple<A...> attrs, int argc, const char** argv,
+  auto parse_command_line(std::tuple<A...> attrs, int argc, const char* argv[],
                           T&&... opts)
   {
 
@@ -196,6 +196,7 @@ namespace iod
       };
       std::cout << std::endl;
       std::cout << description.description << std::endl << std::endl;
+      std::cout << "Available options:" << std::endl << std::endl;
       foreach(std::make_tuple(opts...)) | [&] (auto o)
       {
         auto opt_symbol = get_option_symbol(o);
@@ -229,7 +230,6 @@ namespace iod
     {
       print_help();
 #ifndef IOD_PCL_WITH_EXCEPTIONS
-      std::cerr << err << std::endl;
       exit(0);
 #endif
       throw std::runtime_error("help");
@@ -294,7 +294,7 @@ namespace iod
         err << "Error missing required command line parameter " << missing[0] << std::endl;
 
 #ifndef IOD_PCL_WITH_EXCEPTIONS
-      std::cerr << err << std::endl;
+      std::cerr << err.str() << std::endl;
       exit(1);
 #endif
       throw std::runtime_error(err.str());
@@ -307,7 +307,7 @@ namespace iod
 
   template <typename... Q, typename... T, typename PS>
   auto parse_command_line(std::tuple<Q...> attrs,
-                          int argc, const char** argv,
+                          int argc, const char* argv[],
                           assign_exp<_iod_pcl_positionals_t, PS> ps,
                           T&&... opts)
   {
@@ -316,7 +316,7 @@ namespace iod
 
   template <typename... Q, typename... T, typename PS>
   auto parse_command_line(std::tuple<Q...> attrs,
-                          int argc, const char** argv,
+                          int argc, const char* argv[],
                           assign_exp<_iod_pcl_required_t, PS> ps,
                           T&&... opts)
   {
@@ -325,7 +325,7 @@ namespace iod
 
   template <typename... Q, typename... T, typename PS>
   auto parse_command_line(std::tuple<Q...> attrs,
-                          int argc, const char** argv,
+                          int argc, const char* argv[],
                           assign_exp<_iod_pcl_description_t, PS> ps,
                           T&&... opts)
   {
@@ -334,7 +334,7 @@ namespace iod
   
 
   template <typename... T>
-  auto parse_command_line(int argc, const char** argv,
+  auto parse_command_line(int argc, const char* argv[],
                           T&&... opts)
   {
     return parse_command_line(std::make_tuple(), argc, argv, opts...);

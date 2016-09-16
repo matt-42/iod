@@ -113,7 +113,6 @@ namespace iod
     return o.right;
   }
 
-
   template <typename V>
   void parse_option_value(stringview str, std::vector<V>& v)
   {
@@ -236,6 +235,26 @@ namespace iod
       
     }
 
+    auto parse_and_check_value = [&] (auto symbol, stringview elt)
+      {
+        try {
+          parse_option_value(elt, options[symbol]);
+        } catch (...)
+        {
+          std::stringstream ss;
+          ss << "Invalid command line parameter " << symbol.name() << ": " << std::endl
+          << "  Expected type " << pcl_type_string(options[symbol]) << " got " << elt.to_std_string()
+          << std::endl;
+
+#ifndef IOD_PCL_WITH_EXCEPTIONS
+          std::cerr << ss.str() << std::endl;
+          exit(1);
+#else
+          throw std::runtime_error(ss.str());
+#endif
+        }
+      };
+
     // Parse options.
     std::map<std::string, bool> filled;
     foreach(std::make_tuple(opts...)) | [&] (auto o)
@@ -251,7 +270,7 @@ namespace iod
       if (it != args_map.end() and it->second.size() > 0)
       {
         for (auto elt : it->second)
-          parse_option_value(elt, options[symbol]);
+          parse_and_check_value(symbol, elt);
         filled[symbol.name()] = true;
       }
       else // Positional ?
@@ -263,8 +282,7 @@ namespace iod
               position < positional_values.size())
           {
             filled[symbol.name()] = true;
-            parse_option_value(positional_values[position],
-                               options[symbol]);
+            parse_and_check_value(symbol, positional_values[position]);
           }
           position++;
         };

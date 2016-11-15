@@ -16,43 +16,43 @@ namespace iod
     else return 1 + count_first_falses(b...);
   }
 
-
-  template <typename E, typename T1, typename... T>
-  decltype(auto) arg_get_by_type_(std::enable_if_t<std::is_same<E,
-                                 std::decay_t<T1>>::value>*,
-                                 T1&& a1, T&&... args)
+  template <typename E, typename... T>
+  decltype(auto) arg_get_by_type_(void*,
+                                  E* a1, T&&... args)
   {
-    return std::forward<T1>(a1);
+    return std::forward<E*>(a1);
   }
 
-
-  // template <typename E, typename T1, typename T2, typename... T>
-  // decltype(auto) arg_get_by_type_(std::enable_if_t<!std::is_same<E,
-  //                                std::decay_t<T1>>::value and std::is_same<E,
-  //                                std::decay_t<T2>>::value>*,
-  //                                T1&& a1, T2&& a2, T&&... args)
-  // {
-  //   return std::forward<T2>(a2);
-  // }
-  
-  template <typename E, typename T1, typename... T>
-  decltype(auto) arg_get_by_type_(std::enable_if_t<!std::is_same<E,
-                                 std::decay_t<T1>>::value>*,
-                                 T1&&, T&&... args)
+  template <typename E, typename... T>
+  decltype(auto) arg_get_by_type_(void*,
+                                  const E* a1, T&&... args)
   {
-    return arg_get_by_type_<E>(0, std::forward<T>(args)...);
-  }
-
-  template <typename E, typename T1, typename T2, typename... T>
-  decltype(auto) arg_get_by_type_(std::enable_if_t<!std::is_same<E,
-                                  std::decay_t<T1>>::value and !std::is_same<E,
-                                  std::decay_t<T2>>::value>*,
-                                  T1&&, T2&&, T&&... args)
-  {
-    
-    return arg_get_by_type_<E>(0, std::forward<T>(args)...);
+    return std::forward<const E*>(a1);
   }
   
+  template <typename E, typename... T>
+  decltype(auto) arg_get_by_type_(void*,
+                                  E& a1, T&&... args)
+  {
+    return std::forward<E&>(a1);
+  }
+
+  template <typename E, typename... T>
+  decltype(auto) arg_get_by_type_(void*,
+                                  const E& a1, T&&... args)
+  {
+    return std::forward<const E&>(a1);
+  }
+  
+  template <typename E, typename T1, typename... T>
+  decltype(auto) arg_get_by_type_( std::enable_if_t<!std::is_same<E,
+                                   std::decay_t<T1>>::value>*,
+                                   //void*,
+                                  T1&&, T&&... args)
+  {
+    return arg_get_by_type_<E>((void*)0, std::forward<T>(args)...);
+  }
+
   template <typename E, typename... T>
   decltype(auto) arg_get_by_type(T&&... args)
   {

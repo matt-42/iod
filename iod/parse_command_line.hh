@@ -1,13 +1,12 @@
+#include <iostream>
 #include <iomanip>
 #include <sstream>
 #include <map>
-#include <iostream>
 #include <boost/lexical_cast.hpp>
 
 #include "stringview.hh"
 #include "symbol_definitions.hh"
 #include "grammar.hh"
-
 
 namespace iod
 {

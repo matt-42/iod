@@ -11,12 +11,6 @@ namespace iod
 
   template <typename T>
   struct grammar_value_type { typedef T type; };
-  template <>
-  struct grammar_value_type<const char*> { typedef std::string type; };
-  template <int N>
-  struct grammar_value_type<const char[N]> { typedef std::string type; };
-  template <int N>
-  struct grammar_value_type<char[N]> { typedef std::string type; };
   template <typename T>
   struct grammar_value_type<std::initializer_list<T> >
   { typedef std::vector<typename grammar_value_type<T>::type> type; };
@@ -323,6 +317,9 @@ namespace iod
   struct assign_exp : public Exp<assign_exp<L, R>>
   {
     //assign_exp() {}
+    typedef L left_t;
+    typedef R right_t;
+
     assign_exp(L&& l, R&& r) : left(l), right(r) {}
     assign_exp(const L& l, const R& r) : left(l), right(r) {}
 
@@ -484,28 +481,21 @@ namespace iod
   {
   public:
 
+    auto operator=(const char* l) const
+    {
+      return assign_exp<E, const char*>(*static_cast<const E*>(this), l);
+    }
+
     template <typename L>
-    auto operator=(const L& l) const
+    auto operator=(L&& l) const
     {
-      return assign_exp<E, grammar_value_type_t<L>>(*static_cast<const E*>(this), grammar_value_type_t<L>(l));
+      return assign_exp<E, L>(*static_cast<const E*>(this), l);
     }
-
+    
     template <typename T>
-    inline auto operator=(const std::initializer_list<T>& l) const
+    auto operator=(const std::initializer_list<T>& l) const
     {
-      return assign_exp<E, 
-                        grammar_value_type_t<std::initializer_list<T>>>
-        (*static_cast<const E*>(this), grammar_value_type_t<std::initializer_list<T>>(l));
-    }
-
-    // Special case for initializer_list<const char*> that cannot implicitely build a vector<string>.
-    inline auto operator=(const std::initializer_list<const char*>& l) const
-    {
-      std::vector<std::string> v;
-      for (auto s : l) v.push_back(s);
-
-      return assign_exp<E, std::vector<std::string>>
-        (*static_cast<const E*>(this), v);
+      return assign_exp<E, std::vector<T>>(*static_cast<const E*>(this), std::vector<T>(l));
     }
 
   };

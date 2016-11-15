@@ -95,6 +95,11 @@
     iod_define_symbol(inner_join)
 #endif
 
+#ifndef IOD_SYMBOL_join
+#define IOD_SYMBOL_join
+    iod_define_symbol(join)
+#endif
+
 #ifndef IOD_SYMBOL_iod_pcl_description
 #define IOD_SYMBOL_iod_pcl_description
     iod_define_symbol(iod_pcl_description)

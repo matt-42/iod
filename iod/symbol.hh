@@ -53,7 +53,7 @@ namespace iod
                                                                         \
       variable_type() = default;                                        \
       template <typename V>                                             \
-      variable_type(V v, std::enable_if_t<std::is_constructible<value_type, V>::value>* = 0) : SYMBOL(v) {}                              \
+      variable_type(V&& v, std::enable_if_t<std::is_constructible<value_type, V>::value>* = 0) : SYMBOL(v) {}                              \
       inline value_type& value() { return SYMBOL; }                     \
       inline const value_type& value() const { return SYMBOL; }         \
       auto symbol() const { return NAME##_t(); }                        \

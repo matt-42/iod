@@ -1,4 +1,5 @@
 #include <cassert>
+#include <tuple>
 #include <iostream>
 #include <iod/foreach.hh>
 
@@ -7,12 +8,15 @@
 
 int main()
 {
+  using namespace std::string_literals;
+  
   using s::_age;
   using s::_name;
 
+  auto x = iod::D(_name = "xxx"s, _age = 12);
   auto t = std::make_tuple(1, 2, 3);
-  const auto u = std::make_tuple(1, 2, 4);
-  
+  auto u = std::make_tuple(1, 2, 4);
+
   iod::foreach(t) | [] (auto& x) { x += 1; };
 
   assert(t == std::make_tuple(2, 3, 4));
@@ -28,8 +32,8 @@ int main()
   assert(std::get<1>(t3) == std::get<1>(u) + std::get<1>(t));
   assert(std::get<2>(t3) == std::get<2>(u) + std::get<2>(t));
 
-  auto o1 = iod::D(_name = "xxx", _age = 12);
-  const auto o2 = iod::D(_name = "xxx", _age = 12);
+  auto o1 = iod::D(_name = "xxx"s, _age = 12);
+  const auto o2 = iod::D(_name = "xxx"s, _age = 12);
 
   auto o3 = iod::foreach(o1, o2) | [] (auto& x, auto& y) { return x.symbol() = x.value() + y.value(); };
 

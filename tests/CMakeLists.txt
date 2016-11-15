@@ -3,7 +3,8 @@ cmake_minimum_required(VERSION 2.8)
 enable_testing()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
-add_definitions(-std=c++14 -Wall)
+set (CMAKE_CXX_STANDARD 14)
+add_definitions(-Wall)
 
 #add_executable(iod_query_stl iod_query_stl.cc)
 #add_test(iod_query_stl iod_query_stl)
@@ -17,8 +18,8 @@ add_test(json json)
 add_executable(core core.cc)
 add_test(core core)
 
-#add_executable(linq linq.cc)
-#add_test(linq linq)
+add_executable(linq linq.cc)
+add_test(linq linq)
 
 add_executable(callable_traits callable_traits.cc)
 add_test(callable_traits callable_traits)
@@ -46,3 +47,14 @@ add_test(parse_command_line parse_command_line)
 
 add_executable(deep_merge deep_merge.cc)
 add_test(deep_merge deep_merge)
+
+
+add_executable(array_view array_view.cc)
+add_test(array_view array_view)
+
+add_executable(aos_view aos_view.cc)
+add_test(aos_view aos_view)
+
+
+add_executable(variable variable.cc)
+add_test(variable variable)

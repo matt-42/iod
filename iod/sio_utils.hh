@@ -26,6 +26,17 @@ namespace iod
   template <typename E>
   struct variable;
 
+  template <typename T>
+  struct ref_
+  {
+    typedef T value_t;
+    ref_(T&& v) : value(v) {}
+    T value;
+  };
+
+  template <typename T>
+  decltype(auto) ref(T&& v) { return ref_<T>(std::forward<T>(v)); }
+
   template <typename V>
   const V& exp_to_variable(const variable<V>& v)
   {
@@ -46,7 +57,28 @@ namespace iod
   }
 
   template <typename S, typename V>
+  auto exp_to_variable(const assign_exp<S, ref_<V&>>& e)
+  {
+    typedef V& vtype;
+    return typename S::template variable_type<vtype>(e.right.value);
+  }
+
+  template <typename S, typename V>
+  auto exp_to_variable(const assign_exp<S, ref_<V>>& e)
+  {
+    typedef V vtype;
+    return typename S::template variable_type<vtype>(e.right.value);
+  }
+  
+  template <typename S, typename V>
   auto exp_to_variable(const assign_exp<S, V>& e)
+  {
+    typedef V vtype;
+    return typename S::template variable_type<vtype>(e.right);
+  }
+  
+  template <typename S, typename V>
+  auto exp_to_variable(const assign_exp<S, V&>& e)
   {
     typedef V vtype;
     return typename S::template variable_type<vtype>(e.right);
@@ -59,6 +91,13 @@ namespace iod
     return typename S::template variable_type<vtype, decltype(D(std::declval<ARGS>()...))>(e.right);
   }
 
+  template <typename S, typename V, typename... ARGS>
+  auto exp_to_variable(const assign_exp<function_call_exp<S, ARGS...>, V&>& e)
+  {
+    typedef V vtype;
+    return typename S::template variable_type<vtype, decltype(D(std::declval<ARGS>()...))>(e.right);
+  }
+  
   template <typename ...T>
   inline auto D(T&&... args)
   {

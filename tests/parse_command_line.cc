@@ -12,9 +12,6 @@
 // The command line parser.
 #include "iod/parse_command_line.hh"
 
-// Just for debugging purpose.
-#include "iod/json.hh"
-
 int main()
 {
   using namespace s;
@@ -27,7 +24,6 @@ int main()
                                    _opt1 = int(),
                                    _opt2 = std::string());
 
-    std::cout << json_encode(opts) << std::endl;
     assert(opts.opt1 == 12 and opts.opt2 == "abc");
   }
 
@@ -41,7 +37,6 @@ int main()
                                    _opt3 = float());
 
     assert(opts.opt1 == 12 and opts.opt2 == "abc" and std::abs(opts.opt3 - 1.23) < 0.00001);
-    //std::cout << json_encode(opts) << std::endl;
   }
 
   // Defaults
@@ -52,7 +47,6 @@ int main()
                                    _opt2 = std::string("abc"));
 
     assert(opts.opt1 == 3 and opts.opt2 == "abc");
-    std::cout << json_encode(opts) << std::endl;
   }
 
   // Pointers
@@ -80,7 +74,6 @@ int main()
            opts.b == true and
            opts.c == true and
            opts.d == false);
-    std::cout << json_encode(opts) << std::endl;
   }
   
   // equals option assignments
@@ -90,7 +83,6 @@ int main()
                                    _opt1 = int(),
                                    _a = int(3));
 
-    std::cout << json_encode(opts) << std::endl;
     assert(opts.opt1 == 43 and opts.a == 23);
   }
   
@@ -101,7 +93,6 @@ int main()
                                    _opt1 | _1 = int(),
                                    _opt2 | _2 = std::string());
 
-    std::cout << json_encode(opts) << std::endl;
     assert(opts.opt1 == 3 and opts.opt2 == "abc");
   }
 
@@ -109,7 +100,6 @@ int main()
   {
     const char* argv[] = {"", "-a", "1", "-a", "2", "-a", "3", "-a", "4" };
     auto opts = parse_command_line(9, argv, _a = std::vector<int>());
-    std::cout << json_encode(opts) << std::endl;
     assert(opts.a.size() == 4 and
            opts.a[0] == 1 and
            opts.a[1] == 2 and

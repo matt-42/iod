@@ -28,8 +28,8 @@ int main()
   
   auto o1 = iod::D(_name = "xxx", _age = 12);
   const auto o2 = iod::D(_name = "xxx", _age = 12);
-  iod::apply(o1, [] (std::string& s, int& a) { std::cout << s << std::endl; });
-  iod::apply(o2, [] (const std::string& s, const int& a) { std::cout << s << std::endl; });
+  iod::apply(o1, [] (const char* s, int& a) { std::cout << s << std::endl; });
+  iod::apply(o2, [] (const char* s, const int& a) { std::cout << s << std::endl; });
 
   iod::proxy_apply(t, [] (int x) { return x + 2; }, [] (int x, int y, int z) { std::cout << z << std::endl; });
 

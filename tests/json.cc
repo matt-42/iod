@@ -1,3 +1,4 @@
+#include <string>
 #include <iostream>
 #include <cassert>
 #include <iod/foreach.hh>
@@ -9,11 +10,14 @@
 
 int main()
 {
+  
+  using namespace std::string_literals;
+ 
   using namespace iod;
   using namespace s;
   
   {
-    auto o = D(_name = "John", _age = 12, _children = { 1,2,3,4,5 }, _city = D(_name = "Paris"));
+    auto o = D(_name = "John"s, _age = 12, _children = { 1,2,3,4,5 }, _city = D(_name = "Paris"s));
     auto str = json_encode(o);
 
     decltype(o) p;
@@ -38,7 +42,7 @@ int main()
     auto s = R"json({"name":"\u00E2\u82AC\u00E2\u82AC\u00E2\u82AC\u00E2\u82AC\u00E2\u82AC"})json";
 
     json_decode(o, s);
-    assert(o.name.size() == 15 and o.name == "€€€€€");
+    assert(o.name.size() == 15 and o.name == "€€€€€"s);
   }
 
   {
@@ -46,7 +50,7 @@ int main()
                        _age(_json_skip) = int(),
                        _city = std::string())) User;
     
-    User u("John", 23, "NYC");
+    User u("John"s, 23, "NYC"s);
     
     auto str = json_encode(u);
     assert(str == R"({"username":"John","city":"NYC"})");
@@ -86,16 +90,37 @@ int main()
     json_decode(c, str);
     assert(c.city.str == R"({ "age":12,"city":{"age" : { "age" : [[12,12,34]]}}})");
 
-    str = R"({"city":  "te{}}{}\"st"}})";
-    json_decode(c, str);    
-    assert(c.city.str == R"("te{}}{}\"st")");
+    str = R"({"city":  "te{}}{}\"st\\"}})";
+    json_decode(c, str);
+    std::cout << c.city.str << std::endl;
+    assert(c.city.str == R"("te{}}{}\"st\\")");
 
     str = R"({"city":  "test", "name": "john"})";
     json_decode(c2, str);
-    assert(c2.city.str == R"("test")");
+    assert(c2.city.str == "\"test\"");
 
     str = R"({"city":  1234, "name": "john"})";
     json_decode(c2, str);
-    assert(c2.city.str == R"(1234)");
+    assert(c2.city.str == "1234");
   }
+
+  // Stringview
+  {
+    std::string str = R"json({"name":"John","city":"John2","age":12})json";
+
+    auto object = iod::D(_name = stringview(), _city = stringview(), _age = int());
+    iod::json_decode(object, str);
+    assert(json_encode(object) == str);
+  }
+
+  // Escape
+  {
+    std::string str = R"({"name":"\\ \"age\\\\\" \\"})";
+    auto object = iod::D(_name = stringview());
+    iod::json_decode(object, str);
+    std::cout << json_encode(object) << " == " << str << std::endl; 
+    assert(json_encode(object) == str);
+  }
+
+
 }

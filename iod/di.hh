@@ -198,7 +198,7 @@ namespace iod
       return static_if<typelist_embeds_any_ref_of<std::decay_t<T>, E>::value>(
         [] (auto&& ctx) { return ctx; },
         [] (auto&& ctx) {
-          return di_meta_instantiate<E>(*(typelist_to_tuple_t<std::decay_t<T>>*)0,
+          return di_meta_instantiate<E>(*(typelist_to_tuple_t<std::decay_t<T>>*)42,
                                         [&] (auto instantiate, auto args) -> decltype(auto)
             {
               typedef std::remove_pointer_t<decltype(args)> ARGS;

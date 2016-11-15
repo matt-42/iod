@@ -241,7 +241,7 @@ namespace iod
                                          std::vector<decltype(format_record(req, group[0]))> v;
                                          for (const auto& t : group) v.push_back(format_record(req, t));
                                          return v;
-                                       });
+                                       }, group);
                                   });
                  },
                    [] (auto& req, auto f, auto& v) { // If no group by
@@ -265,6 +265,13 @@ namespace iod
         return query<U>(u);
       }
 
+      inline auto from_exp() { return D(); } 
+
+      // from(vector, _as(_table_name))
+      template <typename E, typename... O>
+      auto from_exp(const function_call_exp<_as_t, E>& e, O&&... tail)
+      { return cat(from_exp(tail...), D(_as = std::get<0>(e.args))); }
+      
       template <typename... E>
       auto select(const E&... e) { return make_query(cat(q, _select = D(e...))); }
 
@@ -273,13 +280,14 @@ namespace iod
       template <typename E>
       auto group_by(E e) { return make_query(cat(q, _group_by = D(_criteria = e))); }
       template <typename Q, typename... E>
-      auto from(Q table, const E&... e) { return make_query(cat(q, _from = D(_table = &table, e...))); }
+      auto from(Q&& table, const E&... e)
+      { return make_query(cat(q, _from = cat(D(_table = &table), from_exp(e...)))); }
 
       template <typename Q, typename... E>
-      auto inner_join(Q table, E... e) { return make_query(cat(q,
-                                                               _inner_join = D(_table = &table, e...))); }
+      auto inner_join(Q&& table, E... e) { return make_query(cat(q,
+                                                                 _inner_join = D(_table = &table, e...))); }
       template <typename Q>
-      auto order_by(Q order) { return make_query(cat(q, _order_by = D(_order = order))); }
+      auto order_by(Q&& order) { return make_query(cat(q, _order_by = D(_order = order))); }
 
       template <typename F>
       void operator|(F f) { return linq_internals::exec_table(q, f); }

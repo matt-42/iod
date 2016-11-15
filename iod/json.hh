@@ -7,7 +7,6 @@
 #include <tuple>
 #include <string>
 #include <sstream>
-#include <iostream>
 #include <stdexcept>
 #include <map>
 #include <boost/lexical_cast.hpp>
@@ -49,22 +48,144 @@ namespace iod
 
   namespace json_internals
   {
-
-    struct my_ostringstream
+    
+    struct external_char_stream
     {
-      my_ostringstream() { str_.reserve(20); }
+
+      external_char_stream(char* buf, int len)
+        : pos_(0),
+          buf_(buf),
+          max_len_(len)
+      {}
+
+      inline void append(const char t)
+      {
+        if (pos_ == max_len_)
+          throw std::runtime_error("Maximum json string lenght reached during encoding.");
+        buf_[pos_] = t;
+        pos_++;
+      }
+
+      inline void append(const stringview s)
+      {
+        if (pos_ + s.size() > max_len_)
+          throw std::runtime_error("Maximum json string lenght reached during encoding.");
+        memcpy(buf_ + pos_, s.data(), s.size());
+        pos_ += s.size();
+      }
+
+      int size() { return pos_; }
+
+      int pos_;
+      char* buf_;
+      int max_len_;
+    };
+
+    static const int LBS = 500;
+    struct stringstream
+    {
+
+      stringstream(int hint_size = 10)
+        : pos_(0)
+      { str_.reserve(hint_size); }
+
+      inline void append(const char t)
+      {
+        if (pos_ == LBS)
+          flush();
+        buf_[pos_] = t;
+        pos_++;
+      }
+
+      inline void append(const stringview s)
+      {
+        const char* begin = s.data();
+        const char* end = s.data() + s.size();
+
+        while (int(end - begin) > (LBS - pos_))
+        {
+          flush();
+          int to_write = std::min(int(end - begin), LBS);
+          
+          memcpy(buf_, begin, to_write);
+          begin += to_write;
+          pos_ += to_write;
+        }
+
+        memcpy(buf_ + pos_, begin, end - begin);
+
+        pos_ += end - begin;
+      }
+
+      inline void flush()
+      {
+        str_.resize(str_.size() + pos_);
+        memcpy(&(str_)[0] + str_.size() - pos_, buf_, pos_);
+        pos_ = 0;
+      }
+
+      const std::string& str() {
+        if (pos_ > 0)
+          flush();
+        return str_;
+      }
+      
+      std::string move_str() {
+        if (pos_ > 0)
+          flush();
+        return std::move(str_);
+      }
+
+      int pos_;
+      char buf_[LBS];
+      std::string str_;
+    };
+
+
+    template <typename S>
+    struct my_ostringstream : public S
+    {
+      using S::S;
+
+      inline my_ostringstream& operator<<(const char t) {
+        S::append(t);
+        return *this;
+      }
+      inline my_ostringstream& operator<<(const stringview& t) {
+        S::append(t);
+        return *this;
+      }
+
+      // Fixme add UTF8 encoding.
+
+      inline my_ostringstream& operator<<(const std::string& t) { (*this) << stringview(t); return *this; }
+      inline my_ostringstream& operator<<(const json_string& t) { (*this) << t.str; return *this; }
+      inline my_ostringstream& operator<<(const char* t) { (*this) << stringview(t, strlen(t)); return *this; }
+      inline my_ostringstream& operator<<(const boost::string_ref& t) { (*this) << stringview(&t[0], t.size()); return *this; }
+
 
       template <typename T>
-      my_ostringstream& operator<<(const T& t) { str_ += boost::lexical_cast<std::string>(t); return *this; }
+      my_ostringstream& operator<<(const T& t) {
+        std::string s = boost::lexical_cast<std::string>(t);
+        (*this) << stringview(s.c_str(), s.size());
+        return *this;
+      }
 
-      my_ostringstream& operator<<(const std::string& t) { str_.append(t); return *this; }
-      my_ostringstream& operator<<(const json_string& t) { str_.append(t.str); return *this; }
-      my_ostringstream& operator<<(const char t) { str_.append(&t, 1); return *this; }
-      my_ostringstream& operator<<(const char* t) { str_.append(t); return *this; }
-      my_ostringstream& operator<<(const boost::string_ref& t) { str_.append(&t[0], t.size()); return *this; }
-      
-      const std::string& str() { return str_; }
-      std::string str_;
+      inline my_ostringstream& operator<<(int t) {
+        if (t < 0) S::append('-');
+
+        const int rs = 20;
+        char reverse[rs];
+        int i = 0;
+        while (t)
+        {
+          reverse[rs - i - 1] = (t % 10) + '0';
+          t /= 10;
+          i++;
+        }
+        S::append(stringview(reverse + rs - i, i));
+        return *this;
+      }
     };
     
     // Json encoder.
@@ -85,8 +206,15 @@ namespace iod
     inline void json_encode_(const stringview& s, S& ss)
     {
       ss << '"';
-      for (int i = 0; i < s.len; i++)
-        ss << s.str[i];
+      ss << s;
+      ss << '"';
+    }
+
+    template <typename S, typename SS>
+    inline void json_encode_symbol(symbol<S>, SS& ss)
+    {
+      ss << '"';
+      ss << stringview(S().name(), strlen(S().name()));
       ss << '"';
     }
 
@@ -127,13 +255,13 @@ namespace iod
       ss << '{';
       int i = 0;
       bool first = true;
-      foreach(o) | [&] (const auto& m)
+      foreach(o) | [&] (auto m)
       {
         if (!m.attributes().has(_json_skip))
         {
           if (!first) { ss << ','; }
           first = false; 
-          json_encode_(m.attributes().get(_json_key, m.symbol()).name(), ss);
+          json_encode_symbol(m.attributes().get(_json_key, m.symbol()), ss);
           ss << ':';
           json_encode_(m.value(), ss);
         }
@@ -279,7 +407,21 @@ namespace iod
         int start = pos;
         int end = pos;
 
-        while (!eof() and str[end] != '"' and str[end - 1] != '\\') end++;
+        while (true)
+        {
+          while (!eof() and str[end] != '"')
+            end++;
+
+          // Count the prev backslashes.
+          int sb = end - 1;
+          while (sb >= 0 and str[sb] == '\\')
+            sb--;
+
+          if ((end - sb) % 2) break;
+          else
+            end++;
+        }
+
         t.str = str.data() + start;
         t.len = end - start;
         pos = end;
@@ -357,8 +499,13 @@ namespace iod
       template <typename T>
       inline json_parser& fill(T& t)
       {
+        static_assert(!std::is_same<T, const char*>::value,
+                      "Cannot json deserialize into an object with const char* members");
+        static_assert(!std::is_same<T, const char[]>::value,
+                      "Cannot json deserialize into an object with const char[] members");
+        
         int end = pos;
-        while(!eof() and str[end] != ',' and str[end] != '}' and str[end] != ']') end++;
+        while(end != str.size() and str[end] != ',' and str[end] != '}' and str[end] != ']') end++;
         t = boost::lexical_cast<std::remove_reference_t<T>>(str.data() + pos, end - pos);
         pos = end;
         return *this;
@@ -384,10 +531,9 @@ namespace iod
 
           if (str[pos] == '"') // strings.
           {
-            do 
-            {
-              pos++;
-            } while (!eof() and (str[pos] != '"' or str[pos - 1] == '\\'));
+            pos++;
+            stringview str;
+            this->fill(str);
           }
           else if (str[pos] == '{' ) // start a json object
             parent_level++;
@@ -418,7 +564,7 @@ namespace iod
 
       inline json_parser& operator>>(char t)
       {
-        if (!eof() and str[pos] == t)
+        if (str[pos] == t)
         {
           pos++;
           return *this;
@@ -450,7 +596,7 @@ namespace iod
 
       inline json_parser& operator>>(spaces_)
       {
-        while (!eof() and std::isspace(str[pos])) pos++;
+        while (!eof() and str[pos] < 33) pos++;
         return *this;
       }
 
@@ -701,9 +847,17 @@ namespace iod
   template <typename ...Tail>
   inline std::string json_encode(const sio<Tail...>& o)
   {
-    json_internals::my_ostringstream ss;
+    json_internals::my_ostringstream<json_internals::stringstream> ss;
     json_internals::json_encode_(o, ss);
-    return ss.str();
+    return ss.move_str();
+  }
+  
+  template <typename ...Tail>
+  inline int json_encode(const sio<Tail...>& o, char* buf, int len)
+  {
+    json_internals::my_ostringstream<json_internals::external_char_stream> ss(buf, len);
+    json_internals::json_encode_(o, ss);
+    return ss.size();
   }
 
   inline std::string json_encode(const json_string& o)
@@ -720,9 +874,9 @@ namespace iod
   template <typename T>
   inline std::string json_encode(const std::vector<T>& v)
   {
-    std::stringstream ss;
+    json_internals::my_ostringstream<json_internals::stringstream> ss;
     json_internals::json_encode_(v, ss);
-    return ss.str();    
+    return ss.move_str(); 
   }
   
 }

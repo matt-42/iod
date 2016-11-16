@@ -15,6 +15,11 @@ namespace iod
 
     array_view_(V _view) : view(_view) {}
 
+    decltype(auto) operator[](int i) const
+    {
+      return view[i].elt;
+    }
+
     decltype(auto) operator[](int i)
     {
       return view[i].elt;

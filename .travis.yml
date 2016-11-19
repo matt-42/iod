@@ -1,0 +1,26 @@
+language: cpp
+
+matrix:
+  include:
+  - os: linux
+    compiler: gcc
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-6', 'libboost-dev']
+    env: COMPILER=g++-6
+  - os: linux
+    compiler: clang
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.8']
+        packages: ['clang-3.8', 'libboost-dev']
+    env: COMPILER=clang++-3.8
+
+script:
+- export CXX=${COMPILER}
+- ${CXX} --version
+- cd build
+- cmake .. && make -j4
+- cd tests
+- CTEST_OUTPUT_ON_FAILURE=1 ctest

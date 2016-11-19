@@ -6,15 +6,15 @@ matrix:
     compiler: gcc
     addons:
       apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-6', 'libboost-dev']
+        sources: ['ubuntu-toolchain-r-test', 'boost-latest']
+        packages: ['g++-6', 'libboost1.54-dev']
     env: COMPILER=g++-6
   - os: linux
     compiler: clang
     addons:
       apt:
-        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.8']
-        packages: ['clang-3.8', 'libboost-dev']
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.8', 'boost-latest']
+        packages: ['clang-3.8', 'libboost1.54-dev']
     env: COMPILER=clang++-3.8
 
 script:

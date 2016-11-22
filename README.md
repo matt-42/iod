@@ -2,15 +2,15 @@ The IOD Library
 ==========================
 
 The IOD library enhances C++14 meta programming with a symbol based
-paradigm. It provides a compile-time a way to introspect objects and
+paradigm. It provides a compile-time way to introspect objects and
 generate code matching their data structures. It also contains few
-utilies built with symbol meta-programming.
+utilities built with symbol meta-programming.
 
 ## What is a IOD symbol?
 
 Symbols are at the core of the IOD paradigm. They add to C++ a missing
 powerful feature: The way to statically store in a variable the
-access to a object member, the call to a method, and the access to the
+access to an object member, the call to a method, and the access to the
 string representing the name of this variable. Here is the most simple
 but powerful operator that is now possible with IOD symbols:
 
@@ -44,8 +44,8 @@ Without symbols (or other similar constructs), it is not possible to
 write such a generic print_member function. Without, one would have to
 write the three version accessing the three different members.
 
-By convention all the symbols starts with _[lowercase character]. And
-to avoid multiple definition, guards should be used such as in the
+By convention all the symbols start with the _[lowercase character]. And
+to avoid multiple definitions, guards should be used such as in the
 following:
 
 ```c++
@@ -110,7 +110,7 @@ https://github.com/matt-42/iod/blob/master/tests/parse_command_line.cc
 
 ## A Fast, Malloc-Free Json Parser / Encoder.
 
-As of today, all json parsers rely dynamic data structures to
+As of today, all json parsers rely upon dynamic data structures to
 parse and store the json objects. Even if some good parser reduces
 dramatically the amount of dynamic memory allocation, they still
 suffer from the dynamic paradigm: A single function has to handle the
@@ -121,13 +121,13 @@ have to use a json parser handling any kind of objects.
 The iod library implements the opposite approach: Using
 meta-programming and introspection, one tiny specialized json parser
 is generated for each SIO object type so it involves no dynamic memory
-allocation, and very few conditional branching. It directly fill the
+allocation and very few conditional branching. It directly fills the
 object member according to their type without having to store the
 object in an intermediate hash map.
 
 This makes its performances impossible to match in other languages
 such as C or Java that do not provide static introspection. The
-encoder still need optimizations, and the parser is currently from
+encoder still needs optimizations, and the parser is currently from
 1.3x to 2.3x faster than the RapidJSON library without explicit use of
 SIMD vector instructions.
 
@@ -181,7 +181,7 @@ In classic C++, you would define a function taking optional arguments as :
 void fun(int mandatory_arg, int optional_arg1 = 1, int optional_arg2 = 12, int optional_arg3 = 32);
 ```
 
-This has to drawbacks: First, it is not practical if the user need to
+This has to drawbacks: First, it is not practical if the user needs to
 set the third optional argument, and oblige him to remember the place
 of each argument. SIOs are a good alternative since they solve both issues:
 
@@ -200,7 +200,7 @@ fun(1, _optional_arg3 = 2); // Set the thirds argument and leave the two others 
 
 ## Foreach for tuple and SIO
 
-While C++11 introduce range based for loops for container such as
+While C++11 introduce range based for loops for a container such as
 std::vector, it does not provide a way to iterate on
 tuples. ```foreach``` is a powerful primitive for processing tuples
 as well as SIOs.
@@ -249,7 +249,7 @@ int res = apply(tuple, fun);
 
 ## C++ Embedded Domain Specific Languages Framework
 
-The IOD library provides a set of tools to ease the embedding of
+The IOD library provides a set of tools to ease the embedding of an
 embedded domain specific languages (EDSL) framework. It includes an
 abstract syntax tree (AST) with symbols and values as terminals. Here
 is an example of a simple expression:
@@ -259,7 +259,7 @@ auto exp = _a(23) + _b;
 ```
 
 This code does nothing except computing the AST type and storing the
-value 23.  ```exp``` has to be evaluate to actually compute
+value 23.  ```exp``` has to be evaluated to actually compute
 something. IOD provides three handy primitives to traverse ASTs:
 exp_map_reduce, exp_transform, exp_tranform_iterate. More
 documentation will come later. In the meantime, you can check how the

@@ -143,7 +143,7 @@ namespace iod
     // Access to the ith element.
     decltype(auto) operator[](int i) const
     {
-      return D((this->template access_member<typename A::left_t>(i))...);
+      return D((const_cast<self_t*>(this)->template access_member<typename A::left_t>(i))...);
     }
     decltype(auto) operator[](int i)
     {

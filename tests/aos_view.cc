@@ -80,7 +80,7 @@ int main()
     std::vector<int> A = {1,2,3,4};
 
     auto v = aos_view(_a = A,
-                      _b = [] (int i) { return i * 2; });
+                      _b = [&] (int i) { return A[i] * 2; });
 
     for (auto x : v)
       std::cout << x.a << " " << x.b << std::endl;
@@ -100,6 +100,8 @@ int main()
     auto v = aos_view(_a = A,
                       _b = [&] (int i, std::string s) {
                         std::cout << A[i] << s << std::endl ; });
+
+    v[2].b("xx");
 
     for (auto x : v)
       x.b(" test");

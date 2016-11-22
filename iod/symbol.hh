@@ -73,6 +73,9 @@ namespace iod
   }
 
   template <int N>
+  struct get_int_symbol_name {};
+  
+  template <int N>
   struct int_symbol : iod::symbol<int_symbol<N>>
   {
     constexpr int_symbol() {}
@@ -85,7 +88,9 @@ namespace iod
     
     static constexpr const int to_int = N;
     static const char* name_str_;
-    inline const char* name() const { return name_str_; }
+    inline const char* name() const {
+      return get_int_symbol_name<N>::value();
+    }
   };
 
   template <typename T> struct is_int_symbol               : std::false_type {};
@@ -93,13 +98,16 @@ namespace iod
   template <typename T> struct is_int_symbol<const T> : is_int_symbol<T> {};
   template <typename T> struct is_int_symbol<T&> : is_int_symbol<T> {};
 
-#define iod_define_number_symbol(NUMBER)                        \
-  namespace s {                                                 \
-    typedef ::iod::int_symbol<NUMBER>  _##NUMBER##_t;           \
-  constexpr _##NUMBER##_t _##NUMBER;                            \
-  }                                                             \
-  template<>                                                    \
-  const char* ::iod::int_symbol<NUMBER>::name_str_ = #NUMBER; 
+#define iod_define_number_symbol(NUMBER)                \
+  namespace iod { template <>                           \
+  struct get_int_symbol_name<NUMBER>                    \
+  {                                                     \
+    static const char* value() { return #NUMBER; }      \
+  }; }                                                  \
+  namespace s {                                         \
+    typedef ::iod::int_symbol<NUMBER>  _##NUMBER##_t;   \
+  constexpr _##NUMBER##_t _##NUMBER;                    \
+  }
 
 }
 

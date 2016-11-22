@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 enable_testing()
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/.. ${Boost_INCLUDE_DIRS})
 set (CMAKE_CXX_STANDARD 14)
 add_definitions(-Wall)
 

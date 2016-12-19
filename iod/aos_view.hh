@@ -15,8 +15,10 @@ namespace iod
                            std::remove_reference_t<decltype(std::declval<V>()[0])>>
   
   {
+  public:
+
     typedef aos_view_iterator<V> self_t;
-    typedef decltype(std::declval<V>()[0]) value_type;
+    typedef std::remove_reference_t<decltype(std::declval<V>()[0])> value_type;
     aos_view_iterator(const aos_view_iterator& it) : idx(it.idx), v(it.v) {}
     aos_view_iterator(V& _v, int _idx)
       : idx(_idx),
@@ -31,7 +33,7 @@ namespace iod
     }
     
     decltype(auto) operator*() { return (*v)[idx]; }
-    self_t&  operator++() { idx++; return *this; }
+    self_t&  operator++() { ++idx; return *this; }
 
     int operator-(const self_t& b) { return idx - b.idx; }
     self_t& operator--() { idx--; return *this; }
@@ -90,16 +92,17 @@ namespace iod
     aos_view_(int size, A&&... a)
       : hand_set_size(size),
         arrays((
-                 typename A::left_t::template variable_type<typename A::right_t&>(a.right)
+                 typename A::left_t::template variable_type<typename A::right_t>(a.right)
                  )...)
     {
+      //void* x = arrays;
       assert(check_sizes() && "All arrays must have the same size.");
     }
     
     aos_view_(A&&... a)
       : hand_set_size(-1),
         arrays((
-                 typename A::left_t::template variable_type<typename A::right_t&>(a.right)
+                 typename A::left_t::template variable_type<typename A::right_t>(a.right)
                  )...)
     {
       assert(check_sizes() && "All arrays must have the same size.");
@@ -169,7 +172,6 @@ namespace iod
               // If m is a function
               [i] (auto&& m) -> decltype(auto) {
                 typedef std::remove_reference_t<decltype(m)> F;
-                //return m(i);
                 return static_if<(callable_traits<F>::arity == 1)>(
                   // If only one int arg:
                   [i] (auto m) { return m(i); },
@@ -182,7 +184,7 @@ namespace iod
     }
 
     int hand_set_size;
-    sio<typename A::left_t::template variable_type<typename A::right_t&>...> arrays;
+    sio<typename A::left_t::template variable_type<typename A::right_t>...> arrays;
   };
 
   // Builder

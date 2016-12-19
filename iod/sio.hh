@@ -171,7 +171,7 @@ namespace iod
     inline sio() = default;
     inline sio(self&&) = default;
     inline sio(const self&) = default;
-    inline sio(Ms&&... members) : Ms(members)... {}
+    inline sio(Ms&&... members) : Ms(std::forward<Ms>(members))... {}
     inline sio(const Ms&... members) : Ms(members)... {}
 
     // Get the member associated with the symbol S.

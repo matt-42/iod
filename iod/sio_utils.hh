@@ -87,6 +87,16 @@ namespace iod
        e.right);
   }
 
+  template <typename S, typename... V>
+  auto exp_to_variable(const assign_exp<S, std::tuple<V...>>& e)
+  {
+    // Fix for clang3.8 where is_symbol<std::tuple<_a_symbol>> fails to compile.
+    // error: cannot cast 'std::decay_t<tuple<_opt2_t, _opt3_t> >' (aka 'std::tuple<s::_opt2_t, s::_opt3_t>')
+    //        to its private base class 'symbol<s::_opt2_t>'
+    typedef decltype(e.right) vtype;
+    return typename S::template variable_type<vtype>(e.right);
+  }
+  
   template <typename S, typename V>
   auto exp_to_variable(const assign_exp<S, const symbol<V>&> e)
   {

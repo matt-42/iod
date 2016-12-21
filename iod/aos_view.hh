@@ -168,7 +168,7 @@ namespace iod
       //return S() = ref(S().member_access(arrays)[i]);
 
       return S() =
-        ref(static_if<is_callable<array_type>::value>(
+        (static_if<is_callable<array_type>::value>(
               // If m is a function
               [i] (auto&& m) -> decltype(auto) {
                 typedef std::remove_reference_t<decltype(m)> F;

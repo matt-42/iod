@@ -8,6 +8,7 @@
 #include <iod/tags.hh>
 #include <iod/sio.hh>
 #include <iod/apply.hh>
+#include <iod/utils.hh>
 #include <iod/tuple_utils.hh>
 #include <iod/grammar.hh>
 
@@ -16,6 +17,37 @@ namespace iod
   template <typename ...T>
   struct sio;
 
+
+  template <typename T>
+  struct is_sio
+  {
+    template<typename... C> 
+    static char test(sio<C...>*);
+    template<typename C>
+    static int test(C*);
+    static const bool value = sizeof(test((std::decay_t<T>*)0)) == 1;
+  };
+
+  template <typename T>
+  struct is_tuple
+  {
+    template<typename... C> 
+    static char test(std::tuple<C...>*);
+    template<typename C>
+    static int test(C*);
+    static const bool value = sizeof(test((std::decay_t<T>*)0)) == 1;
+  };
+
+
+  template <typename T>
+  struct is_symbol
+  {
+    template<typename C> 
+    static char test(symbol<C>*);
+    static int test(...);
+    static const bool value = sizeof(test((std::decay_t<T>*)0)) == 1;
+  };
+  
   template <typename ...T>
   inline auto D(T&&... args);
 
@@ -25,17 +57,6 @@ namespace iod
 
   template <typename E>
   struct variable;
-
-  template <typename T>
-  struct ref_
-  {
-    typedef T value_t;
-    ref_(T&& v) : value(v) {}
-    T value;
-  };
-
-  template <typename T>
-  decltype(auto) ref(T&& v) { return ref_<T>(std::forward<T>(v)); }
 
   template <typename V>
   const V& exp_to_variable(const variable<V>& v)
@@ -55,33 +76,21 @@ namespace iod
     //return typename S::template variable_type<T>(std::get<0>(c.args));
     return typename S::template variable_type<char, decltype(D(std::declval<ARGS>()...))>(0);
   }
-
-  template <typename S, typename V>
-  auto exp_to_variable(const assign_exp<S, ref_<V&>>& e)
-  {
-    typedef V& vtype;
-    return typename S::template variable_type<vtype>(e.right.value);
-  }
-
-  template <typename S, typename V>
-  auto exp_to_variable(const assign_exp<S, ref_<V>>& e)
-  {
-    typedef V vtype;
-    return typename S::template variable_type<vtype>(e.right.value);
-  }
   
   template <typename S, typename V>
   auto exp_to_variable(const assign_exp<S, V>& e)
   {
     typedef V vtype;
-    return typename S::template variable_type<vtype>(e.right);
+    return static_if<is_symbol<V>::value>
+      ([&] (auto&& v) { return typename S::template variable_type<std::remove_reference_t<decltype(v)>>(); },
+       [&] (auto&& v) { return typename S::template variable_type<vtype>(std::forward<decltype(v)>(v)); },
+       e.right);
   }
-  
+
   template <typename S, typename V>
-  auto exp_to_variable(const assign_exp<S, V&>& e)
+  auto exp_to_variable(const assign_exp<S, const symbol<V>&> e)
   {
-    typedef V vtype;
-    return typename S::template variable_type<vtype>(e.right);
+    return typename S::template variable_type<V>(V());
   }
 
   template <typename S, typename V, typename... ARGS>
@@ -102,16 +111,16 @@ namespace iod
   inline auto D(T&&... args)
   {
     typedef
-      sio<std::remove_const_t<std::remove_reference_t<decltype(exp_to_variable(args))>>...>
+      sio<std::decay_t<decltype(exp_to_variable(std::forward<T>(args)))>...>
       result_type;
 
-    return result_type(exp_to_variable(args)...);
+    return result_type(exp_to_variable(std::forward<T>(args))...);
   }
 
   struct D_caller
   {
     template <typename... X>
-    auto operator() (X... t) const { return D(t...); }
+    auto operator() (X&&... t) const { return D(std::forward<X>(t)...); }
   };
 
   template <int N>
@@ -210,36 +219,6 @@ namespace iod
     iod_internals::array_fill<T, Tail...>(t, args..., res);
     return res;
   }
-
-  template <typename T>
-  struct is_sio
-  {
-    template<typename... C> 
-    static char test(sio<C...>*);
-    template<typename C>
-    static int test(C*);
-    static const bool value = sizeof(test((std::decay_t<T>*)0)) == 1;
-  };
-
-  template <typename T>
-  struct is_tuple
-  {
-    template<typename... C> 
-    static char test(std::tuple<C...>*);
-    template<typename C>
-    static int test(C*);
-    static const bool value = sizeof(test((std::decay_t<T>*)0)) == 1;
-  };
-
-
-  template <typename T>
-  struct is_symbol
-  {
-    template<typename C> 
-    static char test(symbol<C>*);
-    static int test(...);
-    static const bool value = sizeof(test((std::decay_t<T>*)0)) == 1;
-  };
 
   template <typename S1, typename S2>
   auto deep_merge_2_sios(S1 s1, S2 s2) { return s1; }

@@ -440,7 +440,7 @@ namespace iod
         val = 0;
 
         const char* s = str.data() + pos;
-
+        
         int fz = 0;
         while(s[fz] == '0') { fz++; end++; }
         
@@ -467,7 +467,8 @@ namespace iod
         float res = 0;
           
         int ent = 0;
-        fill_int<int, 10>(ent);
+        if (str[pos] != '.')
+          fill_int<int, 10>(ent);
 
         res = ent;
 
@@ -729,6 +730,7 @@ namespace iod
       while (p.peak() != ']')
       {
         T t;
+        p >> p.spaces;
         iod_from_json_((typename S::value_type*)0, t, p);
         array.push_back(t);
         p >> p.spaces;

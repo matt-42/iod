@@ -4,7 +4,7 @@ enable_testing()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/.. ${Boost_INCLUDE_DIRS})
 
-add_definitions(-Wall -std=c++14)
+add_definitions(-Wall -Wextra -std=c++14)
 
 #add_executable(iod_query_stl iod_query_stl.cc)
 #add_test(iod_query_stl iod_query_stl)

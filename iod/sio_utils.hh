@@ -178,7 +178,7 @@ namespace iod
 
   template <typename ...T, typename ...U>
   inline auto intersect(const sio<T...>& a,
-                        const sio<U...>& b)
+                        const sio<U...>&)
   {
     return foreach2(a) | [] (auto& m) {
       return static_if<has_symbol<sio<U...>, std::decay_t<decltype(m.symbol())>>::value>(
@@ -242,11 +242,11 @@ namespace iod
   };
 
   template <typename S1, typename S2>
-  auto deep_merge_2_sios(S1 s1, S2 s2) { return s1; }
+  auto deep_merge_2_sios(S1 s1, S2) { return s1; }
   template <typename S2>
-  auto deep_merge_2_sios(member_not_found s1, S2 s2) { return s2; }
+  auto deep_merge_2_sios(member_not_found, S2 s2) { return s2; }
   template <typename S1>
-  auto deep_merge_2_sios(S1 s1, member_not_found s2) { return s1; }
+  auto deep_merge_2_sios(S1 s1, member_not_found) { return s1; }
 
   template <typename... S1, typename... S2>
   auto deep_merge_2_sios(sio<S1...> s1, sio<S2...> s2)

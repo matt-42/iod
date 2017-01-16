@@ -90,7 +90,7 @@ namespace iod
     aos_view_(int size, A&&... a)
       : hand_set_size(size),
         arrays((
-                 typename A::left_t::template variable_type<typename A::right_t&>(a.right)
+                 typename A::left_t::template variable_type<typename A::right_t>(a.right)
                  )...)
     {
       assert(check_sizes() && "All arrays must have the same size.");
@@ -99,7 +99,8 @@ namespace iod
     aos_view_(A&&... a)
       : hand_set_size(-1),
         arrays((
-                 typename A::left_t::template variable_type<typename A::right_t&>(a.right)
+                 typename A::left_t::template variable_type<typename A::right_t>(a.right)
+                 //typename A::left_t() = (a.right)
                  )...)
     {
       assert(check_sizes() && "All arrays must have the same size.");
@@ -116,7 +117,7 @@ namespace iod
           [&res, s] (auto m) {
             res &= (int(m.value().size()) == s);
           },
-          [] (auto m) {},
+          [] (auto) {},
           m);
       };
       return res;
@@ -132,7 +133,7 @@ namespace iod
       {
         static_if<has_size_method<std::remove_reference_t<decltype(m.value())>>::value>(
           [&res] (auto m) { res = m.value().size(); },
-          [] (auto m) { },
+          [] (auto) { },
           m);
       };
 
@@ -182,7 +183,7 @@ namespace iod
     }
 
     int hand_set_size;
-    sio<typename A::left_t::template variable_type<typename A::right_t&>...> arrays;
+    sio<typename A::left_t::template variable_type<typename A::right_t>...> arrays;
   };
 
   // Builder

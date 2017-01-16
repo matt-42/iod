@@ -36,10 +36,10 @@ namespace iod
   template <typename A>
   auto array_view(int size, A&& a)
   {
-    typedef std::remove_reference_t<decltype(s::_elt = a)> var_type;
+    typedef std::remove_reference_t<decltype(s::_elt = std::forward<A>(a))> var_type;
     typedef aos_view_<var_type> aos_type;
 
-    return array_view_<aos_type>(aos_type(size, s::_elt = a));
+    return array_view_<aos_type>(aos_type(size, s::_elt = std::forward<A>(a)));
   }
 
 }

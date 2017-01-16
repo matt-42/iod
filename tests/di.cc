@@ -23,7 +23,7 @@ struct B {
 
   B() {}
   
-  static B instantiate(C c) {
+  static B instantiate(C) {
     std::cout << " instantiate B" << std::endl;
     return B();
   }
@@ -73,11 +73,11 @@ void fun1()
 {
 }
 
-void fun2(int x)
+void fun2(int)
 {
 }
 
-void fun3(float x, int y, A a)
+void fun3(float x, int y, A)
 {
   std::cout << x << " " << y << std::endl;
 }
@@ -94,17 +94,17 @@ void fun5(D d)
 }
 
 
-void fun5_2(D& d)
+void fun5_2(D&)
 {
   std::cout << "fun5" << std::endl;
 }
 
-void fun5_3(const D& d)
+void fun5_3(const D&)
 {
   std::cout << "fun5" << std::endl;
 }
 
-void fun5_4(const D d)
+void fun5_4(const D)
 {
   std::cout << "fun5" << std::endl;
 }

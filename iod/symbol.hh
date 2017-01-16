@@ -17,6 +17,7 @@ namespace iod
     typedef E symbol_type;
     constexpr symbol() {}
     using assignable<E>::operator=;
+
   };
 
 
@@ -24,6 +25,12 @@ namespace iod
   struct variable
   {
   };
+  
+  template <typename S, typename V>
+  decltype(auto) make_variable(V&& value)
+  {
+    return typename S::template variable_type<V>(std::forward<V>(value));    
+  }
 
 #define iod_define_symbol_body(SYMBOL, NAME)                            \
     constexpr NAME##_t() {}                                             \
@@ -55,7 +62,7 @@ namespace iod
       variable_type() = default;                                        \
       template <typename V>                                             \
       variable_type(V&& v, std::enable_if_t<std::is_constructible<value_type, V>::value and \
-					    !std::is_same<std::decay_t<V>, self_type>::value>* = 0) : SYMBOL(v) {} \
+		    !std::is_same<std::decay_t<V>, self_type>::value>* = 0) : SYMBOL(std::forward<V>(v)) {} \
       inline value_type& value() { return SYMBOL; }                     \
       inline const value_type& value() const { return SYMBOL; }         \
       auto symbol() const { return NAME##_t(); }                        \

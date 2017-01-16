@@ -1,3 +1,5 @@
+[![Travis build status](https://travis-ci.org/matt-42/iod.svg)](https://travis-ci.org/matt-42/iod)
+
 The IOD Library
 ==========================
 

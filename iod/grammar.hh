@@ -237,7 +237,7 @@ namespace iod
 
     function_call_exp() {}
     function_call_exp(const M& m, A&&... a)
-      : method(m), args(a...) {}
+      : method(m), args(std::forward<A>(a)...) {}
     function_call_exp(const M& m, std::tuple<A...>& a)
       : method(m), args(a) {}
     function_call_exp(const M& m, const std::tuple<A...>& a)
@@ -316,12 +316,11 @@ namespace iod
   template <typename L, typename R>
   struct assign_exp : public Exp<assign_exp<L, R>>
   {
-    //assign_exp() {}
     typedef L left_t;
     typedef R right_t;
 
     assign_exp(L&& l, R&& r) : left(l), right(r) {}
-    assign_exp(const L& l, const R& r) : left(l), right(r) {}
+    assign_exp(const L& l, R&& r) : left(l), right(std::forward<R>(r)) {}
 
     template <typename F>
     auto visit(F f) { return std::make_tuple(f(left), f(right)); }
@@ -349,81 +348,6 @@ namespace iod
     L left;
     R right;
   };
-
-
-  // template <typename L, typename R>
-  // struct multiply_exp :
-  //   public dividable<multiply_exp<L, R>>,
-  //   public multipliable<multiply_exp<L, R>>,
-  //   public assignable<multiply_exp<L, R>>,
-  //   public Exp<multiply_exp<L, R>>
-  // {
-  //   multiply_exp(L&& l, R&& r) : left(l), right(r) {}
-  //   multiply_exp(const L& l, const R& r) : left(l), right(r) {}
-
-  //   template <typename F>
-  //   auto visit(F f) { return std::make_tuple(f(left), f(right)); }
-
-  //   template <typename F, typename C>
-  //   auto transform(F f, C ctx) {
-  //     auto l = exp_transform(left, f, ctx);
-  //     auto r = exp_transform(right, f, ctx);      
-  //     return multiply_exp<decltype(l), decltype(r)>(l, r);
-  //   }
-
-  //   template <typename F, typename C>
-  //   decltype(auto) transform_iterate(F f, C ctx)                                  
-  //   {                                                                   
-  //     auto l = exp_transform_iterate(left, f, ctx);
-  //     auto r = exp_transform_iterate(right, f, l.second);
-  //     return std::make_pair(multiply_exp<decltype(l.first), decltype(r.first)>
-  //                           (l.first, r.first), r.second);
-  //   }
-  //   auto children_tuple() { return std::make_tuple(left, right); }
-  //   template <typename M, typename C>
-  //   inline decltype(auto) evaluate(M eval, C& ctx) {
-  //     return exp_evaluate(left, eval, ctx) = exp_evaluate(right, eval, ctx);
-  //   }
-  //   L left;
-  //   R right;
-  // };
-
-  // template <typename L, typename R>
-  // struct divide_exp :
-  //   public dividable<divide_exp<L, R>>,
-  //   public multipliable<divide_exp<L, R>>,
-  //   public assignable<divide_exp<L, R>>,
-  //   public Exp<divide_exp<L, R>>
-  // {
-  //   divide_exp(L&& l, R&& r) : left(l), right(r) {}
-  //   divide_exp(const L& l, const R& r) : left(l), right(r) {}
-
-  //   template <typename F>
-  //   auto visit(F f) { return std::make_tuple(f(left), f(right)); }
-
-  //   template <typename F, typename C>
-  //   auto transform(F f, C ctx) {
-  //     auto l = exp_transform(left, f, ctx);
-  //     auto r = exp_transform(right, f, ctx);      
-  //     return divide_exp<decltype(l), decltype(r)>(l, r);
-  //   }
-
-  //   template <typename F, typename C>
-  //   decltype(auto) transform_iterate(F f, C ctx)                                  
-  //   {                                                                   
-  //     auto l = exp_transform_iterate(left, f, ctx);
-  //     auto r = exp_transform_iterate(right, f, l.second);
-  //     return std::make_pair(divide_exp<decltype(l.first), decltype(r.first)>
-  //                           (l.first, r.first), r.second);
-  //   }
-  //   auto children_tuple() { return std::make_tuple(left, right); }
-  //   template <typename M, typename C>
-  //   inline decltype(auto) evaluate(M eval, C& ctx) {
-  //     return exp_evaluate(left, eval, ctx) = exp_evaluate(right, eval, ctx);
-  //   }
-  //   L left;
-  //   R right;
-  // };
   
   template <typename E>
   struct array_subscriptable
@@ -451,51 +375,28 @@ namespace iod
     }
 
   };
-
-  // template <typename E>
-  // struct multipliable
-  // {
-  // public:
-  //   template <typename A>
-  //   constexpr auto operator*(A a) const
-  //   {
-  //     return multiply_exp<E, grammar_value_type_t<A>>(*static_cast<const E*>(this),
-  //                                                     std::forward<grammar_value_type_t<A>>(a));
-  //   }
-  // };
- 
-  // template <typename E>
-  // struct dividable
-  // {
-  // public:
-  //   template <typename A>
-  //   constexpr auto operator/(A a) const
-  //   {
-  //     return divide_exp<E, grammar_value_type_t<A>>(*static_cast<const E*>(this),
-  //                                                   std::forward<grammar_value_type_t<A>>(a));
-  //   }
-  // };
  
   template <typename E>
   struct assignable
   {
   public:
 
-    auto operator=(const char* l) const
-    {
-      return assign_exp<E, const char*>(*static_cast<const E*>(this), l);
-    }
-
     template <typename L>
     auto operator=(L&& l) const
     {
-      return assign_exp<E, L>(*static_cast<const E*>(this), l);
+      return assign_exp<E, L>(static_cast<const E&>(*this), std::forward<L>(l));
+    }
+
+    template <typename L>
+    auto operator=(L&& l)
+    {
+      return assign_exp<E, L>(static_cast<E&>(*this), std::forward<L>(l));
     }
     
     template <typename T>
     auto operator=(const std::initializer_list<T>& l) const
     {
-      return assign_exp<E, std::vector<T>>(*static_cast<const E*>(this), std::vector<T>(l));
+      return assign_exp<E, std::vector<T>>(static_cast<const E&>(*this), std::vector<T>(l));
     }
 
   };

@@ -15,8 +15,10 @@ namespace iod
                            std::remove_reference_t<decltype(std::declval<V>()[0])>>
   
   {
+  public:
+
     typedef aos_view_iterator<V> self_t;
-    typedef decltype(std::declval<V>()[0]) value_type;
+    typedef std::remove_reference_t<decltype(std::declval<V>()[0])> value_type;
     aos_view_iterator(const aos_view_iterator& it) : idx(it.idx), v(it.v) {}
     aos_view_iterator(V& _v, int _idx)
       : idx(_idx),
@@ -31,7 +33,7 @@ namespace iod
     }
     
     decltype(auto) operator*() { return (*v)[idx]; }
-    self_t&  operator++() { idx++; return *this; }
+    self_t&  operator++() { ++idx; return *this; }
 
     int operator-(const self_t& b) { return idx - b.idx; }
     self_t& operator--() { idx--; return *this; }
@@ -93,6 +95,7 @@ namespace iod
                  typename A::left_t::template variable_type<typename A::right_t>(a.right)
                  )...)
     {
+      //void* x = arrays;
       assert(check_sizes() && "All arrays must have the same size.");
     }
     
@@ -100,7 +103,6 @@ namespace iod
       : hand_set_size(-1),
         arrays((
                  typename A::left_t::template variable_type<typename A::right_t>(a.right)
-                 //typename A::left_t() = (a.right)
                  )...)
     {
       assert(check_sizes() && "All arrays must have the same size.");
@@ -166,11 +168,10 @@ namespace iod
       //return S() = ref(S().member_access(arrays)[i]);
 
       return S() =
-        ref(static_if<is_callable<array_type>::value>(
+        (static_if<is_callable<array_type>::value>(
               // If m is a function
               [i] (auto&& m) -> decltype(auto) {
                 typedef std::remove_reference_t<decltype(m)> F;
-                //return m(i);
                 return static_if<(callable_traits<F>::arity == 1)>(
                   // If only one int arg:
                   [i] (auto m) { return m(i); },

@@ -4,7 +4,10 @@ enable_testing()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/.. ${Boost_INCLUDE_DIRS})
 
-add_definitions(-Wall -Wextra -std=c++14)
+
+set(CMAKE_CXX_STANDARD 14)
+add_definitions(-std=c++14) # For old cmake versions
+add_definitions(-Wall)
 
 #add_executable(iod_query_stl iod_query_stl.cc)
 #add_test(iod_query_stl iod_query_stl)
@@ -18,8 +21,12 @@ add_test(json json)
 add_executable(core core.cc)
 add_test(core core)
 
-add_executable(linq linq.cc)
-add_test(linq linq)
+
+add_executable(options options.cc)
+add_test(options options)
+
+#add_executable(linq linq.cc)
+#add_test(linq linq)
 
 add_executable(callable_traits callable_traits.cc)
 add_test(callable_traits callable_traits)

@@ -10,11 +10,12 @@ int main()
 
   {
     std::vector<int> A = {1,2,3,4};
-    auto v = array_view(A.size(), [&] (int i) {
-        return A[i] * 2; });
-  
+    auto v = array_view(A.size(), [&A] (int i) {
+        return  A[i] * 2;
+      });
+
     for (int i = 0; i < int(v.size()); i++)
-      assert(v[i] == (i+1) * 2);
+      assert(v[i] == (A[i] * 2));
 
     for (auto x : v) std::cout << x << std::endl;
   }

@@ -172,18 +172,8 @@ namespace iod
       }
 
       inline my_ostringstream& operator<<(int t) {
-        if (t < 0) S::append('-');
-
-        const int rs = 20;
-        char reverse[rs];
-        int i = 0;
-        while (t)
-        {
-          reverse[rs - i - 1] = (t % 10) + '0';
-          t /= 10;
-          i++;
-        }
-        S::append(stringview(reverse + rs - i, i));
+        std::string s = std::to_string(t);
+        S::append(stringview(s.c_str(), s.size()));
         return *this;
       }
     };

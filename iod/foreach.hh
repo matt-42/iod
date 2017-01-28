@@ -25,7 +25,7 @@ namespace iod
     template<typename Ret, typename F, size_t... TSize, size_t... Nargs, typename... T>
     inline void
     tuple_foreach_impl(std::enable_if_t<std::is_same<void, Ret>::value>*,
-                       std::index_sequence<TSize...> si,
+                       std::index_sequence<TSize...>,
                        F f, T&&... ts)
     {
       return (void)std::initializer_list<int>{
@@ -35,7 +35,7 @@ namespace iod
     template<typename Ret, typename F, size_t... TSize, size_t... Nargs, typename... T>
     inline decltype(auto)
       tuple_foreach_impl(std::enable_if_t<!std::is_same<void, Ret>::value>*,
-                         std::index_sequence<TSize...> si,
+                         std::index_sequence<TSize...>,
                          F f, T&&... ts)
     {
       return std::make_tuple(iod::internal::tuple_foreach_i<TSize>(f, std::forward<T>(ts)...)...);
@@ -51,7 +51,7 @@ namespace iod
     template<typename Ret, typename F, size_t... TSize, size_t... Nargs, typename... T>
     inline void
     sio_foreach_impl(std::enable_if_t<std::is_same<void, Ret>::value>*,
-                     std::index_sequence<TSize...> si,
+                     std::index_sequence<TSize...>,
                      F f, T&&... ts)
     {
       return (void)std::initializer_list<int>{
@@ -105,7 +105,7 @@ namespace iod
 
 
     template<typename F, typename... T>
-    inline void tuple_foreach(F f, std::tuple<> t1, T&&... ts)
+    inline void tuple_foreach(F, std::tuple<>, T&&...)
     {
     }
     

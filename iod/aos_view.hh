@@ -119,7 +119,7 @@ namespace iod
           [&res, s] (auto m) {
             res &= (int(m.value().size()) == s);
           },
-          [] (auto m) {},
+          [] (auto) {},
           m);
       };
       return res;
@@ -135,7 +135,7 @@ namespace iod
       {
         static_if<has_size_method<std::remove_reference_t<decltype(m.value())>>::value>(
           [&res] (auto m) { res = m.value().size(); },
-          [] (auto m) { },
+          [] (auto) { },
           m);
       };
 

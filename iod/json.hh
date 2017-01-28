@@ -172,18 +172,8 @@ namespace iod
       }
 
       inline my_ostringstream& operator<<(int t) {
-        if (t < 0) S::append('-');
-
-        const int rs = 20;
-        char reverse[rs];
-        int i = 0;
-        while (t)
-        {
-          reverse[rs - i - 1] = (t % 10) + '0';
-          t /= 10;
-          i++;
-        }
-        S::append(stringview(reverse + rs - i, i));
+        std::string s = std::to_string(t);
+        S::append(stringview(s.c_str(), s.size()));
         return *this;
       }
     };
@@ -440,7 +430,7 @@ namespace iod
         val = 0;
 
         const char* s = str.data() + pos;
-
+        
         int fz = 0;
         while(s[fz] == '0') { fz++; end++; }
         
@@ -467,7 +457,8 @@ namespace iod
         float res = 0;
           
         int ent = 0;
-        fill_int<int, 10>(ent);
+        if (str[pos] != '.')
+          fill_int<int, 10>(ent);
 
         res = ent;
 
@@ -729,6 +720,7 @@ namespace iod
       while (p.peak() != ']')
       {
         T t;
+        p >> p.spaces;
         iod_from_json_((typename S::value_type*)0, t, p);
         array.push_back(t);
         p >> p.spaces;

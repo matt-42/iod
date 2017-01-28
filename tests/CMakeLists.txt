@@ -4,9 +4,9 @@ enable_testing()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/.. ${Boost_INCLUDE_DIRS})
 
+
 set(CMAKE_CXX_STANDARD 14)
 add_definitions(-std=c++14) # For old cmake versions
-
 add_definitions(-Wall)
 
 #add_executable(iod_query_stl iod_query_stl.cc)

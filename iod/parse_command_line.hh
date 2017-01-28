@@ -95,13 +95,13 @@ namespace iod
   }
   
   template <typename S1, typename S2, typename V>
-  auto get_option_symbol(const assign_exp<logical_or_exp<S1, S2>, V>& o)
+  auto get_option_symbol(const assign_exp<logical_or_exp<S1, S2>, V>&)
   {
     return S1();
   }
 
   template <typename S1, typename S2, typename V>
-  auto get_option_short_symbol(const assign_exp<logical_or_exp<S1, S2>, V>& o)
+  auto get_option_short_symbol(const assign_exp<logical_or_exp<S1, S2>, V>&)
   {
     return S2();
   }

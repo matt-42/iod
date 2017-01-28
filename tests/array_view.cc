@@ -28,7 +28,7 @@ int main()
       Arr1(const Arr1& e) = delete;
       Arr1& operator=(const Arr1& e) = delete;
 
-      decltype(auto) operator[](int i) { return 42; }
+      decltype(auto) operator[](int) { return 42; }
       int size() const { return 5; }
     };
 

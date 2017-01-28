@@ -55,12 +55,14 @@ namespace iod
                                                                         \
       typedef T value_type;                                             \
       typedef INFO attributes_type;                                     \
+      typedef variable_type<T, INFO> self_type;				\
       typedef NAME##_t symbol_type;                                     \
       typedef iod::variable<variable_type<T, INFO>> super;              \
                                                                         \
       variable_type() = default;                                        \
       template <typename V>                                             \
-      variable_type(V&& v, std::enable_if_t<std::is_constructible<value_type, V>::value>* = 0) : SYMBOL(std::forward<V>(v)) {} \
+      variable_type(V&& v, std::enable_if_t<std::is_constructible<value_type, V>::value and \
+		    !std::is_same<std::decay_t<V>, self_type>::value>* = 0) : SYMBOL(std::forward<V>(v)) {} \
       inline value_type& value() { return SYMBOL; }                     \
       inline const value_type& value() const { return SYMBOL; }         \
       auto symbol() const { return NAME##_t(); }                        \

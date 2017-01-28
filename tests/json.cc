@@ -104,6 +104,24 @@ int main()
     assert(c2.city.str == "1234");
   }
 
+  // Float vectors.
+  {
+    typedef decltype(D(_age = { 0.f })) P;
+
+    std::string str = R"({"age":[001.23, 0.23, -0.234, .32, -.32, .345e5]})";
+
+    P o;
+    json_decode(o, str);
+
+    std::cout << o.age[0] << std::endl;
+    assert(o.age[0] == 1.23f);
+    assert(o.age[1] == 0.23f);
+    assert(o.age[2] == -0.234f);
+    assert(o.age[3] == .32f);
+    assert(o.age[4] == -.32f);
+    assert(o.age[5] == .345e5f);
+    
+  }
   // Stringview
   {
     std::string str = R"json({"name":"John","city":"John2","age":12})json";

@@ -46,7 +46,7 @@ namespace iod
       };
 
       template <std::size_t... Is, typename... T>
-      decltype(auto) get_nth_impl(seq<Is...> seq, T&&... l)
+      decltype(auto) get_nth_impl(seq<Is...>, T&&... l)
       {
         return get_nth_helper<Is...>::run(std::forward<T>(l)...);
       }

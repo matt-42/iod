@@ -673,7 +673,16 @@ namespace iod
         {
           if (!m.attributes().has(_json_skip) and !attr_found and attr_name == A[i].name)
           {
-            iod_from_json_(&m.value(), m.symbol().member_access(o), p);
+            try
+            {
+              iod_from_json_(&m.value(), m.symbol().member_access(o), p);
+            }
+            catch (const std::exception& e)
+            {
+              std::stringstream ss;
+              ss << "Error when decoding json attribute " << attr_name.to_std_string() << ": " << e.what();
+              throw std::runtime_error(ss.str());
+            }
             A[i].filled = true;
             attr_found = true;
           }

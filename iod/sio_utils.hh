@@ -81,6 +81,7 @@ namespace iod
   auto exp_to_variable(const assign_exp<S, V>& e)
   {
     typedef V vtype;
+    // If V is a symbol, take it as a value and not a ref.
     return static_if<is_symbol<V>::value>
       ([&] (auto&& v) { return typename S::template variable_type<std::remove_reference_t<decltype(v)>>(); },
        [&] (auto&& v) { return typename S::template variable_type<vtype>(std::forward<decltype(v)>(v)); },
@@ -116,17 +117,58 @@ namespace iod
     typedef V vtype;
     return typename S::template variable_type<vtype, decltype(D(std::declval<ARGS>()...))>(e.right);
   }
+
+  template <typename S, typename I, typename V>
+  auto remove_variable_ref(S, I, V&& v)
+  {
+    return typename S::template variable_type<std::remove_const_t<std::remove_reference_t<V>>, I>(v);
+  }
+
+  template <typename S, typename I>
+  auto remove_variable_ref(S, I, const char v[])
+  {
+    return typename S::template variable_type<const char*, I>(v);
+  }
   
+  template <typename V>
+  auto remove_variable_ref(V&& x)
+  {
+    typedef std::remove_reference_t<V> V2;
+    return static_if<is_symbol<V2>::value>
+      ([] (auto&& x) { return x; },
+       [] (auto&& x) {
+         typedef std::remove_reference_t<decltype(x)> V3;
+         return remove_variable_ref(typename V3::symbol_type(),
+                                    typename V3::attributes_type(),
+                                    x.value());
+       }, std::forward<V>(x));
+        
+  }
+
   template <typename ...T>
   inline auto D(T&&... args)
   {
+    // Remove reference of values.
     typedef
-      sio<std::decay_t<decltype(exp_to_variable(std::forward<T>(args)))>...>
+      sio<std::remove_reference_t<decltype
+                                  (remove_variable_ref(exp_to_variable(std::forward<T>(args))))
+                                  >...>
+      result_type;
+
+    return result_type(remove_variable_ref(exp_to_variable(std::forward<T>(args)))...);
+  }
+
+  template <typename ...T>
+  inline auto D_as_reference(T&&... args)
+  {
+    // Keep references.
+    typedef
+      sio<std::remove_reference_t<decltype(exp_to_variable(std::forward<T>(args)))>...>
       result_type;
 
     return result_type(exp_to_variable(std::forward<T>(args))...);
   }
-
+  
   struct D_caller
   {
     template <typename... X>

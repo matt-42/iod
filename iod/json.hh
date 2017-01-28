@@ -656,7 +656,7 @@ namespace iod
 
       attr_info A[sio<T, Tail...>::size()];
 
-      sio<T, Tail...> scheme;// = *(sio<T, Tail...>*)(nullptr);
+      sio<T, Tail...> scheme;// = *(sio<T, Tail...>*)(42);
       int i = 0;
       foreach(scheme) | [&] (const auto& m)
       {

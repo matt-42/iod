@@ -331,8 +331,16 @@ namespace iod
         auto append_str = [&] (const char* str, int len)
         {
           if (buffer_pos + len > int(sizeof(buffer))) flush();
-          memcpy(buffer + buffer_pos, str, len);
-          buffer_pos += len;
+          if (len < int(sizeof(buffer)))
+          {
+            memcpy(buffer + buffer_pos, str, len);
+            buffer_pos += len;
+          }
+          else
+          {
+            flush();
+            t.append(str, len);
+          }
         };
         
         while (true)

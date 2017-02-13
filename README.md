@@ -183,7 +183,7 @@ In classic C++, you would define a function taking optional arguments as :
 void fun(int mandatory_arg, int optional_arg1 = 1, int optional_arg2 = 12, int optional_arg3 = 32);
 ```
 
-This has to drawbacks: First, it is not practical if the user needs to
+This has two drawbacks: First, it is not practical if the user needs to
 set the third optional argument, and oblige him to remember the place
 of each argument. SIOs are a good alternative since they solve both issues:
 

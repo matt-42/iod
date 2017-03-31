@@ -29,6 +29,8 @@ namespace iod
     const char* data() const { return str; }
     auto to_std_string() const { return std::string(str, len); }
 
+    auto substr(int start, int new_len) { return stringview(str + start, new_len); }
+
     const char* str;
     std::size_t len;
   };

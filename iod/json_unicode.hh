@@ -60,12 +60,12 @@ namespace iod
   }
   inline decltype(auto)
   wrap_json_input_stream(json_internals::json_parser& s) { return s; }
-  inline decltype(auto)
-  wrap_json_input_stream(const iod::stringview& s) { return std::stringstream(s.to_std_string()); }
-  inline decltype(auto)
-  wrap_json_input_stream(const std::string& s) { return std::stringstream(s); }
-  inline decltype(auto)
-  wrap_json_input_stream(const char* s) { return std::stringstream(std::string(s)); }
+  inline std::stringstream
+  wrap_json_input_stream(const iod::stringview& s) { return std::move(std::stringstream(s.to_std_string())); }
+  inline std::stringstream
+  wrap_json_input_stream(const std::string& s) { return std::move(std::stringstream(s)); }
+  inline std::stringstream
+  wrap_json_input_stream(const char* s) { return std::move(std::stringstream(std::string(s))); }
 
   namespace unicode_impl
   {

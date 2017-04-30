@@ -20,6 +20,7 @@ int main()
     auto o = D(_name = "John"s, _age = 12, _children = { 1,2,3,4,5 }, _city = D(_name = "Paris"s));
     auto str = json_encode(o);
 
+    std::cout << str << std::endl;
     decltype(o) p;
     json_decode(p, str);
     assert(str == R"json({"name":"John","age":12,"children":[1,2,3,4,5],"city":{"name":"Paris"}})json");
@@ -39,9 +40,10 @@ int main()
 
   { // UTF 8
     auto o = D(_name = std::string());
-    auto s = R"json({"name":"\u00E2\u82AC\u00E2\u82AC\u00E2\u82AC\u00E2\u82AC\u00E2\u82AC"})json";
+    auto s = R"json({"name":"\u20ac\u20ac\u20ac\u20ac\u20ac"})json";
 
     json_decode(o, s);
+    std::cout << o.name << std::endl;
     assert(o.name.size() == 15 and o.name == "€€€€€"s);
   }
 
@@ -134,11 +136,16 @@ int main()
   // Escape
   {
     std::string str = R"({"name":"\\ \"age\\\\\" \\"})";
-    auto object = iod::D(_name = stringview());
+    auto object = iod::D(_name = std::string());
     iod::json_decode(object, str);
     std::cout << json_encode(object) << " == " << str << std::endl; 
     assert(json_encode(object) == str);
   }
 
+  // Encode strings
+  {
+    auto object = iod::D(_name = "\"");
+    assert(iod::json_encode(object) == R"({"name":"\""})");
+  }
 
 }

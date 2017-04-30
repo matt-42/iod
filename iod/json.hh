@@ -12,6 +12,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/utility/string_ref.hpp>
 
+#include <iod/json_unicode.hh>
 #include <iod/sio.hh>
 #include <iod/foreach.hh>
 #include <iod/symbols.hh>
@@ -155,14 +156,20 @@ namespace iod
         S::append(t);
         return *this;
       }
+      inline my_ostringstream& operator<<(const std::string& t) {
+        S::append(t);
+        return *this;
+      }
+      
+      inline my_ostringstream& operator<<(const json_string& t) {
+          (*this) << t.str;
+          return *this;
+        }
 
-      // Fixme add UTF8 encoding.
-
-      inline my_ostringstream& operator<<(const std::string& t) { (*this) << stringview(t); return *this; }
-      inline my_ostringstream& operator<<(const json_string& t) { (*this) << t.str; return *this; }
-      inline my_ostringstream& operator<<(const char* t) { (*this) << stringview(t, strlen(t)); return *this; }
-      inline my_ostringstream& operator<<(const boost::string_ref& t) { (*this) << stringview(&t[0], t.size()); return *this; }
-
+      // inline my_ostringstream& operator<<(const boost::string_ref& t) {
+      //   (*this) << stringview(&t[0], t.size());
+      //   return *this;
+      // }
 
       template <typename T>
       my_ostringstream& operator<<(const T& t) {
@@ -176,6 +183,7 @@ namespace iod
         S::append(stringview(s.c_str(), s.size()));
         return *this;
       }
+
     };
     
     // Json encoder.
@@ -189,15 +197,17 @@ namespace iod
     template <typename S>
     inline void json_encode_(const char* t, S& ss)
     {
-      ss << '"' << t << '"';
+      std::string s;
+      utf8_to_json(t, s);
+      ss << s;
     }
 
     template <typename S>
-    inline void json_encode_(const stringview& s, S& ss)
+    inline void json_encode_(const stringview& t, S& ss)
     {
-      ss << '"';
+      std::string s;
+      utf8_to_json(t, s);
       ss << s;
-      ss << '"';
     }
 
     template <typename S, typename SS>
@@ -208,13 +218,13 @@ namespace iod
       ss << '"';
     }
 
-    template <typename S>
-    inline void json_encode_(const boost::string_ref& s, S& ss)
-    {
-      ss << '"';
-      ss << s;
-      ss << '"';
-    }
+    // template <typename S>
+    // inline void json_encode_(const boost::string_ref& s, S& ss)
+    // {
+    //   ss << '"';
+    //   ss << s;
+    //   ss << '"';
+    // }
     
     template <typename S>
     inline void json_encode_(const std::string& t, S& ss)
@@ -281,9 +291,10 @@ namespace iod
       inline json_parser(const std::string& _str) : str(_str.c_str(), _str.size()), pos(0) {}
       inline json_parser(const stringview& _str) : str(_str), pos(0) {}
 
-      inline char peak() { return str[pos]; }
+      inline char peek() { return str[pos]; }
       inline char eof() { return pos == str.size(); }
-      inline char eat_one() { return pos++; }
+      inline void eat_one() { pos++; }
+      inline char get() { return str[pos++]; }
 
       template <typename E>
       inline void format_error(E&) {}
@@ -314,89 +325,92 @@ namespace iod
       
       inline json_parser& fill(std::string& t)
       {
-        int start = pos;
-        int end = pos;
-        t.clear();
+        json_to_utf8(*this, t);
+        return *this;
+        // int start = pos;
+        // int end = pos;
+        // t.clear();
 
-        char buffer[128];
-        int buffer_pos = 0;
-        auto flush = [&] () { t.append(buffer, buffer_pos); buffer_pos = 0; };
-        auto append_char = [&] (char c)
-        {
-          if (buffer_pos == sizeof(buffer)) flush();
+        // char buffer[128];
+        // int buffer_pos = 0;
+        // auto flush = [&] () { t.append(buffer, buffer_pos); buffer_pos = 0; };
+        // auto append_char = [&] (char c)
+        // {
+        //   if (buffer_pos == sizeof(buffer)) flush();
             
-          buffer[buffer_pos] = c;
-          buffer_pos++;
-        };
-        auto append_str = [&] (const char* str, int len)
-        {
-          if (buffer_pos + len > int(sizeof(buffer))) flush();
-          if (len < int(sizeof(buffer)))
-          {
-            memcpy(buffer + buffer_pos, str, len);
-            buffer_pos += len;
-          }
-          else
-          {
-            flush();
-            t.append(str, len);
-          }
-        };
+        //   buffer[buffer_pos] = c;
+        //   buffer_pos++;
+        // };
+        // auto append_str = [&] (const char* str, int len)
+        // {
+        //   if (buffer_pos + len > int(sizeof(buffer))) flush();
+        //   if (len < int(sizeof(buffer)))
+        //   {
+        //     memcpy(buffer + buffer_pos, str, len);
+        //     buffer_pos += len;
+        //   }
+        //   else
+        //   {
+        //     flush();
+        //     t.append(str, len);
+        //   }
+        // };
         
-        while (true)
-        {
-          while (!eof() and str[end] != '"' and str[end] != '\\')
-            end++;
+        // while (true)
+        // {
+        //   while (!eof() and str[end] != '"' and str[end] != '\\')
+        //     end++;
 
-          if (eof()) throw json_error("Unexpected end of string when parsing a string.");
-          append_str(str.data() + start, end - start);
+        //   if (eof()) throw json_error("Unexpected end of string when parsing a string.");
+        //   append_str(str.data() + start, end - start);
 
-          if (str[end] == '"') break;
+        //   std::cout << str[end] << std::endl;
+        //   if (str[end] == '"') break;
 
-          end++;
-          switch (str[end])
-          {
-          case '\'': append_char('\''); break;
-          case '"': append_char('"'); break;
-          case '\\': append_char('\\'); break;
-          case '/': append_char('/'); break;
-          case 'n': append_char('\n'); break;
-          case 'r': append_char('\r'); break;
-          case 't': append_char('\t'); break;
-          case 'b': append_char('\b'); break;
-          case 'f': append_char('\f'); break;
-          case 'v': append_char('\v'); break;
-          case '0': append_char('\0'); break;
-          case 'u':
-            while (true)
-            {
-              if (str.size() < end + 4)
-                throw json_error("Unexpected end of string when decoding an utf8 character");
-              end++;
+        //   end++;
+        //   switch (str[end])
+        //   {
+        //   case '\'': append_char('\''); break;
+        //   case '"': append_char('"'); break;
+        //   case '\\': append_char('\\'); break;
+        //   case '/': append_char('/'); break;
+        //   case 'n': append_char('\n'); break;
+        //   case 'r': append_char('\r'); break;
+        //   case 't': append_char('\t'); break;
+        //   case 'b': append_char('\b'); break;
+        //   case 'f': append_char('\f'); break;
+        //   case 'v': append_char('\v'); break;
+        //   case '0': append_char('\0'); break;
+        //   case 'u':
+        //     while (true)
+        //     {
+        //       if (str.size() < end + 4)
+        //         throw json_error("Unexpected end of string when decoding an utf8 character");
+        //       end++;
 
-              auto decode_hex_c = [this] (char c) {
-                if (c >= '0' and c <= '9') return c - '0';
-                else return (10 + c - 'A');
-              };
+        //       auto decode_hex_c = [this] (char c) {
+        //         if (c >= '0' and c <= '9') return c - '0';
+        //         else return (10 + c - 'A');
+        //       };
               
-              const char* str2 = str.data() + end;
-              char x = (decode_hex_c(str2[0]) << 4) + decode_hex_c(str2[1]);
-              if (x) append_char(x);
-              append_char((decode_hex_c(str2[2]) << 4) + decode_hex_c(str2[3]));
+        //       const char* str2 = str.data() + end;
+        //       char x = (decode_hex_c(str2[0]) << 4) + decode_hex_c(str2[1]);
+        //       if (x) append_char(x);
+        //       append_char((decode_hex_c(str2[2]) << 4) + decode_hex_c(str2[3]));
 
-              end += 4;
+        //       end += 4;
               
-              if (str[end] == '\\' and str[end + 1] == 'u')
-                end += 1;
-              else break;
-            }
-            break;
-          }
+        //       if (str[end] == '\\' and str[end + 1] == 'u')
+        //         end += 1;
+        //       else break;
+        //     }
+        //     break;
+        //   }
 
-          start = end;
-        }
-        flush();
-        pos = end;
+        //   start = end;
+        // }
+        // flush();
+        // pos = end;
         return *this;
       }
       
@@ -619,7 +633,7 @@ namespace iod
     template <typename S>
     inline void iod_from_json_(S*, std::string& t, json_parser& p)
     {
-      p >> '"' >> fill(t) >> '"';
+      p >> fill(t);
     }
 
     template <typename S>
@@ -670,7 +684,7 @@ namespace iod
         i++;
       };
 
-      while (p.peak() != '}')
+      while (p.peek() != '}')
       {
         stringview attr_name;
         p >> p.spaces >> '"' >> fill(attr_name) >> '"' >> p.spaces >> ':' >> p.spaces;
@@ -702,15 +716,15 @@ namespace iod
                                    attr_name.to_std_string());
 
         p >> p.spaces;
-        if (p.peak() == ',')
+        if (p.peek() == ',')
           p.eat_one();
         else
           break;
       }
 
-      if (p.peak() != '}')
+      if (p.peek() != '}')
       {
-        throw p.json_error("Expected } got ", p.peak());
+        throw p.json_error("Expected } got ", p.peek());
       }
 
       i = 0;
@@ -727,21 +741,21 @@ namespace iod
     inline void iod_from_json_(S*, std::vector<T>& array, json_parser& p)
     {
       p >> '[' >> p.spaces;
-      if (p.peak() == ']')
+      if (p.peek() == ']')
       {
         p >> ']';
         return;
       }
 
       array.clear();
-      while (p.peak() != ']')
+      while (p.peek() != ']')
       {
         T t;
         p >> p.spaces;
         iod_from_json_((typename S::value_type*)0, t, p);
         array.push_back(t);
         p >> p.spaces;
-        if (p.peak() == ']')
+        if (p.peek() == ']')
           break;
         else
           p >> ',';

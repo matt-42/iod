@@ -20,6 +20,11 @@
     iod_define_symbol(as)
 #endif
 
+#ifndef IOD_SYMBOL_append
+#define IOD_SYMBOL_append
+    iod_define_symbol(append)
+#endif
+
 #ifndef IOD_SYMBOL_avg
 #define IOD_SYMBOL_avg
     iod_define_symbol(avg)

@@ -314,8 +314,8 @@ namespace iod
         int w = 20;
         int b = pos > w ? pos - w : 0;
         int e = pos < int(str.size()) - w ? pos + w : int(str.size()) - 1;
-        std::string near(str.data() + b, str.data() + e);
-        err << std::endl << "Json parse error near " << near << std::endl;
+        std::string position(str.data() + b, str.data() + e);
+        err << std::endl << "Json parse error near " << position << std::endl;
         err << "                      ";
         for (int i = 0; i < pos - b - 1; i++) err << ' ';
         err << "^^^"<< std::endl;

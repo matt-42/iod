@@ -18,28 +18,28 @@ namespace iod
 
   template <typename E, typename... T>
   decltype(auto) arg_get_by_type_(void*,
-                                  E* a1, T&&... args)
+                                  E* a1, T&&... /*args*/)
   {
     return std::forward<E*>(a1);
   }
 
   template <typename E, typename... T>
   decltype(auto) arg_get_by_type_(void*,
-                                  const E* a1, T&&... args)
+                                  const E* a1, T&&... /*args*/)
   {
     return std::forward<const E*>(a1);
   }
   
   template <typename E, typename... T>
   decltype(auto) arg_get_by_type_(void*,
-                                  E& a1, T&&... args)
+                                  E& a1, T&&... /*args*/)
   {
     return std::forward<E&>(a1);
   }
 
   template <typename E, typename... T>
   decltype(auto) arg_get_by_type_(void*,
-                                  const E& a1, T&&... args)
+                                  const E& a1, T&&... /*args*/)
   {
     return std::forward<const E&>(a1);
   }

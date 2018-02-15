@@ -23,26 +23,22 @@ int main()
   
   auto t = std::make_tuple(1, 2, 3);
   const auto u = std::make_tuple(1, 2, 3);
-  iod::apply(t, [] (int x, int y, int s) { std::cout << s << std::endl; });
-  iod::apply(u, 32, [] (int x, int y, int s, int p) { std::cout << s << "-" << p << std::endl; });
+  iod::apply(t, [] (int, int, int s) { std::cout << s << std::endl; });
+  iod::apply(u, 32, [] (int, int, int s, int p) { std::cout << s << "-" << p << std::endl; });
   
   auto o1 = iod::D(_name = "xxx", _age = 12);
   const auto o2 = iod::D(_name = "xxx", _age = 12);
-  iod::apply(o1, [] (const char* s, int& a) { std::cout << s << std::endl; });
-  iod::apply(o2, [] (const char* s, const int& a) { std::cout << s << std::endl; });
+  iod::apply(o1, [] (const char* s, int&) { std::cout << s << std::endl; });
+  iod::apply(o2, [] (const char* s, const int&) { std::cout << s << std::endl; });
 
-  iod::proxy_apply(t, [] (int x) { return x + 2; }, [] (int x, int y, int z) { std::cout << z << std::endl; });
-
+  iod::proxy_apply(t, [] (int x) { return x + 2; }, [] (int, int, int z) { std::cout << z << std::endl; });
 
   assert(iod::apply(std::string("A"), std::string("B"), plus) == "AB");
 
-
-  
   {
     // Forward
     auto t = std::make_tuple(1, 2, 3);
     auto fun = [] (auto t) { return std::get<0>(t); };
     iod::apply(forward(t), fun);
-    
   }
 }

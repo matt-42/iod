@@ -61,7 +61,7 @@ namespace iod
     template<typename Ret, typename F, size_t... TSize, size_t... Nargs, typename... T>
     inline decltype(auto)
     sio_foreach_impl(std::enable_if_t<!std::is_same<void, Ret>::value>*,
-                     std::index_sequence<TSize...> si,
+                     std::index_sequence<TSize...> /*si*/,
                      F f, T&&... ts)
     {
       return D(iod::internal::sio_foreach_i<TSize>(f, std::forward<T>(ts)...)...);
@@ -120,7 +120,7 @@ namespace iod
 
     template<typename F, typename T1, typename... T>
     inline void sio_foreach(std::enable_if_t<std::remove_reference_t<T1>::_size == 0>*,
-                            F f, T1&& t1, T&&... ts)
+                            F /*f*/, T1&& /*t1*/, T&&... /*ts*/)
     {
     }
     

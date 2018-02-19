@@ -82,13 +82,13 @@ void fun3(float x, int y, A)
   std::cout << x << " " << y << std::endl;
 }
 
-void fun4(B b)
+void fun4(B)
 {
   std::cout << "fun4" << std::endl;
 }
 
 
-void fun5(D d)
+void fun5(D)
 {
   std::cout << "fun5" << std::endl;
 }
@@ -110,17 +110,17 @@ void fun5_4(const D)
 }
 
 
-void fun6(float x)
+void fun6(float)
 {
 }
 
-void fun7(A a)
+void fun7(A)
 {
   std::cout << "fun7" << std::endl;
 }
 
 
-void fun8(NC& a)
+void fun8(NC&)
 {
   std::cout << "fun8" << std::endl;
 }
@@ -215,7 +215,7 @@ int main()
   NC nc;
   iod::di_call(fun8, nc);
  
-  auto f = [] (int x, float f) {};
+  auto f = [] (int, float) {};
   int_factory int_f;
   float_factory float_f;
   iod::di_call(f, int_f, float_f);

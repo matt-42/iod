@@ -330,7 +330,7 @@ namespace iod
   template<unsigned N, unsigned SIZE, typename F, typename O, typename P>
   inline
   auto
-  sio_iterate_loop(std::enable_if_t<N == SIZE>*, F f, const O& o, const P& prev)
+  sio_iterate_loop(std::enable_if_t<N == SIZE>*, F /*f*/, const O& /*o*/, const P& prev)
   {
     return prev;
   }

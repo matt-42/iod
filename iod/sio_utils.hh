@@ -71,7 +71,7 @@ namespace iod
   }
 
   template <typename S, typename... ARGS>
-  auto exp_to_variable(const function_call_exp<S, ARGS...>& e)
+  auto exp_to_variable(const function_call_exp<S, ARGS...>& /*e*/)
   {
     //return typename S::template variable_type<T>(std::get<0>(c.args));
     return typename S::template variable_type<char, decltype(D(std::declval<ARGS>()...))>(0);
@@ -99,7 +99,7 @@ namespace iod
   }
   
   template <typename S, typename V>
-  auto exp_to_variable(const assign_exp<S, const symbol<V>&> e)
+  auto exp_to_variable(const assign_exp<S, const symbol<V>&> /*e*/)
   {
     return typename S::template variable_type<V>(V());
   }

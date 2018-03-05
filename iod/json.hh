@@ -659,7 +659,7 @@ namespace iod
 
     // Parse a json hashmap.
     template <typename O>
-    inline void iod_attr_from_json(const sio<>*, O& o, json_parser& p) {}
+    inline void iod_attr_from_json(const sio<>*, O& /*o*/, json_parser& /*p*/) {}
     template <typename T, typename ...Tail, typename O>
     inline void iod_attr_from_json(const sio<T, Tail...>*, O& o, json_parser& p)
     {

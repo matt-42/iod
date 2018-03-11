@@ -86,7 +86,7 @@ namespace iod
   
   // Terminals.
   template <typename E, typename F, typename C>
-  decltype(auto) exp_transform_iterate(E& exp, F map,
+  decltype(auto) exp_transform_iterate(E& exp, F /*map*/,
                              C ctx,
                              std::enable_if_t<!callable_with<F, E&, C>::value and
                              !has_transform_iterate<E>::value>* = 0)
@@ -119,7 +119,7 @@ namespace iod
   
   // Terminals.
   template <typename E, typename F, typename C>
-  decltype(auto) exp_transform(E& exp, F map, C& ctx,
+  decltype(auto) exp_transform(E& exp, F /*map*/, C& /*ctx*/,
                      std::enable_if_t<!callable_with<F, E&, C&>::value and
                      !has_transform_iterate<E>::value>* = 0)
   {
@@ -149,8 +149,8 @@ namespace iod
   
   // Terminals.
   template <typename E, typename N, typename C, typename M, typename R>
-  decltype(auto) exp_map_reduce(E& exp, N neutral, C& ctx,
-                      M map, R reduce,
+  decltype(auto) exp_map_reduce(E& /*exp*/, N neutral, C& /*ctx*/,
+                      M /*map*/, R /*reduce*/,
                       std::enable_if_t<!callable_with<M, E&, C&>::value and
                       !has_transform_iterate<E>::value>* = 0)
   {
@@ -158,8 +158,8 @@ namespace iod
   }
 
   template <typename E, typename N, typename C, typename M, typename R>
-  decltype(auto) exp_map_reduce(E& exp, N neutral, C& ctx,
-                      M map, R reduce,
+  decltype(auto) exp_map_reduce(E& exp, N /*neutral*/, C& ctx,
+                      M map, R /*reduce*/,
                       std::enable_if_t<callable_with<M, E&, C&>::value>* = 0)
   {
     return map(exp, ctx);
@@ -186,7 +186,7 @@ namespace iod
   
   // Terminals.
   template <typename E, typename M, typename C>
-  inline decltype(auto) exp_evaluate(E& exp, M eval, C& ctx,
+  inline decltype(auto) exp_evaluate(E& exp, M /*eval*/, C& /*ctx*/,
                            std::enable_if_t<!callable_with<M, E&, M, C&>::value and
                            !has_transform_iterate<E>::value>* = 0)
   {

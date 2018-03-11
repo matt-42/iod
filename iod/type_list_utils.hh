@@ -117,7 +117,7 @@ namespace iod
     }
 
     template <typename F>
-    auto find_first(F pred)
+    auto find_first(F /*pred*/)
     {
       return not_found();
     }

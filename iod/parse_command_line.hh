@@ -21,7 +21,7 @@ namespace iod
     for (int ai = 1; ai < argc; ai++)
     {
       const char* arg = argv[ai];
-      int len = strlen(arg);
+      int len = static_cast<int>(strlen(arg));
 
       int ndash = 0;
       
@@ -37,9 +37,9 @@ namespace iod
         {
           if (arg_name[i] == '=')
           {
-            arg_name = stringview(arg_name.str, i);
+            arg_name = stringview(arg_name.str, static_cast<size_t>(i));
             arg = arg_name.str + i + 1;
-            len = strlen(arg);
+            len = static_cast<int>(strlen(arg));
             break;
           }
         }
@@ -63,7 +63,7 @@ namespace iod
 
       if (arg[0] != '-')
       {
-        auto value = stringview(arg, len);
+        auto value = stringview(arg, static_cast<size_t>(len));
         if (arg_name.data())
         {
           assert(args_map[arg_name.to_std_string()].size() > 0);

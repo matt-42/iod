@@ -29,7 +29,7 @@ int main()
     for (auto x : v)
       std::cout << x.a << " " << x.b << std::endl;
     
-    for (size_t i = 0; i < v.size(); i++)
+    for (int i = 0; i < static_cast<int>(v.size()); i++)
       std::cout << v[i].a << " " << v[i].b << std::endl;
 
     // Views are writable.
@@ -80,7 +80,7 @@ int main()
     std::vector<int> A = {1,2,3,4};
 
     auto v = aos_view(_a = A,
-                      _b = [&] (int i) { return A[i] * 2; });
+                      _b = [&] (int i) { return A[static_cast<size_t>(i)] * 2; });
 
     for (auto x : v)
       std::cout << x.a << " " << x.b << std::endl;
@@ -99,7 +99,7 @@ int main()
 
     auto v = aos_view(_a = A,
                       _b = [&] (int i, std::string s) {
-                        std::cout << A[i] << s << std::endl ; });
+                        std::cout << A[static_cast<size_t>(i)] << s << std::endl ; });
 
     v[2].b("xx");
 

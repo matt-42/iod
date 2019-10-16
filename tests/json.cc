@@ -95,7 +95,7 @@ int main()
     str = R"({"city":  "te{}}{}\"st\\"}})";
     json_decode(c, str);
     std::cout << c.city.str << std::endl;
-    assert(c.city.str == R"("te{}}{}\"st\\")");
+    assert(c.city.str == "\"te{}}{}\\\"st\\\\\"");
 
     str = R"({"city":  "test", "name": "john"})";
     json_decode(c2, str);
@@ -145,7 +145,7 @@ int main()
   // Encode strings
   {
     auto object = iod::D(_name = "\"");
-    assert(iod::json_encode(object) == R"({"name":"\""})");
+    assert(iod::json_encode(object) == "{\"name\":\"\\\"\"}");
   }
 
 }

@@ -12,7 +12,7 @@ namespace iod
     stringview() : str(0), len(0) {}
     stringview(const std::string& _str) : str(&_str[0]), len(_str.size()) {}
     stringview(const char* _str, std::size_t _len) : str(_str), len(_len) {}
-    stringview(const char* _begin, const char* _end) : str(_begin), len(_end - _begin) { assert(_end >= _begin); }
+    stringview(const char* _begin, const char* _end) : str(_begin), len(static_cast<size_t>(_end - _begin)) { assert(_end >= _begin); }
     stringview(const char* _str) : str(_str), len(strlen(_str)) {}
       
     bool operator==(const stringview& o) const { return len == o.len and !strncmp(o.str, str, len); }
@@ -25,11 +25,11 @@ namespace iod
     auto& operator[](int p) { return str[p]; }
     const auto& operator[](int p) const { return str[p]; }
 
-    int size() const { return len; }
+    int size() const { return static_cast<int>(len); }
     const char* data() const { return str; }
     auto to_std_string() const { return std::string(str, len); }
 
-    auto substr(int start, int new_len) { return stringview(str + start, new_len); }
+    auto substr(int start, int new_len) { return stringview(str + start, static_cast<size_t>(new_len)); }
 
     const char* str;
     std::size_t len;

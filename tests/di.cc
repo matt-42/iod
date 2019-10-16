@@ -127,7 +127,7 @@ void fun8(NC&)
 
 struct int_factory
 {
-  int instantiate(float f) { return f + 1; }
+  int instantiate(float f) { return static_cast<int>(f + 1); }
 };
 
 struct float_factory
@@ -199,7 +199,7 @@ int main()
   // typedef decltype(t) T2;
   // static_assert(iod::di::tuple_embeds_fun_with_return_type<T2, int>::value, "");
   iod::di_call(&fun1);
-  iod::di_call(&fun1, 1);
+  iod::di_call(&fun1, 1); // warning because parameter isn't used by fun1()
   iod::di_call(&fun2, 1);
   iod::di_call(&fun3, y, x);
   iod::di_call(&fun3, y, x, A());

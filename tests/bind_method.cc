@@ -4,7 +4,7 @@
 
 struct A
 {
-  int add(int a, float b) { return a + b; }
+  int add(int a, float b) { return a + static_cast<int>(b); }
 };
 
 int main()

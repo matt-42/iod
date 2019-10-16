@@ -18,7 +18,7 @@ int main()
 
   assert(std::tuple_size<decltype(t2)>::value == 1);
 
-  std::tuple<int, float, int, double> t3{1, 2, 3, 4};
+  std::tuple<int, float, int, double> t3{1, 2.f, 3, 4.};
   auto t4 = tuple_filter<std::is_floating_point>(t3);
   std::cout << std::tuple_size<decltype(t4)>::value << std::endl;
   assert(std::get<0>(t4) == 2);

@@ -37,8 +37,8 @@ int main()
 
   {
     // Forward
-    auto t = std::make_tuple(1, 2, 3);
-    auto fun = [] (auto t) { return std::get<0>(t); };
-    iod::apply(forward(t), fun);
+    auto t123 = std::make_tuple(1, 2, 3);
+    auto fun = [] (auto t123) { return std::get<0>(t123); };
+    iod::apply(forward(t123), fun);
   }
 }

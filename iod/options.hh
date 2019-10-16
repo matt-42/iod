@@ -27,7 +27,7 @@ namespace iod
   template <typename... ARGS>
   auto parse_option(const std::tuple<ARGS...>& e)
   {
-    return apply(e, options_caller);
+    return iod::apply(e, options_caller);
   }
   
   template <typename S, typename... ARGS>

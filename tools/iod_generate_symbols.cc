@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
 
         bool is_type = s.size() >= 2 and s[s.size() - 2] == '_' and s[s.size() - 1] == 't';
         
-        if (!std::isalnum(m[0]) and !is_in_string(what.position()) and
+        if (!std::isalnum(m[0]) and !is_in_string(static_cast<int>(what.position())) and
             !is_type and keywords.find(s) == keywords.end())
           symbols.insert(what[1]);
         start = what[0].second;      

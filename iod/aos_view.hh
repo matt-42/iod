@@ -111,7 +111,7 @@ namespace iod
     bool check_sizes()
     {
       // Check if array have the same sizes.
-      int s = size();
+      int s = static_cast<int>(size());
       bool res = true;
       foreach(arrays) | [&res, s] (auto m)
       {
@@ -128,19 +128,19 @@ namespace iod
     // Get the size of the AOS.
     size_t size() const {
       if (hand_set_size > -1)
-        return hand_set_size;
+        return static_cast<size_t>(hand_set_size);
 
       int res = -1;
       foreach(arrays) | [&res] (auto m)
       {
         static_if<has_size_method<std::remove_reference_t<decltype(m.value())>>::value>(
-          [&res] (auto m) { res = m.value().size(); },
+          [&res] (auto m) { res = static_cast<int>(m.value().size()); },
           [] (auto) { },
           m);
       };
 
       assert(res >= 0 && "At least one array with a size method is needed");
-      return res;
+      return static_cast<size_t>(res);
     }
 
     // Access to the ith element.
@@ -155,7 +155,7 @@ namespace iod
 
     // iterators for range based for loops.
     auto begin() { return iterator(*this, 0); }
-    auto end() { return iterator(*this, size()); }
+    auto end() { return iterator(*this, static_cast<int>(size())); }
 
   private:
     // Helper to access the ith element, whether the set
@@ -179,7 +179,7 @@ namespace iod
                   [i] (auto m) { return bind_first_arg(m, i, (callable_arguments_tuple_t<F>*)0); },
                   m);
               },
-              [i] (auto&& m) -> decltype(auto) { return m[i];},
+              [i] (auto&& m) -> decltype(auto) { return m[static_cast<size_t>(i)];},
               S().member_access(arrays)));
     }
 

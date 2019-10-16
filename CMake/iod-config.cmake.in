@@ -1,0 +1,9 @@
+@PACKAGE_INIT@
+
+# Avoid repeatedly including the targets
+if(NOT TARGET iod::iod)
+    # Provide path for scripts
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
+    include(${CMAKE_CURRENT_LIST_DIR}/iod-targets.cmake)
+    check_required_components("@PROJECT_NAME@")
+endif()

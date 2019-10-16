@@ -112,8 +112,8 @@ install(
 )
 
 # Finally, install the actual header files in this header-only library.
+file(GLOB IOD_HEADER_FILES "${PROJECT_SOURCE_DIR}/iod/*.hh")
 install(
-    DIRECTORY "${PROJECT_SOURCE_DIR}/iod"
+    FILES ${IOD_HEADER_FILES}
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
 )
-

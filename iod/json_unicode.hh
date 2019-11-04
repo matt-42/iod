@@ -207,10 +207,11 @@ namespace iod
           };
               
           uint16_t x =
-            (decode_hex_c(a) << 12) +
-            (decode_hex_c(b) << 8) +
-            (decode_hex_c(c) << 4) +
-            decode_hex_c(d);
+            static_cast<uint16_t>(
+              (decode_hex_c(a) << 12) +
+              (decode_hex_c(b) << 8) +
+              (decode_hex_c(c) << 4) +
+              decode_hex_c(d));
 
           // If x in the  0xD800..0xDBFF range -> decode a surrogate pair \uXXXX\uYYYY -> 20 bits codepoint.
           if (x >= 0xD800 and x <= 0xDBFF)
@@ -218,24 +219,24 @@ namespace iod
             if (s.get() != '\\' or s.get() != 'u')
               throw std::runtime_error("json_to_utf8: Missing low surrogate.");
           
-            uint16_t y =
+            uint16_t y = static_cast<uint16_t>(
               (decode_hex_c(s.get()) << 12) +
               (decode_hex_c(s.get()) << 8) +
               (decode_hex_c(s.get()) << 4) +
-              decode_hex_c(s.get());
+              decode_hex_c(s.get()));
 
             if (s.eof())
               throw std::runtime_error("json_to_utf8: Unexpected end of string when decoding an utf8 character");
 
-            x -= 0xD800;
-            y -= 0xDC00;
+            x = static_cast<uint16_t>(x - 0xD800U);
+            y = static_cast<uint16_t>(y - 0xDC00U);
 
             int cp = (x << 10) + y + 0x10000;
 
-            o.append(0b11110000 | (cp >> 18));
-            o.append(0b10000000 | ((cp & 0x3F000) >> 12));
-            o.append(0b10000000 | ((cp & 0x00FC0) >> 6));
-            o.append(0b10000000 | (cp & 0x003F));
+            o.append(static_cast<char>(0b11110000 | (cp >> 18)));
+            o.append(static_cast<char>(0b10000000 | ((cp & 0x3F000) >> 12)));
+            o.append(static_cast<char>(0b10000000 | ((cp & 0x00FC0) >> 6)));
+            o.append(static_cast<char>(0b10000000 | (cp & 0x003F)));
           
           }
           // else encode the codepoint with the 1-2, or 3 bytes utf8 representation.
@@ -243,18 +244,18 @@ namespace iod
           {
             if (x <= 0x007F) // 7bits codepoints, ASCII 0xxxxxxx.
             {
-              o.append(uint8_t(x));
+              o.append(static_cast<char>(x));
             }
             else if (x >= 0x0080 and x <= 0x07FF) // 11bits codepoint -> 110xxxxx 10xxxxxx
             {
-              o.append(0b11000000 | (x >> 6));
-              o.append(0b10000000 | (x & 0x003F));
+              o.append(static_cast<char>(0b11000000 | (x >> 6)));
+              o.append(static_cast<char>(0b10000000 | (x & 0x003F)));
             }
             else if (x >= 0x0800 and x <= 0xFFFF) //16bits codepoint -> 1110xxxx 10xxxxxx 10xxxxxx
             {
-              o.append(0b11100000 | (x >> 12));
-              o.append(0b10000000 | ((x & 0x0FC0) >> 6));
-              o.append(0b10000000 | (x & 0x003F));
+              o.append(static_cast<char>(0b11100000 | (x >> 12)));
+              o.append(static_cast<char>(0b10000000 | ((x & 0x0FC0) >> 6)));
+              o.append(static_cast<char>(0b10000000 | (x & 0x003F)));
             }
             else
               throw std::runtime_error("json_to_utf8: Bad UTF8 codepoint.");            
@@ -298,7 +299,7 @@ namespace iod
           case '\b': o.append('\\'); o.append('b'); break;
           case '\f': o.append('\\'); o.append('f'); break;
           default:
-            o.append(s.peek());
+            o.append(static_cast<char>(s.peek()));
           }
           s.get();
         }
@@ -309,14 +310,14 @@ namespace iod
         o.append('\\');
         o.append('u');
 
-        uint8_t c1 = s.get();
-        uint8_t c2 = s.get();
+        uint8_t c1 = static_cast<uint8_t>(s.get());
+        uint8_t c2 = static_cast<uint8_t>(s.get());
         {        
           // extract codepoints.
           if (c1 < 0b11100000) // 11bits - 2 char: 110xxxxx	10xxxxxx
           {
-            uint16_t cp = ((c1 & 0b00011111) << 6) +
-              (c2 & 0b00111111);
+            uint16_t cp = static_cast<uint16_t>(((c1 & 0b00011111) << 6) +
+              (c2 & 0b00111111));
             if (cp >= 0x0080 and cp <= 0x07FF)
               encode_16bits(cp);
             else
@@ -324,9 +325,9 @@ namespace iod
           }
           else if (c1 < 0b11110000) // 16 bits - 3 char: 1110xxxx	10xxxxxx	10xxxxxx
           {
-            uint16_t cp = ((c1 & 0b00001111) << 12) +
+            uint16_t cp = static_cast<uint16_t>(((c1 & 0b00001111) << 12) +
               ((c2 & 0b00111111) << 6) +
-              (s.get() & 0b00111111);
+              (s.get() & 0b00111111));
 
             if (cp >= 0x0800 and cp <= 0xFFFF)
               encode_16bits(cp);
@@ -343,8 +344,8 @@ namespace iod
 
             cp -= 0x10000;
 
-            uint16_t H = (cp >> 10) + 0xD800;
-            uint16_t L = (cp & 0x03FF) + 0xDC00;
+            uint16_t H = static_cast<uint16_t>((cp >> 10) + 0xD800);
+            uint16_t L = static_cast<uint16_t>((cp & 0x03FF) + 0xDC00);
 
             // check if we are in the right range.
             // The high surrogate is in the 0xD800..0xDBFF range (HR) and

@@ -37,19 +37,19 @@ namespace iod
   // Encode \o into a json string.
   template <typename T>
   inline std::string json_encode(const std::vector<T>& v);
-  
+
   // Encode \o into a stream.
   template <typename S, typename ...Tail>
   inline void json_encode(const sio<Tail...>& o, S& stream);
 
-  
-  
+
+
   struct json_string { std::string str; };
   inline std::string json_encode(const json_string& o);
 
   namespace json_internals
   {
-    
+
     struct external_char_stream
     {
 
@@ -71,7 +71,7 @@ namespace iod
       {
         if (pos_ + s.size() > max_len_)
           throw std::runtime_error("Maximum json string lenght reached during encoding.");
-        memcpy(buf_ + pos_, s.data(), s.size());
+        memcpy(buf_ + pos_, s.data(), static_cast<size_t>(s.size()));
         pos_ += s.size();
       }
 
@@ -88,7 +88,7 @@ namespace iod
 
       stringstream(int hint_size = 10)
         : pos_(0)
-      { str_.reserve(hint_size); }
+      { str_.reserve(static_cast<size_t>(hint_size)); }
 
       inline void append(const char t)
       {
@@ -107,21 +107,21 @@ namespace iod
         {
           flush();
           int to_write = std::min(int(end - begin), LBS);
-          
-          memcpy(buf_, begin, to_write);
+
+          memcpy(buf_, begin, static_cast<size_t>(to_write));
           begin += to_write;
           pos_ += to_write;
         }
 
-        memcpy(buf_ + pos_, begin, end - begin);
+        memcpy(buf_ + pos_, begin, static_cast<size_t>(end - begin));
 
-        pos_ += end - begin;
+        pos_ += static_cast<int>(end - begin);
       }
 
       inline void flush()
       {
-        str_.resize(str_.size() + pos_);
-        memcpy(&(str_)[0] + str_.size() - pos_, buf_, pos_);
+        str_.resize(str_.size() + static_cast<std::string::size_type>(pos_));
+        memcpy(&(str_)[0] + str_.size() - pos_, buf_, static_cast<size_t>(pos_));
         pos_ = 0;
       }
 
@@ -130,7 +130,7 @@ namespace iod
           flush();
         return str_;
       }
-      
+
       std::string move_str() {
         if (pos_ > 0)
           flush();
@@ -160,7 +160,7 @@ namespace iod
         S::append(t);
         return *this;
       }
-      
+
       inline my_ostringstream& operator<<(const json_string& t) {
           (*this) << t.str;
           return *this;
@@ -185,7 +185,7 @@ namespace iod
       }
 
     };
-    
+
     // Json encoder.
     // =============================================
     template <typename T, typename S>
@@ -225,7 +225,7 @@ namespace iod
     //   ss << s;
     //   ss << '"';
     // }
-    
+
     template <typename S>
     inline void json_encode_(const std::string& t, S& ss)
     {
@@ -260,7 +260,7 @@ namespace iod
         if (!m.attributes().has(_json_skip))
         {
           if (!first) { ss << ','; }
-          first = false; 
+          first = false;
           json_encode_symbol(m.attributes().get(_json_key, m.symbol()), ss);
           ss << ':';
           json_encode_(m.value(), ss);
@@ -275,7 +275,7 @@ namespace iod
 
     template <typename T>
     struct fill_ {
-      inline fill_(T& _r) : r(_r) {}
+      inline fill_(T& _rin) : r(_rin) {}
       T& r;
     };
 
@@ -287,9 +287,9 @@ namespace iod
     {
       struct spaces_ {} spaces;
 
-      inline json_parser(std::istringstream& _stream) : str(_stream.str()), pos(0) {}
-      inline json_parser(const std::string& _str) : str(_str.c_str(), _str.size()), pos(0) {}
-      inline json_parser(const stringview& _str) : str(_str), pos(0) {}
+      inline json_parser(std::istringstream& _istringstream) : str(_istringstream.str()), pos(0) {}
+      inline json_parser(const std::string& _sv) : str(_sv.c_str(), _sv.size()), pos(0) {}
+      inline json_parser(const stringview& _sv) : str(_sv), pos(0) {}
 
       inline char peek() { return str[pos]; }
       inline char eof() { return pos == str.size(); }
@@ -305,7 +305,7 @@ namespace iod
         err << a;
         format_error(err, args...);
       }
-      
+
       template <typename... T>
       inline std::runtime_error json_error(T... message)
       {
@@ -322,7 +322,7 @@ namespace iod
         format_error(err, message...);
         return std::runtime_error(err.str());
       }
-      
+
       inline json_parser& fill(std::string& t)
       {
         json_to_utf8(*this, t);
@@ -337,7 +337,7 @@ namespace iod
         // auto append_char = [&] (char c)
         // {
         //   if (buffer_pos == sizeof(buffer)) flush();
-            
+
         //   buffer[buffer_pos] = c;
         //   buffer_pos++;
         // };
@@ -355,7 +355,7 @@ namespace iod
         //     t.append(str, len);
         //   }
         // };
-        
+
         // while (true)
         // {
         //   while (!eof() and str[end] != '"' and str[end] != '\\')
@@ -392,14 +392,14 @@ namespace iod
         //         if (c >= '0' and c <= '9') return c - '0';
         //         else return (10 + c - 'A');
         //       };
-              
+
         //       const char* str2 = str.data() + end;
         //       char x = (decode_hex_c(str2[0]) << 4) + decode_hex_c(str2[1]);
         //       if (x) append_char(x);
         //       append_char((decode_hex_c(str2[2]) << 4) + decode_hex_c(str2[3]));
 
         //       end += 4;
-              
+
         //       if (str[end] == '\\' and str[end + 1] == 'u')
         //         end += 1;
         //       else break;
@@ -411,9 +411,9 @@ namespace iod
         // }
         // flush();
         // pos = end;
-        return *this;
+        // return *this;
       }
-      
+
       inline json_parser& fill(stringview& t)
       {
         int start = pos;
@@ -435,41 +435,69 @@ namespace iod
         }
 
         t.str = str.data() + start;
-        t.len = end - start;
+        t.len = static_cast<size_t>(end - start);
         pos = end;
         return *this;
       }
 
-      template <typename I, int N>
-      inline json_parser& fill_int(I& val)
+      template<typename I, int N> typename std::enable_if<true == std::is_signed<I>::value, json_parser>::type&
+          fill_int(I& val)
       {
-        int sign = 1;
-        if (std::is_signed<I>::value and str[pos] == '-') { sign = -1; eat_one(); }
-        else if (str[pos] == '+') { eat_one(); }
+          int sign = 1;
+          if (str[pos] == '-') { sign = -1; eat_one(); }
+          else if (str[pos] == '+') { eat_one(); }
+          int end = pos;
 
-        int end = pos;
-          
-        val = 0;
+          val = 0;
 
-        const char* s = str.data() + pos;
-        
-        int fz = 0;
-        while(s[fz] == '0') { fz++; end++; }
-        
-        for (int i = fz; i < N + fz; i++)
-        {
-          if (s[i] < '0' or s[i] > '9') break;
-          val = val * 10 + (s[i] - '0');
-          end++;
-        }
-        val *= sign;
+          const char* s = str.data() + pos;
 
-        if (end == pos) throw json_error("Could not find the expected number.");
-        
-        pos = end;
-        return *this;
+          int fz = 0;
+          while (s[fz] == '0') { fz++; end++; }
+
+          for (int i = fz; i < N + fz; i++)
+          {
+              if (s[i] < '0' or s[i] > '9') break;
+              val = val * 10 + (s[i] - '0');
+              end++;
+          }
+
+          val *= sign;
+
+          if (end == pos) throw json_error("Could not find the expected number.");
+
+          pos = end;
+          return *this;
       }
-      
+
+      template<typename I, int N> typename std::enable_if<false == std::is_signed<I>::value, json_parser>::type&
+          fill_int(I& val)
+      {
+          if (str[pos] == '+') { eat_one(); }
+
+          int end = pos;
+
+          val = 0;
+
+          const char* s = str.data() + pos;
+
+          int fz = 0;
+          while (s[fz] == '0') { fz++; end++; }
+
+          for (int i = fz; i < N + fz; i++)
+          {
+              if (s[i] < '0' or s[i] > '9') break;
+              val = val * 10U + static_cast<unsigned int>(s[i] - '0');
+              end++;
+          }
+
+          if (end == pos) throw json_error("Could not find the expected number.");
+
+          pos = end;
+
+          return *this;
+      }
+
       inline json_parser& fill(float& val)
       {
         int sign = 1;
@@ -477,12 +505,12 @@ namespace iod
         else if (str[pos] == '+') { eat_one(); }
 
         float res = 0;
-          
+
         int ent = 0;
         if (str[pos] != '.')
           fill_int<int, 10>(ent);
 
-        res = ent;
+        res = static_cast<float>(ent);
 
         if (str[pos] == '.')
         {
@@ -491,7 +519,7 @@ namespace iod
           int start = pos;
           fill_int<unsigned int, 10>(floating);
           int end = pos;
-          res += float(floating) / pow_10(end - start);
+          res += static_cast<float>(floating / pow_10(end - start));
         }
 
         if (str[pos] == 'e')
@@ -499,16 +527,16 @@ namespace iod
           eat_one();
           int exp = 0;
           fill_int<int, 10>(exp);
-          res *= pow_10(exp);
+          res *= static_cast<float>(pow_10(exp));
         }
 
-        val = sign * res;
+        val = static_cast<float>(sign) * res;
         return *this;
       }
-      
+
       inline json_parser& fill(int& val) { return fill_int<int, 10>(val); }
       inline json_parser& fill(unsigned int& val) { return fill_int<unsigned int, 10>(val); }
-      
+
       template <typename T>
       inline json_parser& fill(T& t)
       {
@@ -516,7 +544,7 @@ namespace iod
                       "Cannot json deserialize into an object with const char* members");
         static_assert(!std::is_same<T, const char[]>::value,
                       "Cannot json deserialize into an object with const char[] members");
-        
+
         int end = pos;
         while(end != str.size() and str[end] != ',' and str[end] != '}' and str[end] != ']') end++;
         t = boost::lexical_cast<std::remove_reference_t<T>>(str.data() + pos, end - pos);
@@ -535,7 +563,7 @@ namespace iod
         int parent_level = 0;
         int array_level = 0;
         bool done = false;
-        
+
         while (!eof() and !done)
         {
           if (parent_level == 0 and array_level == 0 and !in_str and
@@ -545,8 +573,8 @@ namespace iod
           if (str[pos] == '"') // strings.
           {
             pos++;
-            stringview str;
-            this->fill(str);
+            stringview sv;
+            this->fill(sv);
           }
           else if (str[pos] == '{' ) // start a json object
             parent_level++;
@@ -564,11 +592,11 @@ namespace iod
         }
 
         end = pos;
-        t.str.resize(end - start);
-        memcpy((void*)t.str.data(), (void*) (str.data() + start), end - start);
+        t.str.resize(static_cast<size_t>(end - start));
+        memcpy(static_cast<void *>(const_cast<char*>((t.str.data()))), static_cast<void const*>(str.data() + start), static_cast<size_t>(end - start));
         return *this;
       }
-      
+
       template <typename T>
       inline json_parser& operator>>(fill_<T>&& t)
       {
@@ -619,7 +647,7 @@ namespace iod
       int pos;
     };
 
-    template <typename S>    
+    template <typename S>
     inline void iod_attr_from_json(S*, sio<>&, json_parser&)
     {
     }
@@ -641,7 +669,7 @@ namespace iod
     {
       p >> '"' >> fill(t) >> '"';
     }
-    
+
     // Parse a json hashmap ordered the field in the object \o.
     template <typename T, typename ...Tail>
     inline void iod_attr_from_json_strict(sio<T, Tail...>& o, json_parser& p)
@@ -670,18 +698,18 @@ namespace iod
       attr_info A[sio<T, Tail...>::size()];
 
       sio<T, Tail...> scheme;// = *(sio<T, Tail...>*)(42);
-      int i = 0;
+      int ai = 0;
       foreach(scheme) | [&] (const auto& m)
       {
-        A[i].filled = false;
+        A[ai].filled = false;
         stringview name(m.symbol().name(), strlen(m.symbol().name()));
         if (m.attributes().has(_json_key))
         {
           const char* new_name = m.attributes().get(_json_key, _json_key).name();
           name = stringview(new_name, strlen(new_name));
         }
-        A[i].name = name;
-        i++;
+        A[ai].name = name;
+        ai++;
       };
 
       while (p.peek() != '}')
@@ -727,15 +755,15 @@ namespace iod
         throw p.json_error("Expected } got ", p.peek());
       }
 
-      i = 0;
+      ai = 0;
       foreach(scheme) | [&] (auto& m) {
-        if (!m.attributes().has(_json_skip) and !m.attributes().has(_optional) and !A[i].filled)
+        if (!m.attributes().has(_json_skip) and !m.attributes().has(_optional) and !A[ai].filled)
           throw std::runtime_error(std::string("json_decode error: missing field ") +
                                    m.symbol().name());
-        i++;
+        ai++;
       };
     }
-    
+
     // Parse an array.
     template <typename S, typename T>
     inline void iod_from_json_(S*, std::vector<T>& array, json_parser& p)
@@ -787,7 +815,7 @@ namespace iod
     {
       p >> s;
     }
-    
+
   }
 
   template <typename ...Tail>
@@ -812,7 +840,7 @@ namespace iod
     else
       throw std::runtime_error("Empty string.");
   }
-  
+
   template <typename ...Tail>
   inline void json_decode(sio<Tail...>& o, std::istringstream& stream)
   {
@@ -856,7 +884,7 @@ namespace iod
     else
       throw std::runtime_error("Empty string.");
   }
-  
+
   template <typename O>
   inline void json_decode(json_string& o, std::istringstream& stream)
   {
@@ -866,7 +894,7 @@ namespace iod
     else
       throw std::runtime_error("Empty string.");
   }
-  
+
   template <typename ...Tail>
   inline std::string json_encode(const sio<Tail...>& o)
   {
@@ -874,7 +902,7 @@ namespace iod
     json_internals::json_encode_(o, ss);
     return ss.move_str();
   }
-  
+
   template <typename ...Tail>
   inline int json_encode(const sio<Tail...>& o, char* buf, int len)
   {
@@ -899,9 +927,9 @@ namespace iod
   {
     json_internals::my_ostringstream<json_internals::stringstream> ss;
     json_internals::json_encode_(v, ss);
-    return ss.move_str(); 
+    return ss.move_str();
   }
-  
+
 }
 
 #endif

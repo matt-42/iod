@@ -22,7 +22,7 @@ namespace iod
       return f(std::get<N>(ts)...);
     }
 
-    template<typename Ret, typename F, size_t... TSize, size_t... Nargs, typename... T>
+    template<typename Ret, typename F, size_t... TSize, typename... T>
     inline void
     tuple_foreach_impl(std::enable_if_t<std::is_same<void, Ret>::value>*,
                        std::index_sequence<TSize...>,
@@ -32,7 +32,7 @@ namespace iod
         ((void)tuple_foreach_i<TSize>(f, std::forward<T>(ts)...), 0)...};
     }
 
-    template<typename Ret, typename F, size_t... TSize, size_t... Nargs, typename... T>
+    template<typename Ret, typename F, size_t... TSize, typename... T>
     inline decltype(auto)
       tuple_foreach_impl(std::enable_if_t<!std::is_same<void, Ret>::value>*,
                          std::index_sequence<TSize...>,
@@ -48,7 +48,7 @@ namespace iod
       return f(ts.template get_nth_member<N>()...);
     }
 
-    template<typename Ret, typename F, size_t... TSize, size_t... Nargs, typename... T>
+    template<typename Ret, typename F, size_t... TSize, typename... T>
     inline void
     sio_foreach_impl(std::enable_if_t<std::is_same<void, Ret>::value>*,
                      std::index_sequence<TSize...>,
@@ -58,7 +58,7 @@ namespace iod
         ((void)sio_foreach_i<TSize>(f, std::forward<T>(ts)...), 0)...};
     }
 
-    template<typename Ret, typename F, size_t... TSize, size_t... Nargs, typename... T>
+    template<typename Ret, typename F, size_t... TSize, typename... T>
     inline decltype(auto)
     sio_foreach_impl(std::enable_if_t<!std::is_same<void, Ret>::value>*,
                      std::index_sequence<TSize...> /*si*/,

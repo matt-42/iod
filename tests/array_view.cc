@@ -10,12 +10,12 @@ int main()
 
   {
     std::vector<int> A = {1,2,3,4};
-    auto v = array_view(A.size(), [&A] (int i) {
-        return  A[i] * 2;
+    auto v = array_view(static_cast<int>(A.size()), [&A] (int i) {
+        return  A[static_cast<size_t>(i)] * 2;
       });
 
-    for (int i = 0; i < int(v.size()); i++)
-      assert(v[i] == (A[i] * 2));
+    for (int i = 0; i < static_cast<int>(v.size()); i++)
+      assert(v[i] == (A[static_cast<size_t>(i)] * 2));
 
     for (auto x : v) std::cout << x << std::endl;
   }

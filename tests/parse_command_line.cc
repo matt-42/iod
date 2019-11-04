@@ -119,7 +119,7 @@ int main()
                                      _opt1 | _1 = int(),
                                      _opt2 | _2 = std::string());
     }
-    catch (std::runtime_error e)
+    catch (std::runtime_error &e)
     {
       err = e.what();
     };

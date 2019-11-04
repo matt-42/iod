@@ -64,10 +64,10 @@ namespace iod
     // tuples.
     template <typename... M, typename... T>
     static decltype(auto) run(std::tuple<M...>& o, T&&... t)
-    { return run_tuple<N, sizeof...(M)>::run(o, std::forward<T>(t)...); }
+    { return run_tuple<N, static_cast<int>(sizeof...(M))>::run(o, std::forward<T>(t)...); }
     template <typename... M, typename... T>
     static decltype(auto) run(const std::tuple<M...>& o, T&&... t)
-    { return run_tuple<N, sizeof...(M)>::run(o, std::forward<T>(t)...); }
+    { return run_tuple<N, static_cast<int>(sizeof...(M))>::run(o, std::forward<T>(t)...); }
   
     // Other types
     template <typename T1, typename... T>
@@ -111,7 +111,7 @@ namespace iod
   template <typename... T>
   decltype(auto) apply(T&&... t)
   {
-    return run_apply<sizeof...(T) - 1>::run(std::forward<T>(t)...);
+    return run_apply<static_cast<int>(sizeof...(T) - 1)>::run(std::forward<T>(t)...);
   }
   
   

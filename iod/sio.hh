@@ -151,21 +151,26 @@ namespace iod
     template <std::size_t N>
     using nth_member_type = tl::get_nth_type<N, Ms...>;
 
-    // Get the position of a given symbol    
-    template <typename S>
+    template <typename T> struct pack
+    {
+        typedef typename T::symbol_type symbol_type;
+    };
+
+    // get the position of a given symbol    
+    template <typename s>
     using symbol_to_member_type = nth_member_type<
-      tl::get_type_position<S, typename Ms::symbol_type...>::value
+      tl::get_type_position<s, typename pack<Ms>::symbol_type...>::value
                                   >;
     
-    // Get the value type of a diven symbol.
-    template <typename S>
-    using member_value_type = typename symbol_to_member_type<S>::value_type;
+    // get the value type of a diven symbol.
+    template <typename s>
+    using member_value_type = typename symbol_to_member_type<s>::value_type;
 
-    // template <int V>
-    // struct simple_enum { enum { value = V}; };
+    template <int v>
+    struct simple_enum { enum { value = v}; };
     
     template <typename S>
-    using _has = std::integral_constant<bool, tl::type_list_has<S, typename Ms::symbol_type...>::value>;
+    using _has = std::integral_constant<bool, tl::type_list_has<S, typename pack<Ms>::symbol_type...>::value>;
 
     // Constructor.
     inline sio() = default;

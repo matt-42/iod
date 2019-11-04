@@ -27,7 +27,7 @@ namespace iod
 
     auto size() const { return view.size(); }
     auto begin() { return aos_view_iterator<self_t>(*this, 0); }
-    auto end() { return aos_view_iterator<self_t>(*this, view.size()); }
+    auto end() { return aos_view_iterator<self_t>(*this, static_cast<int>(view.size())); }
 
     V view;
   };

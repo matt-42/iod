@@ -1,7 +1,14 @@
 [![Travis build status](https://travis-ci.org/matt-42/iod.svg)](https://travis-ci.org/matt-42/iod)
 
+Important Note
+=======================
+
+This project has been refactored and renamed as the (Lithium Libraries)[https://github.com/matt-42/lithium]:
+https://github.com/matt-42/lithium
+
 The IOD Library
 ==========================
+
 
 The IOD library enhances C++14 meta programming with a symbol based
 paradigm. It provides a compile-time way to introspect objects and

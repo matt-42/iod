@@ -3,7 +3,7 @@
 Important Note
 =======================
 
-This project has been refactored and renamed as the (Lithium Libraries)[https://github.com/matt-42/lithium]:
+This project has been refactored and renamed as the [Lithium Libraries](https://github.com/matt-42/lithium):
 https://github.com/matt-42/lithium
 
 The IOD Library
